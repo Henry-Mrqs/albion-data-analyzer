@@ -123,13 +123,10 @@ export default function RefiningCalc() {
   const fetchPrices = async (force = false) => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
       const url = force 
         ? `/api/prices?ids=${rawId},${refinedId},${prevRefinedId}&force=true` 
         : `/api/prices?ids=${rawId},${refinedId},${prevRefinedId}`;
-      const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await fetch(url);
       const data = await response.json();
       setPrices(data);
     } catch (err) {

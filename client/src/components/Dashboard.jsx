@@ -96,10 +96,7 @@ export default function Dashboard() {
 
     const delayDebounceFn = setTimeout(async () => {
       try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`/api/items/search?q=${encodeURIComponent(searchQuery)}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await fetch(`/api/items/search?q=${encodeURIComponent(searchQuery)}`);
         const data = await response.json();
         setSearchResults(data);
       } catch (err) {
@@ -119,10 +116,7 @@ export default function Dashboard() {
     setPriceData(null);
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/prices?ids=${item.id}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await fetch(`/api/prices?ids=${item.id}`);
       const data = await response.json();
       setPriceData(data[item.id] || {});
     } catch (err) {

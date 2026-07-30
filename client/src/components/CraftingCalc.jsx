@@ -194,10 +194,7 @@ export default function CraftingCalc() {
   useEffect(() => {
     const fetchRecipes = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const response = await fetch('/api/recipes', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await fetch('/api/recipes');
         const data = await response.json();
         setRecipesList(data);
         const initialRecipe = generateRecipeFromData('T4_MAIN_AXE', data);
@@ -254,12 +251,9 @@ export default function CraftingCalc() {
     setLoading(true);
     try {
       const itemIds = [targetId, ...ingredients.map(ing => ing.itemId)];
-      const token = localStorage.getItem('token');
       const url = force ? `/api/prices?ids=${itemIds.join(',')}&force=true` : `/api/prices?ids=${itemIds.join(',')}`;
       
-      const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await fetch(url);
       const data = await response.json();
       setPrices(data);
     } catch (err) {
@@ -296,10 +290,7 @@ export default function CraftingCalc() {
 
     const delayDebounceFn = setTimeout(async () => {
       try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`/api/items/search?q=${encodeURIComponent(searchQuery)}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await fetch(`/api/items/search?q=${encodeURIComponent(searchQuery)}`);
         const data = await response.json();
         setSearchResults(data);
       } catch (err) {

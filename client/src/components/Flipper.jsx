@@ -179,11 +179,8 @@ export default function Flipper() {
     setLoading(true);
     setError('');
     try {
-      const token = localStorage.getItem('token');
       const url = force ? '/api/flipper/prices?force=true' : '/api/flipper/prices';
-      const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Falha ao obter dados do mercado.');
       }

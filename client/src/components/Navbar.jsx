@@ -1,6 +1,6 @@
 import { LayoutDashboard, Flame, Hammer, Truck, LogOut, ShieldAlert, Download, BadgeAlert } from 'lucide-react';
 
-export default function Navbar({ activeTab, setActiveTab, user, onLogout }) {
+export default function Navbar({ activeTab, setActiveTab }) {
   const menuItems = [
     { id: 'dashboard', label: 'Painel', icon: LayoutDashboard },
     { id: 'refining', label: 'Calculadora de Refino', icon: Flame },
@@ -125,38 +125,6 @@ export default function Navbar({ activeTab, setActiveTab, user, onLogout }) {
           <Download size={14} />
           Albion Data Client
         </a>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Membro do Grupo</span>
-          <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-success)' }}>@{user?.username}</span>
-        </div>
-        <button
-          onClick={onLogout}
-          style={{
-            background: 'rgba(255, 23, 68, 0.1)',
-            border: '1px solid rgba(255, 23, 68, 0.2)',
-            borderRadius: '8px',
-            width: '36px',
-            height: '36px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            color: 'var(--color-danger)',
-            transition: 'all 0.2s ease',
-            outline: 'none'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(255, 23, 68, 0.2)';
-            e.currentTarget.style.borderColor = 'rgba(255, 23, 68, 0.4)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'rgba(255, 23, 68, 0.1)';
-            e.currentTarget.style.borderColor = 'rgba(255, 23, 68, 0.2)';
-          }}
-          title="Sair da sessão"
-        >
-          <LogOut size={16} />
-        </button>
       </div>
     </nav>
   );

@@ -7,23 +7,7 @@ import { fetchAndCachePrices } from './worker.js';
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'albion-secret-key-12345';
 
-// Middleware to authenticate JWT token
-export function authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  
-  if (!token) {
-    return res.status(401).json({ error: 'Access token required' });
-  }
-  
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) {
-      return res.status(403).json({ error: 'Invalid or expired token' });
-    }
-    req.user = user;
-    next();
-  });
-}
+
 
 // Helper to remove accents and normalize text for search
 function normalizeText(text) {
@@ -33,48 +17,10 @@ function normalizeText(text) {
     .toLowerCase();
 }
 
-// Auth Routes
-router.post('/auth/login', async (req, res) => {
-  const { username, password } = req.body;
-  
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Username and password are required' });
-  }
-  
-  try {
-    const user = await query.get('SELECT * FROM users WHERE username = ?', [username]);
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid username or password' });
-    }
-    
-    const validPassword = await bcrypt.compare(password, user.password_hash);
-    if (!validPassword) {
-      return res.status(401).json({ error: 'Invalid username or password' });
-    }
-    
-    // Generate JWT
-    const token = jwt.sign(
-      { id: user.id, username: user.username },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-    
-    res.json({
-      token,
-      user: { id: user.id, username: user.username }
-    });
-  } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
-router.get('/auth/me', authenticateToken, async (req, res) => {
-  res.json({ user: req.user });
-});
 
 // Search items with autocomplete (Portuguese, English, or ID)
-router.get('/items/search', authenticateToken, async (req, res) => {
+router.get('/items/search', async (req, res) => {
   const { q } = req.query;
   if (!q) {
     return res.json([]);
@@ -102,7 +48,7 @@ router.get('/items/search', authenticateToken, async (req, res) => {
 });
 
 // Get prices for specific items (with on-demand caching if stale/missing)
-router.get('/prices', authenticateToken, async (req, res) => {
+router.get('/prices', async (req, res) => {
   const { ids } = req.query;
   if (!ids) {
     return res.status(400).json({ error: 'Item IDs parameter "ids" is required' });
@@ -193,7 +139,7 @@ router.get('/prices', authenticateToken, async (req, res) => {
 });
 
 // Transport Arbitrage Calculator
-router.get('/transport/arbitrage', authenticateToken, async (req, res) => {
+router.get('/transport/arbitrage', async (req, res) => {
   const { force } = req.query;
   try {
     // Fetch all items
@@ -330,7 +276,7 @@ router.get('/transport/arbitrage', authenticateToken, async (req, res) => {
 });
 
 // Flipper prices endpoint for all items (equipment, resources, consumables)
-router.get('/flipper/prices', authenticateToken, async (req, res) => {
+router.get('/flipper/prices', async (req, res) => {
   const { force } = req.query;
   try {
     // 1. Check which items have stale or missing prices
@@ -643,7 +589,7 @@ const RECIPES = {
   CAPE: { name: 'Capa (Cape)', baseWeight: 1.0, resources: [{ type: 'CLOTH', count: 4 }], bonusGroup: 'CAPE', bonusCity: 'Caerleon' }
 };
 
-router.get('/recipes', authenticateToken, (req, res) => {
+router.get('/recipes', (req, res) => {
   res.json(RECIPES);
 });
 
