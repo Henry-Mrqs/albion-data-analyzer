@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://SEU_APP_NO_RENDER.onrender.com/api/$1"
+      "destination": "https://albion-data-analyzer.onrender.com/api/$1"
     },
     {
       "source": "/(.*)",

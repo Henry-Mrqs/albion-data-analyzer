@@ -23,16 +23,12 @@ app.use(express.json());
 // API Routes
 app.use('/api', router);
 
-// Serve static files in production
-const clientBuildPath = path.join(__dirname, '../client/dist');
-app.use(express.static(clientBuildPath));
-
+// Root endpoint for health checks (Render/Cron)
 app.get('*', (req, res) => {
-  // If request starts with /api, return 404, don't serve HTML
   if (req.path.startsWith('/api')) {
     return res.status(404).json({ error: 'API route not found' });
   }
-  res.sendFile(path.join(clientBuildPath, 'index.html'));
+  res.status(200).send('Albion Data Analyzer API is running. Frontend is hosted on Vercel.');
 });
 
 // Initialize database and start server
