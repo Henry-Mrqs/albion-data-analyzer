@@ -205,6 +205,7 @@ export default function CraftingCalc() {
   const [useFocus, setUseFocus] = useState(false);
   const [stationTax, setStationTax] = useState(150); // Operator station tax in flat silver
   const [isPremium, setIsPremium] = useState(true);
+  const [customCraftingRRR, setCustomCraftingRRR] = useState('');
   
 
   const [ingredientSelections, setIngredientSelections] = useState({});
@@ -372,6 +373,9 @@ export default function CraftingCalc() {
   const isCityBonusActive = selectedItem.bonusCity === selectedCity;
   
   const getRRR = () => {
+    if (customCraftingRRR !== '' && !isNaN(parseFloat(customCraftingRRR))) {
+      return parseFloat(customCraftingRRR) / 100;
+    }
     if (isCityBonusActive) {
       return useFocus ? 0.479 : 0.248; // 47.9% or 24.8%
     }
@@ -478,11 +482,11 @@ export default function CraftingCalc() {
   let materialsCostGross = 0;
   let totalRefiningTax = 0;
 
-  const getIngredientCostDetails = (itemId, type, tier, ench, countNeeded) => {
+  const getIngredientCostDetails = (itemId, type, tier, ench, targetYield) => {
     const selection = ingredientSelections[itemId];
-    const ref = ingredientRefining[itemId] || { isRefining: false, city: REFINING_MAPPINGS[type]?.cityBonus || selectedCity, useFocus: false, tax: 400, manualRawPrice: '', manualPrevPrice: '' };
+    const ref = ingredientRefining[itemId] || { isRefining: false, city: REFINING_MAPPINGS[type]?.cityBonus || selectedCity, useFocus: false, tax: 400, customRRR: '', manualRawPrice: '', manualPrevPrice: '' };
     
-    let price = 0;
+    let cost = 0;
     let refiningDetails = null;
     let deepDetails = [];
     let recursiveTax = 0;
@@ -493,6 +497,20 @@ export default function CraftingCalc() {
       const prevId = getPrevRefinedItemId(type, tier, ench);
       const refRecipe = getRefiningRecipe(tier);
       
+      const isCityBonusActive = mapping.cityBonus === ref.city;
+      let refRRR = 0;
+      if (ref.customRRR !== '' && !isNaN(parseFloat(ref.customRRR))) {
+        refRRR = parseFloat(ref.customRRR) / 100;
+      } else {
+        let refBonusFactor = 0.179;
+        if (isCityBonusActive) refBonusFactor += 0.401;
+        if (ref.useFocus) refBonusFactor += 0.585;
+        if (isCityBonusActive) { refRRR = ref.useFocus ? 0.539 : 0.367; } else { refRRR = ref.useFocus ? 0.435 : 0.152; }
+      }
+
+      const effectiveRawNeeded = targetYield * refRecipe.rawCount * (1 - refRRR);
+      const effectivePrevNeeded = prevId ? targetYield * refRecipe.prevCount * (1 - refRRR) : 0;
+
       let rawPrice = useBuyOrdersForMats ? getPriceInCity(rawId, ref.city, 'buy') : getPriceInCity(rawId, ref.city, 'sell');
       if (ref.manualRawPrice && !isNaN(parseFloat(ref.manualRawPrice))) {
         rawPrice = parseFloat(ref.manualRawPrice);
@@ -500,12 +518,13 @@ export default function CraftingCalc() {
       
       let prevPrice = 0;
       let prevDeepDetails = [];
+      let prevCost = 0;
       
       if (prevId) {
         const prevRef = ingredientRefining[prevId];
         if (prevRef && prevRef.isRefining) {
-          const prevData = getIngredientCostDetails(prevId, type, tier - 1, ench, countNeeded * refRecipe.prevCount);
-          prevPrice = prevData.price;
+          const prevData = getIngredientCostDetails(prevId, type, tier - 1, ench, effectivePrevNeeded);
+          prevCost = prevData.cost;
           prevDeepDetails = prevData.deepDetails;
           recursiveTax += prevData.recursiveTax;
         } else {
@@ -513,30 +532,23 @@ export default function CraftingCalc() {
           if (ref.manualPrevPrice && !isNaN(parseFloat(ref.manualPrevPrice))) {
             prevPrice = parseFloat(ref.manualPrevPrice);
           }
+          const prevSetupFeeTax = useBuyOrdersForMats ? 1.025 : 1;
+          prevCost = effectivePrevNeeded * prevPrice * prevSetupFeeTax;
         }
       }
       
       const setupFeeTax = useBuyOrdersForMats ? 1.025 : 1;
-      const prevSetupFeeTax = (prevId && ingredientRefining[prevId]?.isRefining) ? 1 : setupFeeTax; // No setup fee if recursively refined
+      const rawCost = effectiveRawNeeded * rawPrice * setupFeeTax;
       
-      const rawCost = (rawPrice * setupFeeTax * refRecipe.rawCount) + (prevPrice * prevSetupFeeTax * refRecipe.prevCount);
-      
-      const isCityBonusActive = mapping.cityBonus === ref.city;
-      let refBonusFactor = 0.179;
-      if (isCityBonusActive) refBonusFactor += 0.401;
-      if (ref.useFocus) refBonusFactor += 0.585;
-      let refRRR = Math.min(0.9, refBonusFactor / (1 + refBonusFactor));
-      if (isCityBonusActive) { refRRR = ref.useFocus ? 0.539 : 0.367; } else { refRRR = ref.useFocus ? 0.435 : 0.152; }
-
       const itemValueActual = tier === 4 ? 16 : tier === 5 ? 32 : tier === 6 ? 64 : tier === 7 ? 128 : 256;
-      const refTaxPerItem = (itemValueActual * 0.05 * (ref.tax / 100));
+      const refTaxTotal = (itemValueActual * 0.05 * (ref.tax / 100)) * targetYield;
       
-      refiningDetails = { rawPrice, prevPrice, rawId, prevId, refRRR, refTaxPerItem, setupFeeTax, rawCost };
+      refiningDetails = { rawCost, prevCost, refTaxTotal, refRRR };
 
       deepDetails.push({
         itemId: rawId,
         type: mapping.rawType,
-        count: refRecipe.rawCount * countNeeded,
+        count: effectiveRawNeeded,
         isSubIngredient: true,
         parentLabel: getFriendlyResourceName(itemId, type),
         parentId: itemId,
@@ -552,7 +564,7 @@ export default function CraftingCalc() {
           deepDetails.push({
             itemId: prevId,
             type: type,
-            count: refRecipe.prevCount * countNeeded,
+            count: effectivePrevNeeded,
             isSubIngredient: true,
             parentLabel: getFriendlyResourceName(itemId, type),
             parentId: itemId,
@@ -567,34 +579,37 @@ export default function CraftingCalc() {
       }
     }
 
+    let itemCost = 0;
     if (ref.isRefining && refiningDetails) {
-      const netCostPerItem = Math.round(refiningDetails.rawCost * (1 - refiningDetails.refRRR) + refiningDetails.refTaxPerItem);
-      price = netCostPerItem;
-      recursiveTax += (refiningDetails.refTaxPerItem * countNeeded);
+      itemCost = refiningDetails.rawCost + refiningDetails.prevCost + refiningDetails.refTaxTotal;
+      recursiveTax += refiningDetails.refTaxTotal;
     } else {
+      let priceUnit = 0;
       if (selection?.mode === 'manual') {
-        price = selection.price || 0;
+        priceUnit = selection.price || 0;
       } else {
         const targetCity = selection?.city || selectedCity;
-        price = useBuyOrdersForMats ? getPriceInCity(itemId, targetCity, 'buy') * 1.025 : getPriceInCity(itemId, targetCity, 'sell');
+        priceUnit = useBuyOrdersForMats ? getPriceInCity(itemId, targetCity, 'buy') * 1.025 : getPriceInCity(itemId, targetCity, 'sell');
       }
+      itemCost = targetYield * priceUnit;
     }
     
-    return { price, refiningDetails, deepDetails, isRefining: ref.isRefining, recursiveTax };
+    cost = itemCost;
+    return { cost, refiningDetails, deepDetails, isRefining: ref.isRefining, recursiveTax };
   };
 
   const ingredientsCalculated = ingredients.map(ing => {
-    const totalIngredientCount = ing.count * craftQuantity;
-    const { price, refiningDetails, deepDetails, isRefining, recursiveTax } = getIngredientCostDetails(ing.itemId, ing.type, selectedTier, selectedEnch, totalIngredientCount);
+    // Determine target yield: how many raw materials we actually need to buy
+    const targetYield = ing.count * craftQuantity * (1 - rrrValue);
+    const { cost, refiningDetails, deepDetails, isRefining, recursiveTax } = getIngredientCostDetails(ing.itemId, ing.type, selectedTier, selectedEnch, targetYield);
     
-    const cost = price * totalIngredientCount;
     materialsCostGross += cost;
     totalRefiningTax += recursiveTax;
     
     const selection = ingredientSelections[ing.itemId];
     return {
       ...ing,
-      price,
+      count: targetYield,
       cost,
       sourceMode: selection?.mode || 'city',
       sourceValue: selection?.mode === 'manual' ? (selection.price || 0) : (selection?.city || selectedCity),
@@ -610,7 +625,7 @@ export default function CraftingCalc() {
   const silverFee = stationTax * craftQuantity;
 
   // Net cost of materials applying RRR + Silver Fee
-  const netCraftingCost = Math.round(materialsCostGross * (1 - rrrValue) + silverFee);
+  const netCraftingCost = Math.round(materialsCostGross + silverFee);
 
   // Sales comparisons
   const taxRateSellOrder = isPremium ? 0.065 : 0.105; // 4% market tax + 2.5% fee
@@ -707,6 +722,22 @@ export default function CraftingCalc() {
                     onChange={e => setIngredientRefining(prev => ({...prev, [itemId]: { ...prev[itemId], tax: Math.max(0, parseInt(e.target.value)||0) }}))}
                     style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '2px 4px' }}
                  />
+               </div>
+             </div>
+             
+             <div style={{ marginBottom: '8px' }}>
+               <div style={{ padding: '8px', background: 'rgba(0,0,0,0.2)', borderRadius: '4px', border: '1px solid rgba(138, 75, 245, 0.2)' }}>
+                 <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '2px', fontSize: '11px' }}>% Retorno H.O. (Opcional)</label>
+                 <div style={{ position: 'relative' }}>
+                   <input 
+                     type="number" 
+                     value={ingredientRefining[itemId]?.customRRR !== undefined ? ingredientRefining[itemId]?.customRRR : ''}
+                     onChange={e => setIngredientRefining(prev => ({...prev, [itemId]: { ...prev[itemId], customRRR: e.target.value }}))}
+                     style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '2px 24px 2px 4px', fontSize: '13px' }}
+                     placeholder="ex: 26"
+                   />
+                   <span style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: '12px' }}>%</span>
+                 </div>
                </div>
              </div>
              
@@ -910,6 +941,25 @@ export default function CraftingCalc() {
             </label>
           </div>
 
+          {/* Custom RRR Toggle / Input */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderTop: '1px solid rgba(138, 75, 245, 0.15)' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: '600', fontSize: '14px' }}>Retorno de Hideout (H.O.) %</div>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Sobrescreve a taxa da cidade</div>
+            </div>
+            <div style={{ position: 'relative', width: '80px' }}>
+              <input 
+                type="number" 
+                value={customCraftingRRR}
+                onChange={e => setCustomCraftingRRR(e.target.value)}
+                placeholder="ex: 26"
+                className="input-field"
+                style={{ paddingRight: '24px', textAlign: 'right' }}
+              />
+              <span style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>%</span>
+            </div>
+          </div>
+
           {/* Premium Account Toggle */}
           <div style={{ display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderTop: '1px solid rgba(138, 75, 245, 0.15)' }}>
             <div>
@@ -1017,7 +1067,7 @@ export default function CraftingCalc() {
                       <div key={ing.itemId} className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
-                            <div style={{ fontWeight: '600', fontSize: '14px' }}>{getFriendlyResourceName(ing.itemId, ing.type)} (x{ing.count * craftQuantity})</div>
+                            <div style={{ fontWeight: '600', fontSize: '14px' }}>{getFriendlyResourceName(ing.itemId, ing.type)} (x{Math.ceil(ing.count)})</div>
                             <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{ing.itemId}</div>
                           </div>
                           <div style={{ textAlign: 'right' }}>
@@ -1418,7 +1468,7 @@ export default function CraftingCalc() {
                         {row.isSubIngredient && <div style={{ width: '6px', height: '6px', borderLeft: '2px solid rgba(255,255,255,0.2)', borderBottom: '2px solid rgba(255,255,255,0.2)', display: 'inline-block', marginBottom: '4px' }}></div>}
                         <div>
                           <div style={{ fontWeight: row.isSubIngredient ? '400' : '600', color: row.isSubIngredient ? 'var(--text-secondary)' : 'var(--text-primary)', fontSize: row.isSubIngredient ? '13px' : '14px' }}>
-                            {getFriendlyResourceName(row.itemId, row.type)} (x{row.count})
+                            {getFriendlyResourceName(row.itemId, row.type)} (x{Math.ceil(row.count)})
                           </div>
                           <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                             {row.itemId} {row.isSubIngredient ? `(para ${row.parentLabel})` : ''}
