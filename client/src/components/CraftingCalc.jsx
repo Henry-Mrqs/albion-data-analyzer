@@ -384,15 +384,13 @@ export default function CraftingCalc() {
   const getPriceInCity = (itemId, city, type = 'sell') => {
     if (!prices || !prices[itemId] || !prices[itemId][city]) return 0;
     const cityData = prices[itemId][city];
-    let bestPrice = type === 'sell' ? Infinity : 0;
+    let bestPrice = Infinity;
     const priceKey = type === 'sell' ? 'sell_price_min' : 'buy_price_max';
     
     for (let q = 1; q <= 5; q++) {
       if (cityData[q] && cityData[q][priceKey] > 0) {
-        if (type === 'sell') {
-          if (cityData[q][priceKey] < bestPrice) bestPrice = cityData[q][priceKey];
-        } else {
-          if (cityData[q][priceKey] > bestPrice) bestPrice = cityData[q][priceKey];
+        if (cityData[q][priceKey] < bestPrice) {
+          bestPrice = cityData[q][priceKey];
         }
       }
     }
