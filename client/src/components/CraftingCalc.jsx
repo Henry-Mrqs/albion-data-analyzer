@@ -611,6 +611,7 @@ export default function CraftingCalc() {
       ...ing,
       count: targetYield,
       cost,
+      price: targetYield > 0 ? cost / targetYield : 0,
       sourceMode: selection?.mode || 'city',
       sourceValue: selection?.mode === 'manual' ? (selection.price || 0) : (selection?.city || selectedCity),
       isRefining,
