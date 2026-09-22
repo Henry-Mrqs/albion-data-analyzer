@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Hammer, Calculator, CheckCircle2, XCircle, AlertTriangle, 
-  Shield, Percent, Info, Search, RotateCw 
+  Shield, Percent, Info, Search, RotateCw, ShoppingCart 
 } from 'lucide-react';
 
 const CITIES = ['Martlock', 'Thetford', 'Fort Sterling', 'Lymhurst', 'Bridgewatch', 'Caerleon'];
@@ -1080,6 +1080,25 @@ export default function CraftingCalc() {
                         </div>
                         
                         {REFINING_MAPPINGS[ing.type] && renderRefiningTree(ing.itemId, ing.type, selectedTier, selectedEnch, 0)}
+
+                        {ing.isRefining && ing.deepDetails && ing.deepDetails.length > 0 && (
+                          <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', borderLeft: '3px solid var(--color-primary-hover)' }}>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <ShoppingCart size={14} /> Lista de Compras (Itens Brutos)
+                            </div>
+                            {ing.deepDetails.map((d, idx) => (
+                              <div key={`${d.itemId}-${idx}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: idx < ing.deepDetails.length - 1 ? '1px dashed rgba(255,255,255,0.05)' : 'none' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                                  <span style={{ color: 'var(--color-primary-hover)' }}>└</span>
+                                  {getFriendlyResourceName(d.itemId, d.type)}
+                                </div>
+                                <div style={{ fontWeight: 'bold', color: 'var(--text-primary)', fontSize: '14px' }}>
+                                  x{Math.ceil(d.count)}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
 
                         {!ing.isRefining && (
                           <>
