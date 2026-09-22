@@ -8,6 +8,33 @@ const CITIES = ['Martlock', 'Thetford', 'Fort Sterling', 'Lymhurst', 'Bridgewatc
 const TIERS = [4, 5, 6, 7, 8];
 const ENCHANTMENTS = [0, 1, 2, 3, 4];
 
+// Refining mapping for calculation
+const REFINING_MAPPINGS = {
+  'METALBAR': { rawType: 'ORE', cityBonus: 'Thetford' },
+  'PLANK': { rawType: 'WOOD', cityBonus: 'Fort Sterling' },
+  'LEATHER': { rawType: 'HIDE', cityBonus: 'Martlock' },
+  'CLOTH': { rawType: 'FIBER', cityBonus: 'Lymhurst' },
+  'STONEBLOCK': { rawType: 'STONE', cityBonus: 'Bridgewatch' }
+};
+
+const getRefiningRecipe = (tier) => {
+  if (tier < 4) return { rawCount: 1, prevCount: 0 };
+  const rawCount = tier === 4 ? 2 : tier === 5 ? 3 : tier === 6 ? 4 : 5;
+  return { rawCount, prevCount: 1 };
+};
+
+const getRawItemId = (rawType, tier, ench) => {
+  const suffix = ench === 0 || rawType === 'STONE' ? '' : `_LEVEL${ench}`;
+  return `T${tier}_${rawType}${suffix}`;
+};
+
+const getPrevRefinedItemId = (refinedType, tier, ench) => {
+  if (tier <= 2) return null;
+  const suffix = ench === 0 || refinedType === 'STONEBLOCK' ? '' : `_LEVEL${ench}`;
+  return `T${tier - 1}_${refinedType}${suffix}`;
+};
+
+
 // Item Value lookup for crafting tax calculations
 const EQUIPMENT_BASE_VALUES = {
   4: 120,
@@ -179,7 +206,13 @@ export default function CraftingCalc() {
   const [stationTax, setStationTax] = useState(150); // Operator station tax in flat silver
   const [isPremium, setIsPremium] = useState(true);
   
+
   const [ingredientSelections, setIngredientSelections] = useState({});
+  const [ingredientRefining, setIngredientRefining] = useState({}); // { itemId: { isRefining: false, city: 'Thetford', useFocus: false, tax: 400 } }
+  const [useBuyOrdersForMats, setUseBuyOrdersForMats] = useState(false);
+  const [craftQuantity, setCraftQuantity] = useState(1);
+  const [manualSellPriceBM, setManualSellPriceBM] = useState('');
+
   
   const [prices, setPrices] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -250,8 +283,21 @@ export default function CraftingCalc() {
     if (!selectedItem) return;
     setLoading(true);
     try {
-      const itemIds = [targetId, ...ingredients.map(ing => ing.itemId)];
-      const url = force ? `/api/prices?ids=${itemIds.join(',')}&force=true` : `/api/prices?ids=${itemIds.join(',')}`;
+      let itemIds = [targetId, ...ingredients.map(ing => ing.itemId)];
+      // Add required raw materials for any refinable ingredient, down to tier 2
+      ingredients.forEach(ing => {
+        if (REFINING_MAPPINGS[ing.type]) {
+          const mapping = REFINING_MAPPINGS[ing.type];
+          for (let t = selectedTier; t >= 2; t--) {
+            const rawId = getRawItemId(mapping.rawType, t, selectedEnch);
+            const prevId = getPrevRefinedItemId(ing.type, t, selectedEnch);
+            itemIds.push(rawId);
+            if (prevId) itemIds.push(prevId);
+          }
+        }
+      });
+      const uniqueIds = [...new Set(itemIds)];
+      const url = force ? `/api/prices?ids=${uniqueIds.join(',')}&force=true` : `/api/prices?ids=${uniqueIds.join(',')}`;
       
       const response = await fetch(url);
       const data = await response.json();
@@ -335,44 +381,34 @@ export default function CraftingCalc() {
   const rrrValue = getRRR();
 
   // Price resolution helpers - scan qualities 1-5 for best available price
-  const getPriceInCity = (itemId, city) => {
+  const getPriceInCity = (itemId, city, type = 'sell') => {
     if (!prices || !prices[itemId] || !prices[itemId][city]) return 0;
     const cityData = prices[itemId][city];
-    // Scan quality 1-5 for the lowest non-zero sell_price_min
-    let bestPrice = 0;
+    let bestPrice = type === 'sell' ? Infinity : 0;
+    const priceKey = type === 'sell' ? 'sell_price_min' : 'buy_price_max';
+    
     for (let q = 1; q <= 5; q++) {
-      if (cityData[q] && cityData[q].sell_price_min > 0) {
-        if (bestPrice === 0 || cityData[q].sell_price_min < bestPrice) {
-          bestPrice = cityData[q].sell_price_min;
+      if (cityData[q] && cityData[q][priceKey] > 0) {
+        if (type === 'sell') {
+          if (cityData[q][priceKey] < bestPrice) bestPrice = cityData[q][priceKey];
+        } else {
+          if (cityData[q][priceKey] > bestPrice) bestPrice = cityData[q][priceKey];
         }
       }
     }
-    if (bestPrice > 0) return bestPrice;
-    return cityData.sell_price_min || 0;
+    if (bestPrice !== Infinity && bestPrice !== 0) return bestPrice;
+    return cityData[priceKey] || 0;
   };
 
   const getBuyOrderInCity = (itemId, city) => {
-    if (!prices || !prices[itemId] || !prices[itemId][city]) return 0;
-    const cityData = prices[itemId][city];
-    // Scan quality 1-5 for the highest non-zero buy_price_max
-    let bestPrice = 0;
-    for (let q = 1; q <= 5; q++) {
-      if (cityData[q] && cityData[q].buy_price_max > 0) {
-        if (cityData[q].buy_price_max > bestPrice) {
-          bestPrice = cityData[q].buy_price_max;
-        }
-      }
-    }
-    if (bestPrice > 0) return bestPrice;
-    return cityData.buy_price_max || 0;
+    return getPriceInCity(itemId, city, 'buy');
   };
 
-  // Get the date string associated with the resolved price
-  const getPriceDateInCity = (itemId, city, mode = 'sell') => {
+  const getPriceDateInCity = (itemId, city, type = 'sell') => {
     if (!prices || !prices[itemId] || !prices[itemId][city]) return null;
     const cityData = prices[itemId][city];
-    const dateKey = mode === 'sell' ? 'sell_price_min_date' : 'buy_price_max_date';
-    const priceKey = mode === 'sell' ? 'sell_price_min' : 'buy_price_max';
+    const dateKey = type === 'sell' ? 'sell_price_min_date' : 'buy_price_max_date';
+    const priceKey = type === 'sell' ? 'sell_price_min' : 'buy_price_max';
     // Scan quality 1-5 matching the resolved price
     for (let q = 1; q <= 5; q++) {
       if (cityData[q] && cityData[q][priceKey] > 0) {
@@ -382,14 +418,14 @@ export default function CraftingCalc() {
     return cityData[dateKey] || null;
   };
 
-  const getBestCityToBuy = (itemId) => {
+  const getBestCityToBuy = (itemId, useBuyOrder = false) => {
     if (!prices || !prices[itemId]) return { city: 'Sem dados', price: 0 };
     let bestCity = 'Sem dados';
     let minPrice = Infinity;
     
     const citiesToSearch = ['Martlock', 'Thetford', 'Fort Sterling', 'Lymhurst', 'Bridgewatch', 'Caerleon'];
     for (const city of citiesToSearch) {
-      const price = getPriceInCity(itemId, city);
+      const price = getPriceInCity(itemId, city, useBuyOrder ? 'buy' : 'sell');
       if (price > 0 && price < minPrice) {
         minPrice = price;
         bestCity = city;
@@ -442,30 +478,138 @@ export default function CraftingCalc() {
   // Math Calculations
   // Total cost of materials (before RRR) in the selected crafting city
   let materialsCostGross = 0;
-  const ingredientsCalculated = ingredients.map(ing => {
-    const selection = ingredientSelections[ing.itemId];
+  let totalRefiningTax = 0;
+
+  const getIngredientCostDetails = (itemId, type, tier, ench, countNeeded) => {
+    const selection = ingredientSelections[itemId];
+    const ref = ingredientRefining[itemId] || { isRefining: false, city: REFINING_MAPPINGS[type]?.cityBonus || selectedCity, useFocus: false, tax: 400, manualRawPrice: '', manualPrevPrice: '' };
+    
     let price = 0;
-    if (selection?.mode === 'manual') {
-      price = selection.price || 0;
-    } else {
-      const targetCity = selection?.city || selectedCity;
-      price = getPriceInCity(ing.itemId, targetCity);
+    let refiningDetails = null;
+    let deepDetails = [];
+    let recursiveTax = 0;
+
+    if (REFINING_MAPPINGS[type]) {
+      const mapping = REFINING_MAPPINGS[type];
+      const rawId = getRawItemId(mapping.rawType, tier, ench);
+      const prevId = getPrevRefinedItemId(type, tier, ench);
+      const refRecipe = getRefiningRecipe(tier);
+      
+      let rawPrice = useBuyOrdersForMats ? getPriceInCity(rawId, ref.city, 'buy') : getPriceInCity(rawId, ref.city, 'sell');
+      if (ref.manualRawPrice && !isNaN(parseFloat(ref.manualRawPrice))) {
+        rawPrice = parseFloat(ref.manualRawPrice);
+      }
+      
+      let prevPrice = 0;
+      let prevDeepDetails = [];
+      
+      if (prevId) {
+        const prevRef = ingredientRefining[prevId];
+        if (prevRef && prevRef.isRefining) {
+          const prevData = getIngredientCostDetails(prevId, type, tier - 1, ench, countNeeded * refRecipe.prevCount);
+          prevPrice = prevData.price;
+          prevDeepDetails = prevData.deepDetails;
+          recursiveTax += prevData.recursiveTax;
+        } else {
+          prevPrice = useBuyOrdersForMats ? getPriceInCity(prevId, ref.city, 'buy') : getPriceInCity(prevId, ref.city, 'sell');
+          if (ref.manualPrevPrice && !isNaN(parseFloat(ref.manualPrevPrice))) {
+            prevPrice = parseFloat(ref.manualPrevPrice);
+          }
+        }
+      }
+      
+      const setupFeeTax = useBuyOrdersForMats ? 1.025 : 1;
+      const prevSetupFeeTax = (prevId && ingredientRefining[prevId]?.isRefining) ? 1 : setupFeeTax; // No setup fee if recursively refined
+      
+      const rawCost = (rawPrice * setupFeeTax * refRecipe.rawCount) + (prevPrice * prevSetupFeeTax * refRecipe.prevCount);
+      
+      const isCityBonusActive = mapping.cityBonus === ref.city;
+      let refBonusFactor = 0.179;
+      if (isCityBonusActive) refBonusFactor += 0.401;
+      if (ref.useFocus) refBonusFactor += 0.585;
+      let refRRR = Math.min(0.9, refBonusFactor / (1 + refBonusFactor));
+      if (isCityBonusActive) { refRRR = ref.useFocus ? 0.539 : 0.367; } else { refRRR = ref.useFocus ? 0.435 : 0.152; }
+
+      const itemValueActual = tier === 4 ? 16 : tier === 5 ? 32 : tier === 6 ? 64 : tier === 7 ? 128 : 256;
+      const refTaxPerItem = (itemValueActual * 0.05 * (ref.tax / 100));
+      
+      refiningDetails = { rawPrice, prevPrice, rawId, prevId, refRRR, refTaxPerItem, setupFeeTax, rawCost };
+
+      deepDetails.push({
+        itemId: rawId,
+        type: mapping.rawType,
+        count: refRecipe.rawCount * countNeeded,
+        isSubIngredient: true,
+        parentLabel: getFriendlyResourceName(itemId, type),
+        parentId: itemId,
+        sourceMode: ref.manualRawPrice !== undefined && ref.manualRawPrice !== '' ? 'manual' : 'city',
+        sourceValue: ref.city || selectedCity,
+        manualValue: ref.manualRawPrice,
+        manualKey: 'manualRawPrice',
+        price: rawPrice
+      });
+      
+      if (prevId) {
+        if (!ingredientRefining[prevId]?.isRefining) {
+          deepDetails.push({
+            itemId: prevId,
+            type: type,
+            count: refRecipe.prevCount * countNeeded,
+            isSubIngredient: true,
+            parentLabel: getFriendlyResourceName(itemId, type),
+            parentId: itemId,
+            sourceMode: ref.manualPrevPrice !== undefined && ref.manualPrevPrice !== '' ? 'manual' : 'city',
+            sourceValue: ref.city || selectedCity,
+            manualValue: ref.manualPrevPrice,
+            manualKey: 'manualPrevPrice',
+            price: prevPrice
+          });
+        }
+        deepDetails = deepDetails.concat(prevDeepDetails);
+      }
     }
-    const cost = price * ing.count;
+
+    if (ref.isRefining && refiningDetails) {
+      const netCostPerItem = Math.round(refiningDetails.rawCost * (1 - refiningDetails.refRRR) + refiningDetails.refTaxPerItem);
+      price = netCostPerItem;
+      recursiveTax += (refiningDetails.refTaxPerItem * countNeeded);
+    } else {
+      if (selection?.mode === 'manual') {
+        price = selection.price || 0;
+      } else {
+        const targetCity = selection?.city || selectedCity;
+        price = useBuyOrdersForMats ? getPriceInCity(itemId, targetCity, 'buy') * 1.025 : getPriceInCity(itemId, targetCity, 'sell');
+      }
+    }
+    
+    return { price, refiningDetails, deepDetails, isRefining: ref.isRefining, recursiveTax };
+  };
+
+  const ingredientsCalculated = ingredients.map(ing => {
+    const totalIngredientCount = ing.count * craftQuantity;
+    const { price, refiningDetails, deepDetails, isRefining, recursiveTax } = getIngredientCostDetails(ing.itemId, ing.type, selectedTier, selectedEnch, totalIngredientCount);
+    
+    const cost = price * totalIngredientCount;
     materialsCostGross += cost;
+    totalRefiningTax += recursiveTax;
+    
+    const selection = ingredientSelections[ing.itemId];
     return {
       ...ing,
       price,
       cost,
       sourceMode: selection?.mode || 'city',
-      sourceValue: selection?.mode === 'manual' ? (selection.price || 0) : (selection?.city || selectedCity)
+      sourceValue: selection?.mode === 'manual' ? (selection.price || 0) : (selection?.city || selectedCity),
+      isRefining,
+      refiningDetails,
+      deepDetails
     };
   });
 
   // Silver Fee calculation - Flat silver fee in pratas
   const baseValue = selectedItem.itemType === 'consumable' ? 12 : (EQUIPMENT_BASE_VALUES[selectedTier] || 120);
   const systemValue = baseValue * Math.pow(2, selectedEnch);
-  const silverFee = stationTax;
+  const silverFee = stationTax * craftQuantity;
 
   // Net cost of materials applying RRR + Silver Fee
   const netCraftingCost = Math.round(materialsCostGross * (1 - rrrValue) + silverFee);
@@ -475,14 +619,18 @@ export default function CraftingCalc() {
   const taxRateBuyOrder = isPremium ? 0.04 : 0.08;   // 4% or 8% direct market tax
 
   // Option 1: Sell via Sell Order in Royal Crafting City (or Caerleon if crafted there)
+  const totalYield = selectedItem.batchCount * craftQuantity;
   const localSellPrice = getPriceInCity(targetId, selectedCity);
-  const localNetSell = Math.round(localSellPrice * selectedItem.batchCount * (1 - taxRateSellOrder));
+  const localNetSell = Math.round(localSellPrice * totalYield * (1 - taxRateSellOrder));
   const localProfit = localNetSell - netCraftingCost;
   const localMargin = localNetSell > 0 && netCraftingCost > 0 ? (localProfit / netCraftingCost) * 100 : 0;
 
   // Option 2: Sell to Caerleon Black Market Buy Order (instant)
-  const bmBuyOrderPrice = getBuyOrderInCity(targetId, 'Black Market');
-  const bmNetSell = Math.round(bmBuyOrderPrice * selectedItem.batchCount * (1 - taxRateBuyOrder));
+  let bmBuyOrderPrice = getBuyOrderInCity(targetId, 'Black Market');
+  if (manualSellPriceBM !== '' && !isNaN(parseFloat(manualSellPriceBM))) {
+    bmBuyOrderPrice = parseFloat(manualSellPriceBM);
+  }
+  const bmNetSell = Math.round(bmBuyOrderPrice * totalYield * (1 - taxRateBuyOrder));
   const bmProfit = bmNetSell - netCraftingCost;
   const bmMargin = bmNetSell > 0 && netCraftingCost > 0 ? (bmProfit / netCraftingCost) * 100 : 0;
 
@@ -505,6 +653,98 @@ export default function CraftingCalc() {
     missingMaterials.push(`Preço de Venda (${targetId})`);
   }
   const hasMissingPrices = missingMaterials.length > 0;
+
+  const renderRefiningTree = (itemId, type, tier, ench, countNeeded, depth = 0) => {
+    if (!REFINING_MAPPINGS[type]) return null;
+    
+    const mapping = REFINING_MAPPINGS[type];
+    const rawId = getRawItemId(mapping.rawType, tier, ench);
+    const prevId = getPrevRefinedItemId(type, tier, ench);
+    const refRecipe = getRefiningRecipe(tier);
+    
+    const isRefining = ingredientRefining[itemId]?.isRefining || false;
+    const refCity = ingredientRefining[itemId]?.city || mapping.cityBonus || selectedCity;
+    const refTax = ingredientRefining[itemId]?.tax ?? 400;
+    
+    const rawPrice = ingredientRefining[itemId]?.manualRawPrice || '';
+    const prevPrice = ingredientRefining[itemId]?.manualPrevPrice || '';
+    
+    return (
+      <div key={itemId} style={{ marginTop: '8px', paddingLeft: depth > 0 ? '12px' : '0', borderLeft: depth > 0 ? '2px solid rgba(138, 75, 245, 0.3)' : 'none' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.2)', padding: '6px 12px', borderRadius: '4px', fontSize: '12px' }}>
+          <span style={{ color: 'var(--text-secondary)' }}>Refinar {getFriendlyResourceName(itemId, type)} você mesmo?</span>
+          <label className="toggle-switch" style={{ transform: 'scale(0.8)' }}>
+            <input 
+              type="checkbox" 
+              checked={isRefining}
+              onChange={(e) => {
+                setIngredientRefining(prev => ({
+                  ...prev,
+                  [itemId]: { ...(prev[itemId] || { city: mapping.cityBonus || selectedCity, useFocus: false, tax: 400 }), isRefining: e.target.checked }
+                }));
+              }}
+            />
+            <span className="slider"></span>
+          </label>
+        </div>
+        
+        {isRefining && (
+          <div style={{ padding: '8px', background: 'rgba(138, 75, 245, 0.05)', border: '1px solid rgba(138, 75, 245, 0.2)', borderRadius: '6px', fontSize: '11px', marginTop: '8px' }}>
+             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+               <div>
+                 <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '2px' }}>Cidade Refino</label>
+                 <select 
+                    value={refCity}
+                    onChange={e => setIngredientRefining(prev => ({...prev, [itemId]: { ...prev[itemId], city: e.target.value }}))}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '2px 4px' }}
+                 >
+                   {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+                 </select>
+               </div>
+               <div>
+                 <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '2px' }}>Taxa Estação (Nutrição)</label>
+                 <input 
+                    type="number" 
+                    value={refTax}
+                    onChange={e => setIngredientRefining(prev => ({...prev, [itemId]: { ...prev[itemId], tax: Math.max(0, parseInt(e.target.value)||0) }}))}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '2px 4px' }}
+                 />
+               </div>
+             </div>
+             
+             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+               <div>
+                 <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '2px' }}>Preço Manual: {getFriendlyResourceName(rawId)}</label>
+                 <input 
+                    type="number" 
+                    value={rawPrice}
+                    onChange={e => setIngredientRefining(prev => ({...prev, [itemId]: { ...prev[itemId], manualRawPrice: e.target.value }}))}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '2px 4px' }}
+                 />
+               </div>
+               {prevId && !ingredientRefining[prevId]?.isRefining && (
+                 <div>
+                   <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '2px' }}>Preço Manual: {getFriendlyResourceName(prevId)}</label>
+                   <input 
+                      type="number" 
+                      value={prevPrice}
+                      onChange={e => setIngredientRefining(prev => ({...prev, [itemId]: { ...prev[itemId], manualPrevPrice: e.target.value }}))}
+                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '2px 4px' }}
+                   />
+                 </div>
+               )}
+             </div>
+             <div style={{ color: 'var(--text-secondary)' }}>
+               <span>Receita: {refRecipe.rawCount}x {getFriendlyResourceName(rawId)}</span>
+               {prevId && <span> + 1x {getFriendlyResourceName(prevId)}</span>}
+             </div>
+             
+             {prevId && renderRefiningTree(prevId, type, tier - 1, ench, countNeeded * refRecipe.prevCount, depth + 1)}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', minHeight: 'calc(100vh - 160px)' }}>
@@ -628,6 +868,34 @@ export default function CraftingCalc() {
             </div>
           </div>
 
+          {/* Quantity */}
+          <div className="input-group">
+            <label className="input-label">Quantidade a Fabricar</label>
+            <input 
+              className="input-field" 
+              type="number" 
+              value={craftQuantity}
+              onChange={(e) => setCraftQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+              min="1"
+            />
+          </div>
+
+          {/* Buy Order Toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderTop: '1px solid rgba(138, 75, 245, 0.15)' }}>
+            <div>
+              <div style={{ fontWeight: '600', fontSize: '14px' }}>Ordens de Compra (Buy Orders)</div>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Para Materiais Brutos (+2.5% Setup Fee)</div>
+            </div>
+            <label className="toggle-switch">
+              <input 
+                type="checkbox" 
+                checked={useBuyOrdersForMats} 
+                onChange={(e) => setUseBuyOrdersForMats(e.target.checked)} 
+              />
+              <span className="slider"></span>
+            </label>
+          </div>
+
           {/* Focus Toggle */}
           <div style={{ display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderTop: '1px solid rgba(138, 75, 245, 0.15)' }}>
             <div>
@@ -746,29 +1014,34 @@ export default function CraftingCalc() {
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {ingredientsCalculated.map(ing => {
-                    const bestBuy = getBestCityToBuy(ing.itemId);
+                    const bestBuy = getBestCityToBuy(ing.itemId, useBuyOrdersForMats);
                     return (
                       <div key={ing.itemId} className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
-                            <div style={{ fontWeight: '600', fontSize: '14px' }}>{getFriendlyResourceName(ing.itemId, ing.type)} (x{ing.count})</div>
+                            <div style={{ fontWeight: '600', fontSize: '14px' }}>{getFriendlyResourceName(ing.itemId, ing.type)} (x{ing.count * craftQuantity})</div>
                             <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{ing.itemId}</div>
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ fontWeight: 'bold' }}>{ing.cost.toLocaleString('pt-BR')} pratas</div>
                             <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                              {ing.price.toLocaleString('pt-BR')} pratas / un ({ing.sourceMode === 'manual' ? 'Manual' : ing.sourceValue})
+                              {ing.price.toLocaleString('pt-BR')} pratas / un {ing.isRefining ? '(Refinado)' : `(${ing.sourceMode === 'manual' ? 'Manual' : ing.sourceValue})`}
                             </div>
                           </div>
                         </div>
+                        
+                        {REFINING_MAPPINGS[ing.type] && renderRefiningTree(ing.itemId, ing.type, selectedTier, selectedEnch, 0)}
+
+                        {!ing.isRefining && (
+                          <>
                         {/* Per-city price breakdown */}
                         <div style={{ borderTop: '1px dashed rgba(255,255,255,0.08)', paddingTop: '8px' }}>
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '6px', fontSize: '11px' }}>
                             {['Martlock', 'Thetford', 'Fort Sterling', 'Lymhurst', 'Bridgewatch', 'Caerleon'].map(city => {
-                              const cityPrice = getPriceInCity(ing.itemId, city);
+                              const cityPrice = getPriceInCity(ing.itemId, city, useBuyOrdersForMats ? 'buy' : 'sell');
                               const isBest = cityPrice > 0 && city === bestBuy.city;
                               const isSelected = ing.sourceMode === 'city' && ing.sourceValue === city;
-                              const priceAge = getPriceDateInCity(ing.itemId, city, 'sell');
+                              const priceAge = getPriceDateInCity(ing.itemId, city, useBuyOrdersForMats ? 'buy' : 'sell');
                               const ageStr = formatPriceAge(priceAge);
                               return (
                                 <div 
@@ -863,6 +1136,8 @@ export default function CraftingCalc() {
                             <span>{bestBuy.price > 0 ? `${bestBuy.price.toLocaleString('pt-BR')} pratas / un` : <span style={{ color: 'var(--color-danger)' }}>sem dados</span>}</span>
                           </div>
                         </div>
+                        </>
+                        )}
                       </div>
                     );
                   })}
@@ -902,7 +1177,7 @@ export default function CraftingCalc() {
                           {localProfit > 0 ? '+' : ''}{localProfit.toLocaleString('pt-BR')} pratas ({localMargin.toFixed(1)}%)
                         </div>
                         <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                          Unitário: {localSellPrice.toLocaleString('pt-BR')} pratas | Lote ({selectedItem.batchCount}x): {(localSellPrice * selectedItem.batchCount).toLocaleString('pt-BR')} pratas
+                          Unitário: {localSellPrice.toLocaleString('pt-BR')} pratas | Total ({totalYield}x): {(localSellPrice * totalYield).toLocaleString('pt-BR')} pratas
                         </div>
                       </div>
                     </div>
@@ -917,6 +1192,19 @@ export default function CraftingCalc() {
                       <div>
                         <div style={{ fontWeight: 'bold', fontSize: '14px' }}>Mercado Negro (Caerleon)</div>
                         <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Venda Imediata BM (Impostos: {(taxRateBuyOrder * 100).toFixed(0)}%)</div>
+                        <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <input 
+                            type="number" 
+                            placeholder={`API: ${getBuyOrderInCity(targetId, 'Black Market').toLocaleString('pt-BR')}`}
+                            value={manualSellPriceBM}
+                            onChange={(e) => setManualSellPriceBM(e.target.value)}
+                            style={{ 
+                              background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', 
+                              borderRadius: '4px', color: 'var(--text-primary)', fontSize: '11px', padding: '4px 8px', width: '100px' 
+                            }}
+                          />
+                          <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Preço Manual BM</span>
+                        </div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         {hasBMOption ? (
@@ -925,7 +1213,7 @@ export default function CraftingCalc() {
                               {bmProfit > 0 ? '+' : ''}{bmProfit.toLocaleString('pt-BR')} pratas ({bmMargin.toFixed(1)}%)
                             </div>
                             <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                              Unitário: {bmBuyOrderPrice.toLocaleString('pt-BR')} pratas | Lote ({selectedItem.batchCount}x): {(bmBuyOrderPrice * selectedItem.batchCount).toLocaleString('pt-BR')} pratas
+                              Unitário: {bmBuyOrderPrice.toLocaleString('pt-BR')} pratas | Total ({totalYield}x): {(bmBuyOrderPrice * totalYield).toLocaleString('pt-BR')} pratas
                             </div>
                           </>
                         ) : (
@@ -1001,9 +1289,17 @@ export default function CraftingCalc() {
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 'bold' }}>
                     Melhor Opção: {bestOptionName}
                   </div>
-                  <div style={{ display: 'flex', gap: '24px', marginTop: '8px' }}>
+                  <div style={{ display: 'flex', gap: '24px', marginTop: '8px', flexWrap: 'wrap' }}>
                     <div>
-                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Custo Líquido:</span>
+                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Custo Refino:</span>
+                      <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-muted)' }}>{totalRefiningTax.toLocaleString('pt-BR')} pratas</div>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Custo Craft Final:</span>
+                      <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-muted)' }}>{silverFee.toLocaleString('pt-BR')} pratas</div>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Custo Líquido Total:</span>
                       <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{netCraftingCost.toLocaleString('pt-BR')} pratas</div>
                     </div>
                     <div>
@@ -1063,44 +1359,113 @@ export default function CraftingCalc() {
             </thead>
             <tbody>
               {/* Ingredients rows */}
-              {ingredientsCalculated.map(ing => {
-                const bestBuy = getBestCityToBuy(ing.itemId);
-                const isManualSelected = ing.sourceMode === 'manual';
-                const manualValue = isManualSelected ? ing.sourceValue : 0;
+              {ingredientsCalculated.flatMap(ing => {
+                const rows = [];
+                rows.push({
+                  ...ing,
+                  isSubIngredient: false
+                });
+
+                if (ing.deepDetails && ing.deepDetails.length > 0) {
+                  // Push all recursive details to the table
+                  ing.deepDetails.forEach(detail => rows.push(detail));
+                }
+                return rows;
+              }).map(row => {
+                const bestBuy = getBestCityToBuy(row.itemId, useBuyOrdersForMats);
+                const isManualSelected = row.sourceMode === 'manual';
+                const manualValue = isManualSelected ? (row.isSubIngredient ? row.manualValue : row.sourceValue) : '';
+
+                const handleManualChange = (val) => {
+                  if (row.isSubIngredient) {
+                    setIngredientRefining(prev => ({
+                      ...prev,
+                      [row.parentId]: {
+                        ...(prev[row.parentId] || {}),
+                        [row.manualKey]: val > 0 ? val.toString() : ''
+                      }
+                    }));
+                  } else {
+                    selectIngredientManual(row.itemId, val);
+                  }
+                };
+
+                const handleManualToggle = () => {
+                  if (!isManualSelected) {
+                    handleManualChange(row.price || 0);
+                  } else if (row.isSubIngredient) {
+                    setIngredientRefining(prev => ({
+                      ...prev,
+                      [row.parentId]: {
+                        ...(prev[row.parentId] || {}),
+                        [row.manualKey]: ''
+                      }
+                    }));
+                  }
+                };
+
                 return (
                   <tr 
-                    key={ing.itemId} 
+                    key={`${row.itemId}-${row.isSubIngredient ? 'sub' : 'main'}-${row.parentId || ''}`} 
                     style={{ 
                       borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                      transition: 'background-color 0.2s'
+                      transition: 'background-color 0.2s',
+                      background: row.isSubIngredient ? 'rgba(0, 0, 0, 0.2)' : 'transparent'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(138, 75, 245, 0.04)'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = row.isSubIngredient ? 'rgba(0, 0, 0, 0.4)' : 'rgba(138, 75, 245, 0.04)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = row.isSubIngredient ? 'rgba(0, 0, 0, 0.2)' : 'transparent'}
                   >
-                    <td style={{ padding: '12px' }}>
-                      <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
-                        {getFriendlyResourceName(ing.itemId, ing.type)} (x{ing.count})
+                    <td style={{ padding: '12px', paddingLeft: row.isSubIngredient ? '32px' : '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {row.isSubIngredient && <div style={{ width: '6px', height: '6px', borderLeft: '2px solid rgba(255,255,255,0.2)', borderBottom: '2px solid rgba(255,255,255,0.2)', display: 'inline-block', marginBottom: '4px' }}></div>}
+                        <div>
+                          <div style={{ fontWeight: row.isSubIngredient ? '400' : '600', color: row.isSubIngredient ? 'var(--text-secondary)' : 'var(--text-primary)', fontSize: row.isSubIngredient ? '13px' : '14px' }}>
+                            {getFriendlyResourceName(row.itemId, row.type)} (x{row.count})
+                          </div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                            {row.itemId} {row.isSubIngredient ? `(para ${row.parentLabel})` : ''}
+                          </div>
+                        </div>
                       </div>
-                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{ing.itemId}</div>
                     </td>
                     
                     {['Martlock', 'Thetford', 'Fort Sterling', 'Lymhurst', 'Bridgewatch', 'Caerleon', 'Black Market'].map(city => {
-                      const price = getPriceInCity(ing.itemId, city);
+                      const price = getPriceInCity(row.itemId, city, useBuyOrdersForMats ? 'buy' : 'sell');
                       const isCheapest = price > 0 && city === bestBuy.city;
-                      const isSelected = ing.sourceMode === 'city' && ing.sourceValue === city;
-                      const priceDate = getPriceDateInCity(ing.itemId, city, 'sell');
+                      
+                      let isSelected = false;
+                      if (!row.isSubIngredient) {
+                        isSelected = row.sourceMode === 'city' && row.sourceValue === city;
+                      } else {
+                        // For sub ingredients, selected if it matches the parent refining city
+                        isSelected = !isManualSelected && row.sourceValue === city;
+                      }
+
+                      const priceDate = getPriceDateInCity(row.itemId, city, useBuyOrdersForMats ? 'buy' : 'sell');
                       const ageStr = formatPriceAge(priceDate);
                       return (
                         <td 
                           key={city} 
-                          onClick={() => { if (price > 0) selectIngredientCity(ing.itemId, city); }}
+                          onClick={() => { 
+                            if (price > 0 && !row.isSubIngredient) selectIngredientCity(row.itemId, city); 
+                            else if (price > 0 && row.isSubIngredient) {
+                              setIngredientRefining(prev => ({
+                                ...prev,
+                                [row.parentId]: {
+                                  ...(prev[row.parentId] || {}),
+                                  city: city
+                                }
+                              }));
+                            }
+                          }}
                           style={{ 
                             padding: '12px', 
                             textAlign: 'right',
                             cursor: price > 0 ? 'pointer' : 'default',
                             background: isSelected ? 'rgba(138, 75, 245, 0.12)' : 'transparent',
                             outline: isSelected ? '1px solid var(--color-primary-hover)' : 'none',
-                            transition: 'all 0.2s'
+                            transition: 'all 0.2s',
+                            opacity: row.isSubIngredient && !isSelected ? 0.7 : 1
                           }}
                         >
                           {price === 0 ? (
@@ -1110,6 +1475,7 @@ export default function CraftingCalc() {
                               <span style={{ 
                                 color: isSelected ? 'var(--color-primary-hover)' : (isCheapest ? 'var(--color-success)' : 'var(--text-primary)'), 
                                 fontWeight: isSelected || isCheapest ? '700' : 'normal',
+                                fontSize: row.isSubIngredient ? '13px' : '14px'
                               }}>
                                 {price.toLocaleString('pt-BR')}
                                 {isSelected && (
@@ -1148,12 +1514,12 @@ export default function CraftingCalc() {
                           placeholder="Manual"
                           onChange={(e) => {
                             const val = Math.max(0, parseInt(e.target.value) || 0);
-                            selectIngredientManual(ing.itemId, val);
+                            handleManualChange(val);
                           }}
                           onClick={(e) => {
                             e.stopPropagation();
                             if (!isManualSelected) {
-                              selectIngredientManual(ing.itemId, 0);
+                              handleManualChange(0);
                             }
                           }}
                           style={{
@@ -1169,9 +1535,9 @@ export default function CraftingCalc() {
                         />
                         <input 
                           type="radio" 
-                          name={`table-price-source-${ing.itemId}`} 
+                          name={`table-price-source-${row.itemId}-${row.parentId || 'main'}`} 
                           checked={isManualSelected}
-                          onChange={() => selectIngredientManual(ing.itemId, manualValue || 0)}
+                          onChange={handleManualToggle}
                           style={{ cursor: 'pointer' }}
                         />
                       </div>
@@ -1179,9 +1545,9 @@ export default function CraftingCalc() {
 
                     <td style={{ padding: '12px', textAlign: 'right', fontWeight: '600', color: 'var(--color-primary-hover)' }}>
                       <div>
-                        <div style={{ color: 'var(--text-primary)' }}>{ing.price.toLocaleString('pt-BR')} pratas</div>
+                        <div style={{ color: 'var(--text-primary)' }}>{row.price.toLocaleString('pt-BR')} pratas</div>
                         <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                          {ing.sourceMode === 'manual' ? 'Manual' : ing.sourceValue}
+                          {row.sourceMode === 'manual' ? 'Manual' : (row.isSubIngredient ? row.sourceValue : row.sourceValue)}
                         </div>
                       </div>
                     </td>
