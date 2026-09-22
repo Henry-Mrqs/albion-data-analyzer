@@ -1092,11 +1092,22 @@ export default function CraftingCalc() {
                                   <span style={{ color: 'var(--color-primary-hover)' }}>└</span>
                                   {getFriendlyResourceName(d.itemId, d.type)}
                                 </div>
-                                <div style={{ fontWeight: 'bold', color: 'var(--text-primary)', fontSize: '14px' }}>
-                                  x{Math.ceil(d.count)}
+                                <div style={{ textAlign: 'right' }}>
+                                  <div style={{ fontWeight: 'bold', color: 'var(--text-primary)', fontSize: '14px' }}>
+                                    x{Math.ceil(d.count)}
+                                  </div>
+                                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                    {d.price.toLocaleString('pt-BR')} S/un | Total: {(d.price * Math.ceil(d.count)).toLocaleString('pt-BR')} S
+                                  </div>
                                 </div>
                               </div>
                             ))}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                              <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Custo Total (Itens Brutos):</span>
+                              <span style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--color-info)' }}>
+                                {ing.deepDetails.reduce((acc, d) => acc + (d.price * Math.ceil(d.count)), 0).toLocaleString('pt-BR')} S
+                              </span>
+                            </div>
                           </div>
                         )}
 
