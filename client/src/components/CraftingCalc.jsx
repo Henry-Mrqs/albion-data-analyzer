@@ -195,31 +195,55 @@ const generateRecipeFromData = (itemId, recipes) => {
   };
 };
 
+function useLocalStorage(key, initialValue) {
+  const [storedValue, setStoredValue] = useState(() => {
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      console.warn('Error reading localStorage', error);
+      return initialValue;
+    }
+  });
+
+  const setValue = value => {
+    try {
+      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      setStoredValue(valueToStore);
+      window.localStorage.setItem(key, JSON.stringify(valueToStore));
+    } catch (error) {
+      console.warn('Error setting localStorage', error);
+    }
+  };
+
+  return [storedValue, setValue];
+}
+
 export default function CraftingCalc() {
   const [recipesList, setRecipesList] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [selectedCity, setSelectedCity] = useState('Martlock');
-  const [selectedTier, setSelectedTier] = useState(4);
-  const [selectedEnch, setSelectedEnch] = useState(0);
+  const [selectedCity, setSelectedCity] = useLocalStorage('craft_selectedCity', 'Martlock');
+  const [selectedTier, setSelectedTier] = useLocalStorage('craft_selectedTier', 4);
+  const [selectedEnch, setSelectedEnch] = useLocalStorage('craft_selectedEnch', 0);
   
-  const [useFocus, setUseFocus] = useState(false);
-  const [stationTax, setStationTax] = useState(150); // Operator station tax in flat silver
-  const [isPremium, setIsPremium] = useState(true);
-  const [customCraftingRRR, setCustomCraftingRRR] = useState('');
+  const [useFocus, setUseFocus] = useLocalStorage('craft_useFocus', false);
+  const [stationTax, setStationTax] = useLocalStorage('craft_stationTax', 150); // Operator station tax in flat silver
+  const [isPremium, setIsPremium] = useLocalStorage('craft_isPremium', true);
+  const [customCraftingRRR, setCustomCraftingRRR] = useLocalStorage('craft_customCraftingRRR', '');
   
 
-  const [ingredientSelections, setIngredientSelections] = useState({});
-  const [ingredientRefining, setIngredientRefining] = useState({}); // { itemId: { isRefining: false, city: 'Thetford', useFocus: false, tax: 400 } }
-  const [useBuyOrdersForMats, setUseBuyOrdersForMats] = useState(false);
-  const [craftQuantity, setCraftQuantity] = useState(1);
-  const [manualSellPriceBM, setManualSellPriceBM] = useState('');
+  const [ingredientSelections, setIngredientSelections] = useLocalStorage('craft_ingredientSelections', {});
+  const [ingredientRefining, setIngredientRefining] = useLocalStorage('craft_ingredientRefining', {}); // { itemId: { isRefining: false, city: 'Thetford', useFocus: false, tax: 400 } }
+  const [useBuyOrdersForMats, setUseBuyOrdersForMats] = useLocalStorage('craft_useBuyOrdersForMats', false);
+  const [craftQuantity, setCraftQuantity] = useLocalStorage('craft_craftQuantity', 1);
+  const [manualSellPriceBM, setManualSellPriceBM] = useLocalStorage('craft_manualSellPriceBM', '');
 
   
   const [prices, setPrices] = useState(null);
   const [loading, setLoading] = useState(false);
 
   // Search Autocomplete state
-  const [searchQuery, setSearchQuery] = useState('Machado de Batalha T4 (T4_MAIN_AXE)');
+  const [searchQuery, setSearchQuery] = useLocalStorage('craft_searchQuery', 'Machado de Batalha T4 (T4_MAIN_AXE)');
   const [searchResults, setSearchResults] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
@@ -231,7 +255,14 @@ export default function CraftingCalc() {
         const response = await fetch('/api/recipes');
         const data = await response.json();
         setRecipesList(data);
-        const initialRecipe = generateRecipeFromData('T4_MAIN_AXE', data);
+        
+        let defaultId = 'T4_MAIN_AXE';
+        try {
+          const savedId = window.localStorage.getItem('craft_selectedItemId');
+          if (savedId) defaultId = JSON.parse(savedId);
+        } catch(e) {}
+        
+        const initialRecipe = generateRecipeFromData(defaultId, data);
         setSelectedItem(initialRecipe);
       } catch (err) {
         console.error('Error fetching recipes:', err);
@@ -354,9 +385,10 @@ export default function CraftingCalc() {
     
     const recipe = generateRecipeFromData(item.id, recipesList);
     setSelectedItem(recipe);
+    try { window.localStorage.setItem('craft_selectedItemId', JSON.stringify(item.id)); } catch(e){}
     setSelectedTier(parsed.tier);
     setSelectedEnch(parsed.enchantment);
-    setSearchQuery(`${item.name_pt} (${item.id})`);
+    setSearchQuery(`${item.name_pt || item.name || item.id} (${item.id})`);
     setShowDropdown(false);
   };
 
