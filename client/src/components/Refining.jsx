@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Route } from 'lucide-react';
 import { REFINING, marketId, nameOf } from '../lib/catalog';
 import { CITIES, SELL_CITIES, cityLabel, quote, usePrices } from '../lib/market';
 import { rrr as calcRRR, refineUnit, refineChainIds, netSale, fmt, pct } from '../lib/econ';
@@ -7,6 +8,31 @@ import { Age, Banner, Field, Money, NumberInput, PriceStatus, Segmented, Switch 
 
 const TYPES = Object.keys(REFINING);
 const TIERS = [4, 5, 6, 7, 8];
+const ROUTES = [
+  { value: 'buy', label: 'Comprar refinado pronto', hint: 'Só refina o último nível; compra o tier anterior já refinado.' },
+  { value: 'all', label: 'Produzir tudo', hint: 'Compra só o recurso bruto e refina a cadeia inteira até T2.' },
+  { value: 'best', label: 'Melhor combinação', hint: 'Em cada nível escolhe o mais barato: comprar pronto ou refinar.' },
+];
+
+// Percorre a cadeia e diz, nível a nível, se compra o refinado pronto ou produz.
+function routePath(unit, tier) {
+  const steps = [];
+  let node = unit;
+  let t = tier;
+  while (node) {
+    const l = node.lines.find((x) => x.refined);
+    steps.push({ tier: t, action: 'make', raw: node.lines.filter((x) => !x.refined) });
+    if (!l) break;
+    if (l.sub) {
+      node = l.sub;
+      t -= 1;
+    } else {
+      steps.push({ tier: t - 1, action: 'buy', unit: l.unit, city: l.city });
+      break;
+    }
+  }
+  return steps;
+}
 
 export default function Refining() {
   const { premium } = useSettings();
@@ -14,9 +40,10 @@ export default function Refining() {
     type: 'PLANKS', tier: 4, ench: 0,
     buyCity: 'best', refineCity: 'Fort Sterling', sellCity: 'best',
     focus: false, daily: 0, feePer100: 400, customRRR: '',
-    useOrders: false, deep: false, sellMode: 'order', qty: 100,
+    useOrders: false, route: 'best', sellMode: 'order', qty: 100,
   });
   const set = (patch) => setCfg((c) => ({ ...c, ...patch }));
+  const route = cfg.route ?? (cfg.deep ? 'all' : 'best');
   const info = REFINING[cfg.type];
   const noEnch = cfg.type === 'STONEBLOCK';
   const ench = noEnch ? 0 : cfg.ench;
@@ -31,13 +58,13 @@ export default function Refining() {
   const ids = useMemo(() => {
     const s = new Set();
     for (const t of TIERS) {
-      refineChainIds(`T${t}_${cfg.type}${ench ? `_LEVEL${ench}` : ''}`, cfg.deep).forEach((i) => s.add(i));
+      refineChainIds(`T${t}_${cfg.type}${ench ? `_LEVEL${ench}` : ''}`, true).forEach((i) => s.add(i));
     }
     return [...s];
-  }, [cfg.type, ench, cfg.deep]);
+  }, [cfg.type, ench]);
   const { prices, loading, error, updatedAt, refresh } = usePrices(ids);
 
-  const ctx = { prices, city: cfg.buyCity, useOrders: cfg.useOrders, rrr: rrrValue, feePer100: +cfg.feePer100 || 0, deep: cfg.deep };
+  const ctx = { prices, city: cfg.buyCity, useOrders: cfg.useOrders, rrr: rrrValue, feePer100: +cfg.feePer100 || 0, route };
 
   const evaluate = (tier) => {
     const uniq = uniqOf(tier);
@@ -61,12 +88,30 @@ export default function Refining() {
   const missing = cur ? [...new Set(cur.unit.missing)] : [];
   const ready = cur && missing.length === 0 && cur.sell.price > 0;
 
+  // ----- rotas: comprar refinado pronto x produzir tudo x melhor combinação -----
+  const curUniq = uniqOf(cfg.tier);
+  const routes = prices
+    ? ROUTES.map((r) => ({ ...r, unit: refineUnit(curUniq, { ...ctx, route: r.value }) })).map((r) => ({ ...r, ok: !r.unit.missing.length }))
+    : [];
+  const bestRoute = routes.filter((r) => r.ok).sort((a, b) => a.unit.cost - b.unit.cost)[0];
+  const path = cur ? routePath(cur.unit, cfg.tier) : [];
+
+  // ----- tabela de preços por cidade dos itens usados nesta cadeia -----
+  const chainMids = refineChainIds(curUniq, true);
+  const usedCells = new Set();
+  const walk = (unit) => unit.lines.forEach((l) => (l.sub ? walk(l.sub) : l.city && usedCells.add(`${l.mid}|${l.city}`)));
+  if (cur) walk(cur.unit);
+  const tierOfMid = (mid) => +(mid.match(/^T(\d)/)?.[1] ?? 0);
+  const priceRows = [...chainMids].sort((a, b) => tierOfMid(a) - tierOfMid(b) || (a === cur?.mid ? 1 : 0) - (b === cur?.mid ? 1 : 0));
+
   const renderLines = (lines, level = 0) =>
     lines.map((l) => (
       <div key={`${level}-${l.mid}`} className={level ? 'indent' : ''}>
         <div className="kv">
           <span>
-            {l.qty}× {l.name} {l.sub && <small className="muted">(produzido)</small>}
+            {l.qty}× {l.name}{' '}
+            {l.sub && <small className="muted">(produzido)</small>}
+            {l.refined && !l.sub && <small className="muted">(comprado pronto)</small>}
             {!l.sub && <Age ts={l.date} />}
           </span>
           <span className="num">
@@ -162,7 +207,11 @@ export default function Refining() {
           <NumberInput value={cfg.feePer100} onChange={(v) => set({ feePer100: v })} />
         </Field>
         <Switch label="Comprar com ordens de compra" hint="Mais barato, mas paga 2,5% de taxa de criação" checked={cfg.useOrders} onChange={(v) => set({ useOrders: v })} />
-        <Switch label="Produzir também o tier anterior" hint="Refina toda a cadeia desde o tier 2" checked={cfg.deep} onChange={(v) => set({ deep: v })} />
+        <div className="field">
+          <label>Rota de produção</label>
+          <Segmented value={route} onChange={(v) => set({ route: v })} options={ROUTES.map((r) => ({ value: r.value, label: r.label }))} />
+          <span className="hint">{ROUTES.find((r) => r.value === route)?.hint}</span>
+        </div>
         <div className="field">
           <label>Venda do refinado</label>
           <Segmented value={cfg.sellMode} onChange={(v) => set({ sellMode: v })} options={[{ value: 'order', label: 'Ordem de venda' }, { value: 'instant', label: 'Ordem de compra (na hora)' }]} />
@@ -257,6 +306,70 @@ export default function Refining() {
           )}
         </div>
 
+        {routes.length > 0 && (
+          <div className="card stack">
+            <div className="card-head">
+              <h2>Melhor rota · T{cfg.tier}.{ench}</h2>
+              <button className="btn sm" disabled={route === 'best'} onClick={() => set({ route: 'best' })}>
+                <Route size={14} /> {route === 'best' ? 'Melhor rota marcada' : 'Marcar melhor rota'}
+              </button>
+            </div>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Rota</th>
+                    <th>Custo/un.</th>
+                    <th>Lucro/un.</th>
+                    <th>Diferença</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {routes.map((r) => {
+                    const profit = cur.net - r.unit.cost;
+                    const isBest = bestRoute?.value === r.value;
+                    return (
+                      <tr key={r.value} className={isBest ? 'best' : ''} style={{ cursor: 'pointer' }} onClick={() => set({ route: r.value })}>
+                        <td>
+                          {r.label} {route === r.value && <small className="muted">em uso</small>}
+                        </td>
+                        <td>{r.ok ? <Money value={r.unit.cost} /> : <span className="muted">sem dados</span>}</td>
+                        <td>{r.ok && cur.sell.price ? <Money value={profit} signed /> : '—'}</td>
+                        <td className={isBest ? 'good' : ''}>{r.ok && bestRoute ? (isBest ? 'mais barata' : `+${fmt(r.unit.cost - bestRoute.unit.cost)}`) : '—'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div>
+              <h3 style={{ marginBottom: 6 }}>Passo a passo ({ROUTES.find((r) => r.value === route)?.label.toLowerCase()})</h3>
+              <ol className="steps">
+                {path.map((s) => (
+                  <li key={`${s.tier}-${s.action}`}>
+                    {s.action === 'make' ? (
+                      <>
+                        Refinar <b>T{s.tier}</b>
+                        {s.raw.length > 0 && ' — comprar '}
+                        {s.raw.map((l, i) => (
+                          <span key={l.mid}>
+                            {i > 0 && ' + '}
+                            {l.qty}× {l.name} em <b>{l.city ? cityLabel(l.city) : '—'}</b> ({fmt(l.unit)} un.)
+                          </span>
+                        ))}
+                      </>
+                    ) : (
+                      <>
+                        Comprar <b>T{s.tier}</b> já refinado em <b>{s.city ? cityLabel(s.city) : '—'}</b> ({fmt(s.unit)} un.)
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        )}
+
         <div className="card">
           <div className="card-head">
             <h2>Comparar tiers (.{ench})</h2>
@@ -294,6 +407,56 @@ export default function Refining() {
           </div>
           <p className="hint" style={{ marginTop: 10 }}>Clique numa linha para detalhar o tier. Usa as cidades e bônus escolhidos ao lado.</p>
         </div>
+
+        {prices && (
+          <div className="card">
+            <h2 style={{ marginBottom: 12 }}>Preços por cidade · itens desta cadeia (T{cfg.tier}.{ench})</h2>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    {CITIES.map((c) => (
+                      <th key={c}>{c}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {priceRows.map((mid) => {
+                    const vals = CITIES.map((c) => {
+                      const q = prices?.[mid]?.[c]?.[1];
+                      return cfg.useOrders ? q?.b || 0 : q?.s || 0;
+                    }).filter(Boolean);
+                    const min = vals.length ? Math.min(...vals) : 0;
+                    return (
+                      <tr key={mid}>
+                        <td>
+                          {nameOf(mid)} <small>T{tierOfMid(mid)}{mid === cur?.mid ? ' · produto final' : ''}</small>
+                        </td>
+                        {CITIES.map((c) => {
+                          const q = prices?.[mid]?.[c]?.[1];
+                          const main = cfg.useOrders ? q?.b : q?.s;
+                          const other = cfg.useOrders ? q?.s : q?.b;
+                          const used = usedCells.has(`${mid}|${c}`);
+                          return (
+                            <td key={c} className={`${used ? 'cell-used' : ''} ${main && main === min && mid !== cur?.mid ? 'cell-best' : ''}`}>
+                              {main ? <Money value={main} /> : <span className="muted">—</span>}
+                              <Age ts={cfg.useOrders ? q?.bd : q?.sd} />
+                              {other ? <small>{cfg.useOrders ? 'venda' : 'ordem'}: {fmt(other)}</small> : null}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <p className="hint" style={{ marginTop: 10 }}>
+              Mostra {cfg.useOrders ? 'o maior preço de ordem de compra' : 'o menor preço de venda'} (o que você paga) em cada cidade. Verde = mais barato da linha; borda roxa = compra usada na rota escolhida. O produto final mostra o que ele vale em cada cidade.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

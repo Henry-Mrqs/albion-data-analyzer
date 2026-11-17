@@ -51,24 +51,35 @@ export function refineUnit(uniq, ctx) {
   const lines = [];
   const missing = [];
   let gross = 0;
+  // rota: 'buy' = compra o refinado pronto; 'all' = produz toda a cadeia; 'best' = o mais barato em cada nível
+  const route = ctx.route ?? (ctx.deep ? 'all' : 'buy');
   for (const r of rec.res) {
-    let unit;
+    const refined = !!refinedTypeOf(r.uniq) && tierOf(r.uniq) >= 2;
+    const q = buyQuote(ctx.prices, r.mid, ctx);
+    let unit = q.price;
     let sub = null;
-    let date = null;
-    let city = null;
-    if (ctx.deep && refinedTypeOf(r.uniq) && tierOf(r.uniq) >= 2) {
-      sub = refineUnit(r.uniq, ctx);
-      unit = sub.cost;
-      missing.push(...sub.missing);
-    } else {
-      const q = buyQuote(ctx.prices, r.mid, ctx);
-      unit = q.price;
-      date = q.date;
-      city = q.city;
-      if (!unit) missing.push(r.mid);
+    let date = q.date;
+    let city = q.city;
+    let choice = 'buy';
+    let alt = 0; // custo da alternativa não escolhida
+    if (refined && route !== 'buy') {
+      const s = refineUnit(r.uniq, ctx);
+      const canMake = !s.missing.length && s.cost > 0;
+      if (route === 'all' || (canMake && (!q.price || s.cost < q.price))) {
+        choice = 'make';
+        sub = s;
+        unit = s.cost;
+        date = null;
+        city = null;
+        alt = q.price;
+        missing.push(...s.missing);
+      } else {
+        alt = canMake ? s.cost : 0;
+      }
     }
+    if (choice === 'buy' && !unit) missing.push(r.mid);
     gross += r.count * unit;
-    lines.push({ mid: r.mid, name: r.name, qty: r.count, unit, date, city, sub });
+    lines.push({ mid: r.mid, name: r.name, qty: r.count, unit, date, city, sub, refined, choice, alt });
   }
   const value = ingredientValue(uniq) || recipeValue(rec);
   const fee = stationFee(value, ctx.feePer100);
