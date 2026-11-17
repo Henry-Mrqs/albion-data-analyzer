@@ -1,5 +1,5 @@
 import { Route } from 'lucide-react';
-import { getItem, recipeOf, recipeValue, marketId, nameOf, refinedTypeOf, tierOf, craftBonusCity, categoryLabel } from '../lib/catalog';
+import { REFINING, getItem, recipeOf, recipeValue, marketId, nameOf, refinedTypeOf, tierOf, craftBonusCity, categoryLabel } from '../lib/catalog';
 import { CITIES, SELL_CITIES, cityLabel, usePrices, quote } from '../lib/market';
 import { rrr as calcRRR, refineUnit, refineChainIds, buyQuote, materialPlan, netSale, stationFee, fmt, pct } from '../lib/econ';
 import { useSettings, usePersisted } from '../lib/settings';
@@ -13,7 +13,7 @@ export default function Crafting() {
   const [cfg, setCfg] = usePersisted('craft:cfg', {
     craftCity: 'Lymhurst', specialty: null, focus: false, feePer100: 400, customRRR: '',
     matCity: 'best', useOrders: false, crafts: 1,
-    refine: {}, refineFocus: false, refineFee: 400,
+    refine: {}, refineFocus: false, refineFee: 400, refineCity: 'auto', refineDaily: {},
   });
   const set = (patch) => setCfg((c) => ({ ...c, ...patch }));
 
@@ -27,7 +27,9 @@ export default function Crafting() {
   const autoRRR = calcRRR({ kind: 'craft', specialty, focus: cfg.focus });
   const custom = cfg.customRRR !== '' && !isNaN(+cfg.customRRR);
   const craftRRR = custom ? +cfg.customRRR / 100 : autoRRR;
-  const refineRRR = calcRRR({ kind: 'refine', specialty: true, focus: cfg.refineFocus });
+  // RRR do refino por tipo de recurso: bônus base + bônus da cidade especializada (se refinar lá) + foco + bônus diário do recurso
+  const refineRRRFor = (type, daily = +(cfg.refineDaily?.[type] ?? 0)) =>
+    calcRRR({ kind: 'refine', specialty: cfg.refineCity === 'auto' || REFINING[type].city === cfg.refineCity, focus: cfg.refineFocus, daily });
 
   const keyOf = (uniq) => uniq.replace(/^T\d_/, '').replace(/_LEVEL\d$/, '');
   const canRefineUniq = (uniq) => !!refinedTypeOf(uniq) && tierOf(uniq) >= 2;
@@ -50,7 +52,7 @@ export default function Crafting() {
   const { prices, loading, error, updatedAt, refresh } = usePrices(ids);
 
   const matCtx = { prices, city: cfg.matCity, useOrders: cfg.useOrders };
-  const refCtx = { ...matCtx, rrr: refineRRR, feePer100: +cfg.refineFee || 0 };
+  const refCtx = { ...matCtx, feePer100: +cfg.refineFee || 0 };
 
   const lines = rec
     ? rec.res.map((r) => {
@@ -64,8 +66,15 @@ export default function Crafting() {
         let sub = null;
         let cmp = null;
         if (canRefine && prices) {
-          const sAll = refineUnit(r.uniq, { ...refCtx, route: 'all' });
-          const sBest = refineUnit(r.uniq, { ...refCtx, route: 'best' });
+          const type = refinedTypeOf(r.uniq);
+          const ctxAt = (daily) => ({ ...refCtx, rrr: refineRRRFor(type, daily) });
+          const sAll = refineUnit(r.uniq, { ...ctxAt(), route: 'all' });
+          const sBest = refineUnit(r.uniq, { ...ctxAt(), route: 'best' });
+          const bestAt = (daily) => {
+            const b = refineUnit(r.uniq, { ...ctxAt(daily), route: 'best' });
+            const ok = !b.missing.length && b.cost > 0;
+            return ok && (!q.price || b.cost < q.price) ? b.cost : q.price;
+          };
           const okAll = !sAll.missing.length && sAll.cost > 0;
           const okBest = !sBest.missing.length && sBest.cost > 0;
           const bestIsMake = okBest && (!q.price || sBest.cost < q.price);
@@ -74,6 +83,8 @@ export default function Crafting() {
             all: okAll ? sAll.cost : 0,
             best: bestIsMake ? sBest.cost : q.price,
             bestIsMake,
+            d10: bestAt(10),
+            d20: bestAt(20),
           };
           const make = mode === 'all' || (mode === 'best' && bestIsMake);
           if (make) {
@@ -83,7 +94,8 @@ export default function Crafting() {
             city = null;
           }
         }
-        return { ...r, qty, unit, total: qty * unit, date, city, sub, mode, cmp, useRefine: !!sub, canRefine };
+        const rr = canRefine ? refineRRRFor(refinedTypeOf(r.uniq)) : 0;
+        return { ...r, rr, qty, unit, total: qty * unit, date, city, sub, mode, cmp, useRefine: !!sub, canRefine };
       })
     : [];
 
@@ -117,7 +129,7 @@ export default function Crafting() {
   const used = new Set();
   for (const l of lines) {
     if (l.sub) {
-      const p = materialPlan(l.sub, l.qty, refineRRR);
+      const p = materialPlan(l.sub, l.qty, l.rr);
       p.makes.forEach((m) => plan.push({ kind: 'make', ...m, total: m.fee }));
       p.buys.forEach((b) => plan.push({ kind: 'buy', ...b, total: b.qty * b.unit }));
       p.buys.forEach((b) => b.city && used.add(`${b.mid}|${b.city}`));
@@ -177,7 +189,25 @@ export default function Crafting() {
         <Switch label="Comprar com ordens de compra" hint="Mais barato, mas paga 2,5% de taxa de criação" checked={cfg.useOrders} onChange={(v) => set({ useOrders: v })} />
         {lines.some((l) => l.canRefine) && (
           <>
-            <Switch label="Refino na cidade especializada com foco" checked={cfg.refineFocus} onChange={(v) => set({ refineFocus: v })} />
+            <h3>Refino dos materiais</h3>
+            <Field label="Refinar em" hint="“Cada recurso na sua cidade” = bônus de especialização em todos (Thetford p/ minério, Martlock p/ couro, Fort Sterling p/ madeira, Lymhurst p/ fibra, Bridgewatch p/ pedra).">
+              <select className="input" value={cfg.refineCity} onChange={(e) => set({ refineCity: e.target.value })}>
+                <option value="auto">Cada recurso na sua cidade de bônus</option>
+                {CITIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </Field>
+            <Switch label="Usar foco no refino" hint="+59% de bônus de produção" checked={cfg.refineFocus} onChange={(v) => set({ refineFocus: v })} />
+            {[...new Map(lines.filter((l) => l.canRefine).map((l) => [refinedTypeOf(l.uniq), l])).entries()].map(([type, l]) => (
+              <Field key={type} label={`Bônus diário · ${REFINING[type].label} (${REFINING[type].city})`} hint={`RRR atual: ${(l.rr * 100).toFixed(1)}%`}>
+                <select className="input" value={+(cfg.refineDaily?.[type] ?? 0)} onChange={(e) => set({ refineDaily: { ...cfg.refineDaily, [type]: +e.target.value } })}>
+                  <option value={0}>Nenhum</option>
+                  <option value={10}>+10%</option>
+                  <option value={20}>+20%</option>
+                </select>
+              </Field>
+            ))}
             <Field label="Taxa da bancada de refino (por 100 nutrição)">
               <NumberInput value={cfg.refineFee} onChange={(v) => set({ refineFee: v })} />
             </Field>
@@ -397,6 +427,8 @@ export default function Crafting() {
                     <th>Produzir tudo</th>
                     <th>Melhor</th>
                     <th>Economia</th>
+                    <th title="Custo da melhor rota se o recurso estiver com bônus diário de refino">Melhor c/ +10%</th>
+                    <th>Melhor c/ +20%</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -410,13 +442,15 @@ export default function Crafting() {
                         <td>{c.all ? <Money value={c.all * l.qty} /> : <span className="muted">sem dados</span>}</td>
                         <td className="good">{c.best ? <Money value={c.best * l.qty} /> : '—'}<small>{c.bestIsMake ? 'produzir' : 'comprar pronto'}</small></td>
                         <td>{c.best && worst ? <Money value={(worst - c.best) * l.qty} /> : '—'}</td>
+                        <td>{c.d10 ? <><Money value={c.d10 * l.qty} />{c.best - c.d10 > 0.5 ? <small className="good">−{fmt((c.best - c.d10) * l.qty)}</small> : <small className="muted">sem ganho</small>}</> : '—'}</td>
+                        <td>{c.d20 ? <><Money value={c.d20 * l.qty} />{c.best - c.d20 > 0.5 ? <small className="good">−{fmt((c.best - c.d20) * l.qty)}</small> : <small className="muted">sem ganho</small>}</> : '—'}</td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
             </div>
-            <p className="hint">Custo total do material para a quantidade acima. “Melhor” decide em cada tier se compensa comprar o refinado pronto ou refiná-lo (inclusive só de uma parte da cadeia).</p>
+            <p className="hint">Custo total do material para a quantidade acima. As duas últimas colunas mostram quanto você economizaria esperando o dia de bônus de refino daquele recurso (+10% ou +20%). “Melhor” decide em cada tier se compensa comprar o refinado pronto ou refiná-lo (inclusive só de uma parte da cadeia).</p>
           </div>
         )}
 
