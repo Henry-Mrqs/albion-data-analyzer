@@ -1,0 +1,147 @@
+// Gera client/public/data/catalog.json a partir dos dumps oficiais do jogo (ao-bin-dumps).
+// Uso: node scripts/build-catalog.mjs
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const OUT = path.join(ROOT, 'client', 'public', 'data', 'catalog.json');
+const BASE = 'https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master';
+
+async function cached(url, name) {
+  const file = path.join(os.tmpdir(), `albion-${name}`);
+  if (!fs.existsSync(file)) {
+    console.log('baixando', url);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
+    fs.writeFileSync(file, Buffer.from(await res.arrayBuffer()));
+  }
+  return JSON.parse(fs.readFileSync(file, 'utf8'));
+}
+
+const arr = (x) => (x === undefined ? [] : Array.isArray(x) ? x : [x]);
+const num = (x, d = 0) => (x === undefined || x === '' || isNaN(+x) ? d : +x);
+
+const raw = (await cached(`${BASE}/items.json`, 'items.json')).items;
+const loc = await cached(`${BASE}/formatted/items.json`, 'loc.json');
+const names = new Map(loc.map((l) => [l.UniqueName, l.LocalizedNames || {}]));
+
+const nameOf = (id) => {
+  const n = names.get(id) || names.get(id.replace(/@\d$/, '')) || {};
+  return [n['PT-BR'] || n['EN-US'] || id, n['EN-US'] || id];
+};
+
+const KINDS = ['simpleitem', 'consumableitem', 'equipmentitem', 'weapon', 'farmableitem'];
+const all = new Map();
+for (const k of KINDS) for (const it of arr(raw[k])) all.set(it['@uniquename'], { k, it });
+
+// categorias que interessam como produto final
+const PRODUCT_CATS = new Set([
+  'weapons', 'armors', 'head', 'shoes', 'offhands', 'capes', 'bags', 'consumables', 'artefacts',
+]);
+const RESOURCE_RE = /^T\d_(PLANKS|METALBAR|LEATHER|CLOTH|STONEBLOCK|WOOD|ORE|HIDE|FIBER|ROCK)$/;
+
+function parseRecipe(cr) {
+  const r = arr(cr)[0];
+  if (!r) return null;
+  const res = arr(r.craftresource).map((c) => [c['@uniquename'], num(c['@count'], 1)]);
+  if (!res.length) return null;
+  return { a: num(r['@amountcrafted'], 1), f: num(r['@craftingfocus']), s: num(r['@silver']), r: res };
+}
+
+// regra: item encantado usa recursos básicos encantados
+const ruleRes = (res, n) => res.map(([id, c]) => [RESOURCE_RE.test(id) ? `${id}_LEVEL${n}` : id, c]);
+const sameRes = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+const items = [];
+const needed = new Set();
+let deviations = 0;
+
+for (const [id, { it }] of all) {
+  if (!/^T\d_/.test(id)) continue;
+  const tier = num(it['@tier']);
+  const cat1 = it['@shopcategory'];
+  const sub = it['@shopsubcategory1'];
+  const isResource = RESOURCE_RE.test(id);
+  const isProduct = PRODUCT_CATS.has(cat1) && tier >= 3;
+  if (!isProduct && !isResource) continue;
+  if (id.includes('_LEVEL')) continue;
+  if (cat1 === 'artefacts' && sub === 'fragments') continue;
+  if (it['@showinmarketplace'] === 'false') continue;
+
+  const base = parseRecipe(it.craftingrequirements);
+  const [pt, en] = nameOf(id);
+  const entry = {
+    i: id,
+    p: pt,
+    e: en,
+    c: `${cat1}/${sub}`,
+    t: tier,
+    w: num(it['@weight']),
+    v: num(it['@itemvalue']),
+  };
+  const enchs = arr(it.enchantments?.enchantment);
+  entry.x = enchs.length;
+  if (base) {
+    entry.a = base.a;
+    entry.f = base.f;
+    entry.r = base.r;
+    base.r.forEach(([rid]) => needed.add(rid));
+    const er = {};
+    for (const en of enchs) {
+      const n = num(en['@enchantmentlevel']);
+      const rec = parseRecipe(en.craftingrequirements);
+      if (!rec) continue;
+      rec.r.forEach(([rid]) => needed.add(rid));
+      if (!sameRes(rec.r, ruleRes(base.r, n))) {
+        er[n] = rec.r;
+        deviations++;
+      }
+    }
+    if (Object.keys(er).length) entry.er = er;
+  }
+  if (isResource) {
+    // recursos encantados são itens próprios (T4_PLANKS_LEVEL1) com receita própria
+    const er = {};
+    for (let n = 1; n <= 4; n++) {
+      const v = all.get(`${id}_LEVEL${n}`);
+      if (!v) continue;
+      entry.x = n;
+      const rec = parseRecipe(v.it.craftingrequirements);
+      if (rec) {
+        er[n] = rec.r;
+        rec.r.forEach(([rid]) => needed.add(rid));
+      }
+    }
+    if (Object.keys(er).length) entry.er = er;
+  }
+  items.push(entry);
+}
+
+// ingredientes citados (artefatos, extratos, runas...) sem receita
+const have = new Set(items.map((x) => x.i));
+const extra = {};
+const vals = {};
+for (const rid of needed) {
+  vals[rid] = num(all.get(rid)?.it?.['@itemvalue']);
+  const baseId = rid.replace(/_LEVEL\d$/, '');
+  if (have.has(baseId) || extra[baseId]) continue;
+  const [pt, en] = nameOf(baseId);
+  extra[baseId] = [pt, en, num(all.get(baseId)?.it?.['@weight'])];
+}
+
+// nomes dos recursos encantados (variações "Incomum", "Raro"...) vêm do próprio dump
+const encNames = {};
+for (const e of items) {
+  if (!RESOURCE_RE.test(e.i)) continue;
+  for (let n = 1; n <= 4; n++) {
+    const [pt] = nameOf(`${e.i}_LEVEL${n}@${n}`);
+    if (pt && pt !== `${e.i}_LEVEL${n}@${n}`) encNames[`${e.i}@${n}`] = pt;
+  }
+}
+
+fs.mkdirSync(path.dirname(OUT), { recursive: true });
+fs.writeFileSync(OUT, JSON.stringify({ built: new Date().toISOString().slice(0, 10), items, extra, vals, encNames }));
+const kb = (fs.statSync(OUT).size / 1024).toFixed(0);
+console.log(`ok: ${items.length} itens, ${Object.keys(extra).length} extras, ${deviations} receitas encantadas fora da regra, ${kb} KB`);
