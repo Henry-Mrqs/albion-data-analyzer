@@ -4,6 +4,7 @@ import { REFINING, marketId, nameOf } from '../lib/catalog';
 import { CITIES, SELL_CITIES, cityLabel, quote, usePrices } from '../lib/market';
 import { rrr as calcRRR, refineUnit, refineChainIds, netSale, fmt, pct } from '../lib/econ';
 import { useSettings, usePersisted } from '../lib/settings';
+import PriceMatrix from './PriceMatrix';
 import { Age, Banner, Field, Money, NumberInput, PriceStatus, Segmented, Switch } from './ui';
 
 const TYPES = Object.keys(REFINING);
@@ -101,8 +102,6 @@ export default function Refining() {
   const usedCells = new Set();
   const walk = (unit) => unit.lines.forEach((l) => (l.sub ? walk(l.sub) : l.city && usedCells.add(`${l.mid}|${l.city}`)));
   if (cur) walk(cur.unit);
-  const tierOfMid = (mid) => +(mid.match(/^T(\d)/)?.[1] ?? 0);
-  const priceRows = [...chainMids].sort((a, b) => tierOfMid(a) - tierOfMid(b) || (a === cur?.mid ? 1 : 0) - (b === cur?.mid ? 1 : 0));
 
   const renderLines = (lines, level = 0) =>
     lines.map((l) => (
@@ -408,55 +407,7 @@ export default function Refining() {
           <p className="hint" style={{ marginTop: 10 }}>Clique numa linha para detalhar o tier. Usa as cidades e bônus escolhidos ao lado.</p>
         </div>
 
-        {prices && (
-          <div className="card">
-            <h2 style={{ marginBottom: 12 }}>Preços por cidade · itens desta cadeia (T{cfg.tier}.{ench})</h2>
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Item</th>
-                    {CITIES.map((c) => (
-                      <th key={c}>{c}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {priceRows.map((mid) => {
-                    const vals = CITIES.map((c) => {
-                      const q = prices?.[mid]?.[c]?.[1];
-                      return cfg.useOrders ? q?.b || 0 : q?.s || 0;
-                    }).filter(Boolean);
-                    const min = vals.length ? Math.min(...vals) : 0;
-                    return (
-                      <tr key={mid}>
-                        <td>
-                          {nameOf(mid)} <small>T{tierOfMid(mid)}{mid === cur?.mid ? ' · produto final' : ''}</small>
-                        </td>
-                        {CITIES.map((c) => {
-                          const q = prices?.[mid]?.[c]?.[1];
-                          const main = cfg.useOrders ? q?.b : q?.s;
-                          const other = cfg.useOrders ? q?.s : q?.b;
-                          const used = usedCells.has(`${mid}|${c}`);
-                          return (
-                            <td key={c} className={`${used ? 'cell-used' : ''} ${main && main === min && mid !== cur?.mid ? 'cell-best' : ''}`}>
-                              {main ? <Money value={main} /> : <span className="muted">—</span>}
-                              <Age ts={cfg.useOrders ? q?.bd : q?.sd} />
-                              {other ? <small>{cfg.useOrders ? 'venda' : 'ordem'}: {fmt(other)}</small> : null}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            <p className="hint" style={{ marginTop: 10 }}>
-              Mostra {cfg.useOrders ? 'o maior preço de ordem de compra' : 'o menor preço de venda'} (o que você paga) em cada cidade. Verde = mais barato da linha; borda roxa = compra usada na rota escolhida. O produto final mostra o que ele vale em cada cidade.
-            </p>
-          </div>
-        )}
+        {prices && <PriceMatrix title={`Preços por cidade · itens desta cadeia (T${cfg.tier}.${ench})`} prices={prices} mids={chainMids} used={usedCells} useOrders={cfg.useOrders} targetMid={cur?.mid} />}
       </div>
     </div>
   );

@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
-import { getItem, recipeOf, recipeValue, marketId, nameOf, refinedTypeOf, craftBonusCity, categoryLabel } from '../lib/catalog';
+import { Route } from 'lucide-react';
+import { getItem, recipeOf, recipeValue, marketId, nameOf, refinedTypeOf, tierOf, craftBonusCity, categoryLabel } from '../lib/catalog';
 import { CITIES, SELL_CITIES, cityLabel, usePrices, quote } from '../lib/market';
-import { rrr as calcRRR, refineUnit, refineChainIds, buyQuote, netSale, stationFee, fmt, pct } from '../lib/econ';
+import { rrr as calcRRR, refineUnit, refineChainIds, buyQuote, materialPlan, netSale, stationFee, fmt, pct } from '../lib/econ';
 import { useSettings, usePersisted } from '../lib/settings';
 import ItemSelector from './ItemSelector';
+import PriceMatrix from './PriceMatrix';
 import { Age, Banner, Field, Money, NumberInput, PriceStatus, Segmented, Switch } from './ui';
 
 export default function Crafting() {
@@ -12,7 +13,7 @@ export default function Crafting() {
   const [cfg, setCfg] = usePersisted('craft:cfg', {
     craftCity: 'Lymhurst', specialty: null, focus: false, feePer100: 400, customRRR: '',
     matCity: 'best', useOrders: false, crafts: 1,
-    refine: {}, refineFocus: false, refineFee: 400, deep: false,
+    refine: {}, refineFocus: false, refineFee: 400,
   });
   const set = (patch) => setCfg((c) => ({ ...c, ...patch }));
 
@@ -28,41 +29,61 @@ export default function Crafting() {
   const craftRRR = custom ? +cfg.customRRR / 100 : autoRRR;
   const refineRRR = calcRRR({ kind: 'refine', specialty: true, focus: cfg.refineFocus });
 
-  const refining = (uniq) => cfg.refine[uniq.replace(/^T\d_/, '').replace(/_LEVEL\d$/, '')] === 'refine' && !!refinedTypeOf(uniq);
+  const keyOf = (uniq) => uniq.replace(/^T\d_/, '').replace(/_LEVEL\d$/, '');
+  const canRefineUniq = (uniq) => !!refinedTypeOf(uniq) && tierOf(uniq) >= 2;
+  // 'buy' = compra o refinado pronto; 'all' = produz desde o recurso bruto mais baixo; 'best' = mais barato em cada nível
+  const modeOf = (uniq) => {
+    const v = cfg.refine[keyOf(uniq)];
+    return v === 'buy' ? 'buy' : v === 'refine' || v === 'all' ? 'all' : 'best';
+  };
 
-  const ids = useMemo(() => {
-    if (!rec) return [];
-    const s = new Set([targetMid]);
+  // todos os itens das cadeias de refino ficam na mesma consulta (permite comparar as rotas)
+  const chainMids = [];
+  if (rec) {
+    chainMids.push(targetMid);
     for (const r of rec.res) {
-      s.add(r.mid);
-      if (refining(r.uniq)) refineChainIds(r.uniq, cfg.deep).forEach((i) => s.add(i));
+      if (canRefineUniq(r.uniq)) chainMids.push(...refineChainIds(r.uniq, true));
+      else chainMids.push(r.mid);
     }
-    return [...s];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sel.id, sel.ench, cfg.refine, cfg.deep]);
+  }
+  const ids = [...new Set(chainMids)];
   const { prices, loading, error, updatedAt, refresh } = usePrices(ids);
 
   const matCtx = { prices, city: cfg.matCity, useOrders: cfg.useOrders };
-  const refCtx = { ...matCtx, rrr: refineRRR, feePer100: +cfg.refineFee || 0, deep: cfg.deep };
+  const refCtx = { ...matCtx, rrr: refineRRR, feePer100: +cfg.refineFee || 0 };
 
   const lines = rec
     ? rec.res.map((r) => {
-        const useRefine = refining(r.uniq);
+        const canRefine = canRefineUniq(r.uniq);
+        const mode = modeOf(r.uniq);
         const qty = r.count * crafts * (r.returnable ? 1 - craftRRR : 1);
-        let unit;
-        let date = null;
-        let city = null;
+        const q = buyQuote(prices, r.mid, matCtx);
+        let unit = q.price;
+        let date = q.date;
+        let city = q.city;
         let sub = null;
-        if (useRefine && prices) {
-          sub = refineUnit(r.uniq, refCtx);
-          unit = sub.cost;
-        } else {
-          const q = buyQuote(prices, r.mid, matCtx);
-          unit = q.price;
-          date = q.date;
-          city = q.city;
+        let cmp = null;
+        if (canRefine && prices) {
+          const sAll = refineUnit(r.uniq, { ...refCtx, route: 'all' });
+          const sBest = refineUnit(r.uniq, { ...refCtx, route: 'best' });
+          const okAll = !sAll.missing.length && sAll.cost > 0;
+          const okBest = !sBest.missing.length && sBest.cost > 0;
+          const bestIsMake = okBest && (!q.price || sBest.cost < q.price);
+          cmp = {
+            buy: q.price,
+            all: okAll ? sAll.cost : 0,
+            best: bestIsMake ? sBest.cost : q.price,
+            bestIsMake,
+          };
+          const make = mode === 'all' || (mode === 'best' && bestIsMake);
+          if (make) {
+            sub = mode === 'all' ? sAll : sBest;
+            unit = sub.cost;
+            date = null;
+            city = null;
+          }
         }
-        return { ...r, qty, unit, total: qty * unit, date, city, sub, useRefine, canRefine: !!refinedTypeOf(r.uniq) };
+        return { ...r, qty, unit, total: qty * unit, date, city, sub, mode, cmp, useRefine: !!sub, canRefine };
       })
     : [];
 
@@ -90,6 +111,25 @@ export default function Crafting() {
   options.sort((a, b) => b.profit - a.profit);
   const best = options[0];
   const ready = rec && missing.length === 0 && best;
+
+  // ----- plano: o que comprar, onde, quanto, e o que refinar -----
+  const plan = [];
+  const used = new Set();
+  for (const l of lines) {
+    if (l.sub) {
+      const p = materialPlan(l.sub, l.qty, refineRRR);
+      p.makes.forEach((m) => plan.push({ kind: 'make', ...m, total: m.fee }));
+      p.buys.forEach((b) => plan.push({ kind: 'buy', ...b, total: b.qty * b.unit }));
+      p.buys.forEach((b) => b.city && used.add(`${b.mid}|${b.city}`));
+    } else {
+      plan.push({ kind: 'buy', mid: l.mid, name: l.name, qty: l.qty, unit: l.unit, city: l.city, date: l.date, total: l.total, refined: l.canRefine });
+      if (l.city) used.add(`${l.mid}|${l.city}`);
+    }
+  }
+  const tierOfMid = (mid) => +(mid.match(/^T(\d)/)?.[1] ?? 0);
+  const refinable = lines.filter((l) => l.cmp);
+  const allBest = refinable.length > 0 && refinable.every((l) => l.mode === 'best');
+  const setAllBest = () => set({ refine: Object.fromEntries(refinable.map((l) => [keyOf(l.uniq), 'best'])) });
 
   return (
     <div className="grid-2">
@@ -138,7 +178,6 @@ export default function Crafting() {
         {lines.some((l) => l.canRefine) && (
           <>
             <Switch label="Refino na cidade especializada com foco" checked={cfg.refineFocus} onChange={(v) => set({ refineFocus: v })} />
-            <Switch label="Refinar também o tier anterior" hint="Cadeia completa até o tier 2" checked={cfg.deep} onChange={(v) => set({ deep: v })} />
             <Field label="Taxa da bancada de refino (por 100 nutrição)">
               <NumberInput value={cfg.refineFee} onChange={(v) => set({ refineFee: v })} />
             </Field>
@@ -171,7 +210,14 @@ export default function Crafting() {
 
           {rec && (
             <>
-              <h3>Materiais ({units} {units === 1 ? 'unidade' : 'unidades'} de produto)</h3>
+              <div className="card-head">
+                <h3>Materiais ({units} {units === 1 ? 'unidade' : 'unidades'} de produto)</h3>
+                {refinable.length > 0 && (
+                  <button className="btn sm" disabled={allBest} onClick={setAllBest}>
+                    <Route size={14} /> {allBest ? 'Melhor rota marcada' : 'Marcar melhor rota'}
+                  </button>
+                )}
+              </div>
               <div className="table-wrap">
                 <table>
                   <thead>
@@ -190,9 +236,9 @@ export default function Crafting() {
                           {l.canRefine && (
                             <div style={{ marginTop: 4 }}>
                               <Segmented
-                                value={l.useRefine ? 'refine' : 'buy'}
-                                onChange={(v) => set({ refine: { ...cfg.refine, [l.uniq.replace(/^T\d_/, '').replace(/_LEVEL\d$/, '')]: v } })}
-                                options={[{ value: 'buy', label: 'Comprar' }, { value: 'refine', label: 'Refinar' }]}
+                                value={l.mode}
+                                onChange={(v) => set({ refine: { ...cfg.refine, [keyOf(l.uniq)]: v } })}
+                                options={[{ value: 'buy', label: 'Comprar pronto' }, { value: 'all', label: 'Produzir tudo' }, { value: 'best', label: 'Melhor' }]}
                               />
                             </div>
                           )}
@@ -201,7 +247,7 @@ export default function Crafting() {
                         <td className="num">{l.qty.toFixed(l.qty % 1 ? 1 : 0)}</td>
                         <td>
                           {l.unit ? <Money value={l.unit} /> : <span className="warn">sem preço</span>}
-                          {l.useRefine ? <small>custo de refino</small> : <>{l.city && <small>{cityLabel(l.city)}</small>}<Age ts={l.date} /></>}
+                          {l.useRefine ? <small>custo de produção</small> : <>{l.city && <small>{cityLabel(l.city)}</small>}<Age ts={l.date} /></>}
                         </td>
                         <td><Money value={l.total} /></td>
                       </tr>
@@ -284,6 +330,98 @@ export default function Crafting() {
               Ordem de venda: você lista o item (imposto {premium ? '4%' : '8%'} + 2,5% de taxa). Ordem de compra: vende na hora a um comprador (imposto {premium ? '4%' : '8%'}).
             </p>
           </div>
+        )}
+
+        {rec && prices && plan.length > 0 && (
+          <div className="card stack">
+            <h2>Plano de compra e produção</h2>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Etapa</th>
+                    <th>Quantidade</th>
+                    <th>Onde / preço un.</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {plan.map((p, i) => (
+                    <tr key={`${p.kind}-${p.mid}-${i}`} className={p.kind === 'make' ? 'best' : ''}>
+                      <td>
+                        {p.kind === 'make' ? 'Refinar' : 'Comprar'} {nameOf(p.mid)} <small>T{tierOfMid(p.mid)}{p.kind === 'buy' && p.refined ? ' · já refinado' : ''}</small>
+                      </td>
+                      <td className="num">{fmt(Math.ceil(p.qty - 1e-9))}</td>
+                      <td>
+                        {p.kind === 'buy' ? (
+                          <>
+                            {p.unit ? <Money value={p.unit} /> : <span className="warn">sem preço</span>}
+                            {p.city && <small>{cityLabel(p.city)}</small>}
+                            <Age ts={p.date} />
+                          </>
+                        ) : (
+                          <small>taxa da bancada</small>
+                        )}
+                      </td>
+                      <td><Money value={p.total} /></td>
+                    </tr>
+                  ))}
+                  <tr>
+                    <td>Taxa da bancada (craft)</td>
+                    <td></td>
+                    <td></td>
+                    <td><Money value={fee} /></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Total</strong></td>
+                    <td></td>
+                    <td></td>
+                    <td><strong><Money value={plan.reduce((a, p) => a + p.total, 0) + fee} /></strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p className="hint">Quantidades já com o retorno de recursos do craft e do refino. Linhas verdes são refinos; cada refino consome o tier anterior mais o recurso bruto do próprio tier. Arredondado para cima.</p>
+          </div>
+        )}
+
+        {refinable.length > 0 && (
+          <div className="card stack">
+            <h2>Comparar rotas dos materiais refinados</h2>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Material</th>
+                    <th>Comprar pronto</th>
+                    <th>Produzir tudo</th>
+                    <th>Melhor</th>
+                    <th>Economia</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {refinable.map((l) => {
+                    const c = l.cmp;
+                    const worst = Math.max(c.buy, c.all);
+                    return (
+                      <tr key={l.uniq}>
+                        <td>{l.name} <small>{fmt(l.qty)} un.</small></td>
+                        <td>{c.buy ? <Money value={c.buy * l.qty} /> : <span className="muted">sem dados</span>}</td>
+                        <td>{c.all ? <Money value={c.all * l.qty} /> : <span className="muted">sem dados</span>}</td>
+                        <td className="good">{c.best ? <Money value={c.best * l.qty} /> : '—'}<small>{c.bestIsMake ? 'produzir' : 'comprar pronto'}</small></td>
+                        <td>{c.best && worst ? <Money value={(worst - c.best) * l.qty} /> : '—'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <p className="hint">Custo total do material para a quantidade acima. “Melhor” decide em cada tier se compensa comprar o refinado pronto ou refiná-lo (inclusive só de uma parte da cadeia).</p>
+          </div>
+        )}
+
+        {rec && prices && (
+          <PriceMatrix title="Preços por cidade · itens desta cadeia" prices={prices} mids={ids} used={used} useOrders={cfg.useOrders} targetMid={targetMid} />
         )}
       </div>
     </div>

@@ -47,7 +47,7 @@ export function buyQuote(prices, mid, { city = 'best', useOrders = false } = {})
 export function refineUnit(uniq, ctx) {
   const { base, ench } = splitUniq(uniq);
   const rec = recipeOf(base, ench);
-  if (!rec) return { cost: 0, fee: 0, missing: [uniq], lines: [] };
+  if (!rec) return { uniq, cost: 0, fee: 0, missing: [uniq], lines: [] };
   const lines = [];
   const missing = [];
   let gross = 0;
@@ -83,7 +83,21 @@ export function refineUnit(uniq, ctx) {
   }
   const value = ingredientValue(uniq) || recipeValue(rec);
   const fee = stationFee(value, ctx.feePer100);
-  return { cost: gross * (1 - ctx.rrr) + fee, fee, missing, lines };
+  return { uniq, cost: gross * (1 - ctx.rrr) + fee, fee, missing, lines };
+}
+
+/**
+ * Desdobra a produção de `n` unidades de um refinado em etapas:
+ * makes = refinos a fazer (qtd e taxa da bancada); buys = tudo que precisa ser comprado.
+ */
+export function materialPlan(unit, n, rrr, out = { buys: [], makes: [] }) {
+  out.makes.push({ mid: marketId(unit.uniq), qty: n, fee: unit.fee * n });
+  for (const l of unit.lines) {
+    const q = n * l.qty * (1 - rrr);
+    if (l.sub) materialPlan(l.sub, q, rrr, out);
+    else out.buys.push({ mid: l.mid, name: l.name, qty: q, unit: l.unit, city: l.city, date: l.date, refined: l.refined });
+  }
+  return out;
 }
 
 /** IDs de mercado necessários para calcular a cadeia de um refinado (até T2 se deep). */
