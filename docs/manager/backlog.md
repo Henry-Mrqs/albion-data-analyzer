@@ -21,7 +21,7 @@ Status possíveis: `NOVA → TRIADA → PLANEJADA → EM_EXECUÇÃO → EM_QA �
 | IDEIA-005 | **Auditor de variáveis**: painel em cada cálculo listando TODAS as variáveis consideradas (RRR, foco, bônus de cidade, taxa de bancada, imposto, setup fee, premium…) e as ignoradas/pressupostas, com avisos ("sem foco", "sem diário"), para resolver o problema de esquecer variável | 5 | 5 | 3 | 5 | 18 | NOVA |
 | IDEIA-006 | **Ponto de equilíbrio comprar × produzir**: preço máximo que compensa pagar pela barra/couro pronto em cada tier | 5 | 5 | 4 | 4 | 18 | NOVA |
 | IDEIA-002 | **Foco**: pontos de foco gastos por craft/refino, prata/lucro por ponto de foco, "vale usar foco?" | 5 | 5 | 3 | 4 | 17 | PLANEJADA (plano aprovado, D-034; depois da 049) |
-| IDEIA-010 | **Liquidez**: volume vendido por dia (API history) em Craft/Flipper/Mercado, aviso de item sem giro | 5 | 4 | 3 | 5 | 17 | APROVADA c/ observações; conflito com a 041 + retrabalho 1 em curso (D-038) |
+| IDEIA-010 | **Liquidez**: volume vendido por dia (API history) em Craft/Flipper/Mercado, aviso de item sem giro | 5 | 4 | 3 | 5 | 17 | APROVADA (re-teste); deploy 11 em curso |
 | IDEIA-012 | **Confiança do preço**: detecção de outlier, dado velho e preço isolado; selo de confiança por célula | 4 | 5 | 4 | 4 | 17 | NOVA |
 | IDEIA-003 | **Diários de trabalho (journals)**: diário vazio/cheio, prata por craft, entra no lucro | 5 | 4 | 3 | 4 | 16 | TRIADA (escopo reduzido: capacidade, IDs e preço do diário; **fama fora** por confiança BAIXA) |
 | IDEIA-009 | **Encantar**: runa/alma/relíquia — comprar .0 e encantar × craftar já encantado | 5 | 4 | 2 | 5 | 16 | TRIADA (escopo reduzido: quantidades por passo e IDs; **taxa de encantar fora**, sem fonte) |
@@ -122,3 +122,9 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 | ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
 |---|---|---|---|---|---|---|---|
 | IDEIA-070 | **Estado salvo antigo ou incompleto**: `usePersisted` devolve o JSON salvo SEM mesclar com os padrões; cada ideia que acrescentou campo novo (bônus diário, cidade de refino, teto, rota...) depende de o código tolerar a falta. Quem tem configuração antiga salva no navegador (inclusive o usuário deste projeto) nunca foi testado por nenhum Tester. Mesclar com os padrões, validar tipos e versionar; testar com os formatos que as versões anteriores realmente salvaram (reconstruídos do histórico do git) | 4 | 5 | 4 | 2 | 15 | EM_EXECUÇÃO (Executor #60; plano aprovado, D-042) |
+
+## Robustez acrescentada no Loop 7 (medição do re-teste da 010)
+
+| ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
+|---|---|---|---|---|---|---|---|
+| IDEIA-071 | **Limite de erro na tela (error boundary) + restaurar configurações**: hoje qualquer exceção derruba a página inteira em branco (o Tester provou com estado salvo parcial ou `null`) e o usuário não tem como se recuperar sozinho. Mostrar mensagem clara e um botão "restaurar configurações salvas" (apaga só as chaves `albion:*` do app, com confirmação) | 4 | 4 | 4 | 3 | 15 | NOVA (D-043; planejar depois da 070) |
