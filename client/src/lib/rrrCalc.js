@@ -1,5 +1,6 @@
 // Calculadora de RRR: apresenta o que rrr() (econ.js) já calcula. Nenhuma constante de PB é copiada aqui.
 import { rrr } from './econ';
+import { validateInputs } from './inputRules';
 import { REFINING, cityOfCategory, craftCategoryLabel } from './catalog';
 
 // Inverso de RRR = PB / (100 + PB): devolve o PB (em pontos) que gerou o RRR.
@@ -25,7 +26,7 @@ export function itemCraftInfo(item) {
 /** RRR, PB e decomposição do PB (derivada de rrr(), por diferença). */
 export function rrrFor({ kind, city, category, resource, focus, daily = 0 }) {
   const specialty = isSpecialty({ kind, city, category, resource });
-  const d = +daily || 0;
+  const d = validateInputs({ daily }).values.daily; // mesma validação das outras telas (0, 10 ou 20)
   const r = rrr({ kind, specialty, focus: !!focus, daily: d });
   const pb0 = pbOf(rrr({ kind, specialty: false, focus: false }));
   const pb1 = pbOf(rrr({ kind, specialty, focus: false }));
@@ -54,7 +55,7 @@ export function referenceTable() {
 
 /** Retorno esperado de uma receita em `crafts` crafts. Ingredientes que não retornam ficam com retorno 0. */
 export function recipeReturn(rec, crafts, rrrValue) {
-  const n = Math.floor(+crafts) >= 1 ? Math.floor(+crafts) : 1;
+  const n = validateInputs({ crafts }).values.crafts; // faixa única (1 a MAX_QTY, inteiro); a tela mostra o aviso
   return rec.res.map((r) => {
     const gross = r.count * n;
     const returned = r.returnable ? gross * rrrValue : 0;

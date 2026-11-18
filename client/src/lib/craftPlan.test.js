@@ -308,3 +308,36 @@ describe('helpers', () => {
     expect(canRefineUniq('T4_WOOD')).toBe(false);
   });
 });
+
+describe('IDEIA-060: computeCraft blindado', () => {
+  it('RRR manual 150% usa o automático e nenhuma quantidade fica negativa', () => {
+    const c = computeCraft(sword({ customRRR: 150 }));
+    expect(c.rates.craftRRR).toBeCloseTo(33 / 133, 6);
+    expect(c.lines.every((l) => l.qty >= 0)).toBe(true);
+    expect(c.issues[0]).toMatchObject({ field: 'customRRR', level: 'error' });
+  });
+  it('customRRR " " não vira 0', () => expect(computeCraft(sword({ customRRR: ' ' })).rates.craftRRR).toBeCloseTo(33 / 133, 6));
+  it('crafts Infinity dá custo finito', () => {
+    const c = computeCraft(sword({ crafts: Infinity }));
+    expect(Number.isFinite(c.totalCost)).toBe(true);
+    expect(c.units).toBe(1e9);
+  });
+  it('taxa −400 não gera taxa negativa', () => expect(computeCraft(sword({ feePer100: -400 })).fee).toBe(0));
+  it('taxa 5.000 usa o teto 1.000 (1 craft: 1536 × 0,1125 × 10 = 1.728)', () => {
+    const c = computeCraft(sword({ feePer100: 5000 }));
+    expect(c.fee).toBe(1728);
+    expect(c.issues[0]).toMatchObject({ field: 'feePer100', level: 'warn' });
+    expect(computeCraft({ ...sword({ feePer100: 5000 }), feeCeiling: 10000 }).fee).toBe(8640);
+  });
+  it('crafts 2,5 usa 2 (units = amount × 2)', () => {
+    const a = computeCraft(sword({ crafts: 2.5 }));
+    expect(a.units).toBe(computeCraft(sword({ crafts: 2 })).units);
+    expect(a.units).toBe(recipeOf('T6_MAIN_SWORD').amount * 2);
+    expect(a.fee).toBe(computeCraft(sword({ crafts: 2 })).fee);
+  });
+  it('configuração válida: nenhum aviso e números idênticos aos de antes (C1)', () => {
+    const c = computeCraft(bowArgs({ cfg: craftCfg({ crafts: 1000, refine: { PLANKS: 'buy' } }) }));
+    expect(c.fee).toBe(230400);
+    expect(c.issues).toEqual([]);
+  });
+});

@@ -5,7 +5,9 @@ import { CITIES, SELL_CITIES, cityLabel, usePrices } from '../lib/market';
 import { rrr as calcRRR, resolveRRR, refineChainIds, fmt, pct, feeIsUnconfirmedDefault } from '../lib/econ';
 import { compareRoutes, evaluateTier, lotFee, pickBestTier, routePath, usedCells } from '../lib/refinePlan';
 import { useSettings, usePersisted } from '../lib/settings';
+import { cleanRefineCfg } from '../lib/inputRules';
 import FeeField from './FeeField';
+import InputIssues, { CorrectedBadge } from './InputIssues';
 import PriceMatrix from './PriceMatrix';
 import TargetPrice from './TargetPrice';
 import { Age, Banner, Field, Money, NumberInput, PriceStatus, Segmented, Switch } from './ui';
@@ -19,7 +21,7 @@ const ROUTES = [
 ];
 
 export default function Refining() {
-  const { premium } = useSettings();
+  const { premium, feeCeiling } = useSettings();
   const [cfg, setCfg] = usePersisted('refine:cfg', {
     type: 'PLANKS', tier: 4, ench: 0,
     buyCity: 'best', refineCity: 'Fort Sterling', sellCity: 'best',
@@ -34,8 +36,10 @@ export default function Refining() {
   const uniqOf = (tier) => `T${tier}_${cfg.type}${ench ? `_LEVEL${ench}` : ''}`;
 
   const specialty = info.city === cfg.refineCity;
-  const autoRRR = calcRRR({ kind: 'refine', specialty, focus: cfg.focus, daily: +cfg.daily });
-  const rrrValue = resolveRRR(autoRRR, cfg.customRRR);
+  // IDEIA-060: o cálculo usa os valores corrigidos (vcfg); os campos continuam mostrando o que foi digitado
+  const { cfg: vcfg, issues } = cleanRefineCfg(cfg, { premium, feeCeiling });
+  const autoRRR = calcRRR({ kind: 'refine', specialty, focus: cfg.focus, daily: vcfg.daily });
+  const rrrValue = resolveRRR(autoRRR, vcfg.customRRR);
 
   // preços de todos os tiers (permite comparar) — uma única consulta
   const ids = useMemo(() => {
@@ -47,7 +51,7 @@ export default function Refining() {
   }, [cfg.type, ench]);
   const { prices, loading, error, updatedAt, refresh } = usePrices(ids);
 
-  const ctx = { prices, city: cfg.buyCity, useOrders: cfg.useOrders, rrr: rrrValue, feePer100: +cfg.feePer100 || 0, route };
+  const ctx = { prices, city: cfg.buyCity, useOrders: cfg.useOrders, rrr: rrrValue, feePer100: vcfg.feePer100, route };
 
   const evaluate = (tier) =>
     evaluateTier({ tier, uniq: uniqOf(tier), prices, ctx, sellCity: cfg.sellCity, sellMode: cfg.sellMode, premium });
@@ -163,12 +167,14 @@ export default function Refining() {
               <option value={10}>+10%</option>
               <option value={20}>+20%</option>
             </select>
+            <InputIssues issues={issues} field="daily" />
           </Field>
           <Field label="RRR manual (%)" hint="Opcional">
             <NumberInput step="0.1" value={cfg.customRRR} onChange={(v) => set({ customRRR: v })} placeholder={(autoRRR * 100).toFixed(1)} />
+            <InputIssues issues={issues} field="customRRR" />
           </Field>
         </div>
-        <FeeField label="Taxa da bancada (prata por 100 de nutrição)" value={cfg.feePer100} onChange={(v) => set({ feePer100: v })} touched={!feeIsUnconfirmedDefault(cfg.feePer100, cfg.feeSet)} onTouch={() => set({ feeSet: true })} />
+        <FeeField issues={issues.filter((i) => i.field === 'feePer100')} label="Taxa da bancada (prata por 100 de nutrição)" value={cfg.feePer100} onChange={(v) => set({ feePer100: v })} touched={!feeIsUnconfirmedDefault(cfg.feePer100, cfg.feeSet)} onTouch={() => set({ feeSet: true })} />
         <Switch label="Comprar com ordens de compra" hint="Mais barato, mas paga 2,5% de taxa de criação" checked={cfg.useOrders} onChange={(v) => set({ useOrders: v })} />
         <div className="field">
           <label>Rota de produção</label>
@@ -188,6 +194,7 @@ export default function Refining() {
               {nameOf(marketId(uniqOf(cfg.tier)))} <span className="muted">T{cfg.tier}.{ench}</span>
             </h2>
             <span className="num">
+              <CorrectedBadge issues={issues} />{' '}
               RRR <b className="good">{(rrrValue * 100).toFixed(1)}%</b>
             </span>
           </div>
@@ -221,8 +228,8 @@ export default function Refining() {
                   <Money value={cur.unit.fee} />
                 </div>
                 <div className="kv">
-                  <span>Taxa do lote (todas as etapas, {fmt(+cfg.qty || 0)} un.)</span>
-                  <Money value={lotFee(cur.unit, +cfg.qty || 0, rrrValue)} />
+                  <span>Taxa do lote (todas as etapas, {fmt(vcfg.qty)} un.)</span>
+                  <Money value={lotFee(cur.unit, vcfg.qty, rrrValue)} />
                 </div>
                 <div className="kv">
                   <strong>Custo líquido</strong>
@@ -248,10 +255,11 @@ export default function Refining() {
                 <label className="field" style={{ marginTop: 8 }}>
                   <span className="label">Quantidade a refinar</span>
                   <NumberInput small value={cfg.qty} onChange={(v) => set({ qty: v })} />
+                  <InputIssues issues={issues} field="qty" />
                 </label>
                 <div className="kv">
                   <span>Lucro total</span>
-                  <b><Money value={cur.profit * (+cfg.qty || 0)} signed /></b>
+                  <b><Money value={cur.profit * vcfg.qty} signed /></b>
                 </div>
               </div>
             </div>
