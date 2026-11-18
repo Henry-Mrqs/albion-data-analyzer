@@ -81,5 +81,9 @@ Conferi no dump (cache local de `items.json`): `T4_MAIN_SWORD`=sword, `T4_2H_BOW
 5. **Dossiê 050:** o Pesquisador corrige (a prata de transmutação difere por recurso; pedra T5 = 1.180). A 057 usa o valor do dump, então não é afetada.
 **Fila e WIP (limite 3):** em execução 023 e 030; entra a 019 (carrega a dívida DT-001: 4 testes de borda, só arquivos de teste). A 038 espera a 023 estar mesclada. 057 e 039 vêm depois da 038 (mesmos arquivos). 041 depois da 019.
 
+## D-018 — Dois testes da 001 mudam fora da tabela do plano da 019 (aprovado)
+O Executor da 019 parou por regra do briefing (correto): 2 testes da fundação mudaram de valor e não estavam na tabela do plano. Conferi à mão: (1) poção C5, 3 crafts, taxa 150: 1.095 → 1.094 (364,5 × 3 = 1.093,5 arredonda no total); (2) `refineUnit` de 1 unidade, valor 16, taxa 400: taxa 7 → 7,2 (exata; o arredondamento passa a ser só no total do lote). Mesma regra aprovada, plano incompleto na tabela. O Tester da 019 deve conferir explicitamente esses dois casos e a lista completa de testes alterados.
+**Registro de processo:** a regra "parar se um teste mudar fora do plano" funcionou como projetada e evitou uma alteração silenciosa.
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.
