@@ -56,7 +56,7 @@ describe('catalog.json real: cc e cityOf', () => {
 
   it('contagens', () => {
     expect(cat.items).toHaveLength(2292);
-    expect(cat.items.filter((i) => i.r)).toHaveLength(2186);
+    expect(cat.items.filter((i) => i.r)).toHaveLength(2166);
     expect(cat.items.filter((i) => i.cc)).toHaveLength(1286);
     expect(cat.items.filter((i) => /_ROYAL$/.test(i.i) && i.cc)).toHaveLength(0);
   });
@@ -74,5 +74,45 @@ describe('catalog.json real: cc e cityOf', () => {
   it('src fixa o SHA do dump', () => {
     expect(cat.src).toBe('0483dd97f1581dfaf02eed42f25f5ea2a3cb75e5');
     expect(cat.built).toBe('2026-11-02');
+  });
+});
+
+const RAW = cat.items.filter((i) => i.c === 'crafting/resources');
+const VINTE = ['WOOD', 'ROCK', 'ORE', 'HIDE', 'FIBER'].flatMap((t) => [5, 6, 7, 8].map((n) => `T${n}_${t}`));
+
+describe('catalog.json real: transmutação (IDEIA-057)', () => {
+  it('nenhum recurso bruto é craftável', () => {
+    expect(RAW.filter((i) => i.r || i.er || i.a || i.f)).toEqual([]);
+  });
+  it('os 20 recursos de transmutação saíram de craftáveis mas continuam no catálogo', () => {
+    for (const id of VINTE) {
+      expect(byId[id]).toBeDefined();
+      expect(byId[id].r).toBeUndefined();
+      expect(byId[id].tm[0]).toHaveLength(1);
+    }
+    expect(cat.items.filter((i) => i.r)).toHaveLength(2166);
+    expect(cat.items).toHaveLength(2292);
+  });
+  it('tm preserva a prata do dump', () => {
+    expect(byId.T5_ORE.tm[0]).toEqual([['T4_ORE', 781]]);
+    expect(byId.T8_ORE.tm[0]).toEqual([['T7_ORE', 5000]]);
+    expect(byId.T6_WOOD.tm[0]).toEqual([['T5_WOOD', 1250]]);
+    expect(byId.T4_ORE.tm[1]).toEqual([['T4_ORE', 1500]]);
+    expect(byId.T4_WOOD.tm[2]).toEqual([['T4_WOOD_LEVEL1', 3000]]);
+    expect(byId.T5_ORE.tm[1]).toEqual([['T4_ORE_LEVEL1', 1563], ['T5_ORE', 2000]]);
+  });
+  it('pedra tem tabela de prata própria', () => {
+    expect(byId.T5_ROCK.tm[0]).toEqual([['T4_ROCK', 1180]]);
+    expect(byId.T4_ROCK.tm[1]).toEqual([['T4_ROCK', 1800]]);
+  });
+  it('25 recursos têm tm', () => expect(RAW.filter((i) => i.tm)).toHaveLength(25));
+  it('refinados intactos: 35 com receita de refino', () => {
+    const ref = cat.items.filter((i) => i.c === 'crafting/refinedresources');
+    expect(ref).toHaveLength(35);
+    expect(ref.every((i) => i.r)).toBe(true);
+    expect(byId.T4_PLANKS.r).toEqual([['T4_WOOD', 2], ['T3_PLANKS', 1]]);
+  });
+  it('encanto dos refinados continua em er', () => {
+    expect(byId.T4_PLANKS.er[1]).toEqual([['T4_WOOD_LEVEL1', 2], ['T3_PLANKS', 1]]);
   });
 });
