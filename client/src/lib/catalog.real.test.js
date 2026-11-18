@@ -138,3 +138,39 @@ describe('catalog.json real: vals novos da 057', () => {
     resetCatalog();
   });
 });
+
+describe('catalog.json real: não retorna por ingrediente (IDEIA-039)', () => {
+  const nrIds = (id) => byId[id].r.filter((x) => x[2] === 1).map((x) => x[0]);
+  it.each([
+    ['T4_2H_ARCANESTAFF_HELL', ['T4_ARTEFACT_2H_ARCANESTAFF_HELL']],
+    ['T4_OFF_SHIELD_HELL', ['T4_ARTEFACT_OFF_SHIELD_HELL']],
+    ['T6_2H_DUALSCIMITAR_UNDEAD', ['T6_ARTEFACT_2H_DUALSCIMITAR_UNDEAD']],
+    ['T4_ARMOR_PLATE_ROYAL', ['T4_ARMOR_PLATE_SET1', 'QUESTITEM_TOKEN_ROYAL_T4']],
+    ['T4_HEAD_PLATE_ROYAL', ['T4_HEAD_PLATE_SET1', 'QUESTITEM_TOKEN_ROYAL_T4']],
+    ['T4_CAPEITEM_FW_BRIDGEWATCH', ['T4_CAPE', 'T4_CAPEITEM_FW_BRIDGEWATCH_BP', 'T1_FACTION_STEPPE_TOKEN_1']],
+    ['T4_BAG_INSIGHT', ['T4_SKILLBOOK_STANDARD']],
+  ])('não retorna: %s', (id, esperado) => expect(nrIds(id)).toEqual(esperado));
+  it.each(['T4_MAIN_SWORD', 'T4_BAG', 'T4_CAPE', 'T4_POTION_HEAL'])('retorna tudo: %s', (id) => expect(nrIds(id)).toEqual([]));
+  it('contagem de ingredientes marcados', () => {
+    const n = cat.items.filter((i) => i.c !== 'crafting/resources').flatMap((i) => i.r ?? []).filter((x) => x[2] === 1).length;
+    expect(n).toBe(1053);
+  });
+  it('todo ingrediente com ARTEFACT/ARTIFACT no id tem o flag (dossiê M2)', () => {
+    const pares = cat.items.flatMap((i) => [...(i.r ?? []), ...Object.values(i.er ?? {}).flat()]);
+    expect(pares.filter((x) => /ARTEFACT|ARTIFACT/.test(x[0]) && x[2] !== 1)).toEqual([]);
+  });
+  it('só os fragmentos RUNE/SOUL/RELIC/SHARD aparecem sem flag entre os que o regex antigo barrava (M6)', () => {
+    const semFlag = new Set(cat.items.flatMap((i) => i.r ?? []).filter((x) => x[2] !== 1 && /ARTEFACT|ARTIFACT|RUNE|SOUL|RELIC|SHARD/.test(x[0])).map((x) => x[0]));
+    expect(semFlag.size).toBe(30);
+    expect([...semFlag].every((id) => /RUNE|SOUL|RELIC|SHARD/.test(id))).toBe(true);
+  });
+  it('o grupo dos 765 itens de Artefato existe e tem fragmento sem flag', () => {
+    const grupo = cat.items.filter((i) => (i.r ?? []).some((x) => x[2] !== 1 && /RUNE|SOUL|RELIC|SHARD/.test(x[0])));
+    expect(grupo).toHaveLength(765);
+    expect(grupo.every((i) => i.c.startsWith('artefacts/'))).toBe(true);
+  });
+  it('encanto herda o flag: T4_2H_ARCANESTAFF_HELL .1', () => {
+    const lvl = byId.T4_2H_ARCANESTAFF_HELL.er?.[1] ?? byId.T4_2H_ARCANESTAFF_HELL.r;
+    expect(lvl.filter((x) => x[2] === 1).map((x) => x[0])).toEqual(['T4_ARTEFACT_2H_ARCANESTAFF_HELL']);
+  });
+});
