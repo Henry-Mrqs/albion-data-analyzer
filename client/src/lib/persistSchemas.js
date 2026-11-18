@@ -67,6 +67,19 @@ function migrateRrr(o) {
   return { ...o, category: CRAFT_CATEGORIES.includes(next) ? next : 'sword' };
 }
 
+/**
+ * D-042: estado de antes da 7fe574e não tem `refineCity`. O código comparava `refineCity === 'auto'`
+ * (falso para undefined) e refinava SEM o bônus de especialização (RRR 18/118) enquanto a tela mostrava
+ * "cada recurso na sua cidade". Agora o padrão 'auto' vale (58/158): os números mudam, então avisa.
+ */
+const REFINE_CITY_NOTE = {
+  id: 'craft-refine-city',
+  message: 'Sua configuração antiga foi atualizada: o refino agora usa a cidade especializada de cada recurso (RRR +40).',
+};
+function craftNotes(saved, fromVersion) {
+  return fromVersion === 0 && Object.keys(saved).length > 0 && saved.refineCity === undefined ? [REFINE_CITY_NOTE] : [];
+}
+
 export const PERSISTED = {
   'craft:item': { version: 1, migrations: {}, schema: item },
   'market:item': { version: 1, migrations: {}, schema: item },
@@ -74,6 +87,7 @@ export const PERSISTED = {
   'craft:cfg': {
     version: 1,
     migrations: { 1: migrateCraft },
+    notes: craftNotes,
     schema: {
       craftCity: { enum: CRAFT_CITIES },
       specialty: 'boolOrNull',
