@@ -88,7 +88,7 @@ export async function fetchHistory(
       const part = queue.shift();
       let rows;
       try {
-        rows = await requestFn(historyUrl({ server, ids: part, cities }), signal);
+        rows = await requestFn(historyUrl({ server, ids: part, cities }), signal, 'histórico');
       } catch (e) {
         failed = true;
         throw e;
