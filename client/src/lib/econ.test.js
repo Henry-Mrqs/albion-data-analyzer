@@ -169,6 +169,16 @@ describe('refineUnit (rota de refino)', () => {
     expect(refineUnit('T4_PLANKS', ctx(A(), undefined, { deep: true })).cost).toBeCloseTo(62.353, 4);
     expect(refineUnit('T4_PLANKS', ctx(A(), undefined)).cost).toBeCloseTo(76.6203, 4);
   });
+  it('DT-001: empate exato entre produzir e comprar na rota best compra (usa <, não <=)', () => {
+    // rrr 0 e taxa 0: custo de produzir T3_PLANKS = 2 * T3_WOOD (15) + 1 * T2_PLANKS (5) = 35.
+    // T2_WOOD ausente: T2 não é produzível, só comprado a 5. T3_PLANKS pronto custa 35: empate exato.
+    const tie = () => mkPrices(planksSpec({ T2_WOOD: null, T3_PLANKS: 35 }));
+    const u = refineUnit('T4_PLANKS', ctx(tie(), 'best', { rrr: 0, feePer100: 0 }));
+    expect(u.lines[1]).toMatchObject({ mid: 'T3_PLANKS', choice: 'buy', unit: 35, sub: null, alt: 35 });
+    // um centavo mais barato produzir: passa a produzir (o teste do empate não é trivial)
+    const cheaper = mkPrices(planksSpec({ T2_WOOD: null, T3_PLANKS: 35.01 }));
+    expect(refineUnit('T4_PLANKS', ctx(cheaper, 'best', { rrr: 0, feePer100: 0 })).lines[1]).toMatchObject({ choice: 'make', unit: 35 });
+  });
   it('materialPlan(best A, n=1000)', () => {
     const p = materialPlan(refineUnit('T4_PLANKS', ctx(A(), 'best')), 1000, 58 / 158);
     expect(p.makes.map((m) => m.mid)).toEqual(['T4_PLANKS', 'T3_PLANKS']);

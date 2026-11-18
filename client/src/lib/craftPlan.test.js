@@ -120,6 +120,32 @@ describe('computeCraft', () => {
     expect(c.used.has('T2_PLANKS|Fort Sterling')).toBe(true);
   });
 
+  it('DT-001: empate exato entre comprar pronto e produzir (modo best) compra', () => {
+    const run = (planksPrice) => computeCraft(bowArgs({
+      prices: mkPrices({ ...planksSpec({ T4_PLANKS: planksPrice }), T4_2H_BOW: { Lymhurst: { s: 9500 } } }),
+      cfg: craftCfg({ crafts: 10, refine: { PLANKS: 'best' } }),
+    }));
+    // custo de produzir, lido de uma rodada em que comprar é muito mais caro
+    const makeCost = run(100000).lines[0].cmp.best;
+    expect(makeCost).toBeGreaterThan(0);
+    const tie = run(makeCost);
+    expect(tie.lines[0].cmp.bestIsMake).toBe(false);
+    expect(tie.lines[0].useRefine).toBe(false);
+    expect(tie.lines[0].unit).toBe(makeCost);
+    // com o pronto 1 centavo mais caro, passa a produzir
+    expect(run(makeCost + 0.01).lines[0].useRefine).toBe(true);
+  });
+
+  it('DT-001: Black Market nunca é ordem de venda, mesmo com preço de venda (s) > 0', () => {
+    const prices = mkPrices({
+      ...planksSpec(),
+      T4_2H_BOW: { Lymhurst: { s: 9500 }, 'Black Market': { s: 99999, b: 8500 } },
+    });
+    const c = computeCraft(bowArgs({ prices }));
+    expect(c.options.map((o) => [o.city, o.mode])).toEqual([['Lymhurst', 'order'], ['Black Market', 'instant']]);
+    expect(c.options.some((o) => o.city === 'Black Market' && o.mode === 'order')).toBe(false);
+  });
+
   it('C3: espada T6 com artefato (3 ingredientes), refinados em modo buy', () => {
     const prices = mkPrices({ T6_METALBAR: 200, T6_LEATHER: 150, T6_ARTEFACT_MAIN_SWORD_CRYSTAL: 90000 });
     const c = computeCraft({

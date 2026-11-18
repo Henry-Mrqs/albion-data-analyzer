@@ -71,6 +71,28 @@ describe('flipRows', () => {
   it('não vende na mesma cidade em que comprou', () => {
     expect(flipRows(prices(), cfg({ buyCities: ['Caerleon'], sellCities: ['Caerleon'] }), true, now)).toEqual([]);
   });
+  it('DT-001: Black Market nunca é ordem de venda, mesmo com preço de venda (s) > 0', () => {
+    const bm = prices({ 'Black Market': { s: 5000, sd: now - 1 * H, b: 0 } });
+    expect(flipRows(bm, cfg({ sellCities: ['Black Market'], sellMode: 'any' }), true, now)).toEqual([]);
+    expect(flipRows(bm, cfg({ sellCities: ['Black Market'], sellMode: 'order' }), true, now)).toEqual([]);
+  });
+  it('DT-001: comprar e vender na mesma cidade é excluído mesmo com lucro positivo', () => {
+    // Martlock com mercado "invertido": compra a 1000 (s) e a ordem de compra paga 2000 (b): lucro seria 920.
+    const inv = prices({ Martlock: { s: 1000, sd: now - 1 * H, b: 2000, bd: now - 1 * H } });
+    expect(flipRows(inv, cfg({ buyCities: ['Martlock'], sellCities: ['Martlock'] }), true, now)).toEqual([]);
+    // com outro destino disponível, a linha existe e nunca é a mesma cidade
+    const [r] = flipRows(inv, cfg({ buyCities: ['Martlock'], sellCities: ['Martlock', 'Caerleon'] }), true, now);
+    expect(r.sell).not.toBe('Martlock');
+  });
+  it('DT-001: borda da idade: exatamente maxAge entra; 1 ms acima sai (compra e venda)', () => {
+    const buyEdge = (ms) => prices({ Martlock: { s: 1000, sd: now - 3 * H - ms } });
+    expect(flipRows(buyEdge(0), cfg({ maxAge: 3 }), true, now)).toHaveLength(1);
+    expect(flipRows(buyEdge(1), cfg({ maxAge: 3 }), true, now)).toEqual([]);
+    const sellEdge = (ms) => prices({ 'Black Market': { b: 1700, bd: now - 3 * H - ms }, Caerleon: { s: 0, b: 0 } });
+    const c = cfg({ maxAge: 3, sellCities: ['Black Market'] });
+    expect(flipRows(sellEdge(0), c, true, now)).toHaveLength(1);
+    expect(flipRows(sellEdge(1), c, true, now)).toEqual([]);
+  });
   it('sem preços: lista vazia', () => {
     expect(flipRows({}, cfg(), true, now)).toEqual([]);
   });
