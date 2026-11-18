@@ -166,6 +166,22 @@ describe('computeCraft', () => {
     expect(c.totalCost).toBeCloseTo(c.matCost + 230400, 6);
   });
 
+  it('refineFee (taxa do refino dentro do Craft) é usada nas etapas produzidas, ≠ 400', () => {
+    // 1 craft de arco T4, planks em modo 'all': 32 tábuas * (1 - 33/133) = 3200/133 = 24,06015 T4 a produzir.
+    // T3 a produzir: 24,06015 * (1 - 58/158) = 24,06015 * 100/158 = 15,22795.
+    // Taxa por unidade = valor * 0,1125 * taxa/100: T4 (valor 16) = 0,018 * taxa; T3 (valor 8) = 0,009 * taxa.
+    // taxa 100: T4 = 24,06015 * 1,8 = 43,30827; T3 = 15,22795 * 0,9 = 13,70516
+    // taxa 1000: T4 = 433,0827; T3 = 137,0516
+    const makes = (refineFee) => computeCraft(bowArgs({ cfg: craftCfg({ refineFee, refine: { PLANKS: 'all' } }) })).plan.filter((p) => p.kind === 'make');
+    const m100 = makes(100);
+    expect(m100.map((m) => m.mid)).toEqual(['T4_PLANKS', 'T3_PLANKS', 'T2_PLANKS']);
+    expect(m100[0].total).toBeCloseTo(43.30827, 3);
+    expect(m100[1].total).toBeCloseTo(13.70516, 3);
+    const m1000 = makes(1000);
+    expect(m1000[0].total).toBeCloseTo(433.0827, 2);
+    expect(m1000[1].total).toBeCloseTo(137.0516, 2);
+  });
+
   it('C3: espada T6 com artefato (3 ingredientes), refinados em modo buy', () => {
     const prices = mkPrices({ T6_METALBAR: 200, T6_LEATHER: 150, T6_ARTEFACT_MAIN_SWORD_CRYSTAL: 90000 });
     const c = computeCraft({
