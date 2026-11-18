@@ -1,6 +1,7 @@
 // Testa o catalog.json real (gerado de ao-bin-dumps), sem rede e sem fixture. Casos do dossiê IDEIA-038 §4.
 import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { ingredientValue, resetCatalog, setCatalog } from './catalog';
 
 const cat = JSON.parse(fs.readFileSync(new URL('../../public/data/catalog.json', import.meta.url), 'utf8'));
 const byId = Object.fromEntries(cat.items.map((i) => [i.i, i]));
@@ -114,5 +115,26 @@ describe('catalog.json real: transmutação (IDEIA-057)', () => {
   });
   it('encanto dos refinados continua em er', () => {
     expect(byId.T4_PLANKS.er[1]).toEqual([['T4_WOOD_LEVEL1', 2], ['T3_PLANKS', 1]]);
+  });
+});
+
+describe('catalog.json real: vals novos da 057', () => {
+  it('ingredientValue de T8_ROCK_LEVEL1/2 é igual ao fallback vals[T8_ROCK] * 2^n', () => {
+    // Conta à mão: vals.T8_ROCK = 25,6 -> LEVEL1 = 25,6 x 2 = 51,2; LEVEL2 = 25,6 x 4 = 102,4.
+    // Os dois ids entram em vals só por serem entradas de transmutação em tm (ninguém os usa em r/er).
+    expect(cat.vals.T8_ROCK).toBe(25.6);
+    expect(cat.vals.T8_ROCK_LEVEL1).toBe(51.2);
+    expect(cat.vals.T8_ROCK_LEVEL2).toBe(102.4);
+    const semNovos = { ...cat.vals };
+    delete semNovos.T8_ROCK_LEVEL1;
+    delete semNovos.T8_ROCK_LEVEL2;
+    resetCatalog();
+    setCatalog(structuredClone({ ...cat, vals: semNovos })); // sem as chaves novas: cai no fallback
+    const fallback = [ingredientValue('T8_ROCK_LEVEL1'), ingredientValue('T8_ROCK_LEVEL2')];
+    resetCatalog();
+    setCatalog(structuredClone(cat));
+    expect([ingredientValue('T8_ROCK_LEVEL1'), ingredientValue('T8_ROCK_LEVEL2')]).toEqual(fallback);
+    expect(fallback).toEqual([51.2, 102.4]);
+    resetCatalog();
   });
 });
