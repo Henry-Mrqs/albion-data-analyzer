@@ -1,0 +1,71 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { loadFixtureCatalog } from '../test/helpers';
+import { craftBonusCity } from './catalog';
+import { isSpecialty, referenceTable, rrrFor } from './rrrCalc';
+
+beforeEach(loadFixtureCatalog);
+
+const ESPECIALISTA = () => craftBonusCity('weapons/sword');
+const base = { kind: 'craft', city: 'Martlock', category: 'weapons/sword', resource: 'PLANKS', focus: false, daily: 0 };
+const FS = { kind: 'refine', city: 'Fort Sterling', resource: 'PLANKS' };
+const cases = [
+  ['cidade sem bônus', { kind: 'refine', city: 'Martlock', resource: 'PLANKS' }, 18, 0.152542],
+  ['craft em cidade de bônus', { city: 'ESPECIALISTA' }, 33, 0.24812],
+  ['refino em cidade de bônus', FS, 58, 0.367089],
+  ['foco sem bônus', { kind: 'refine', city: 'Martlock', resource: 'PLANKS', focus: true }, 77, 0.435028],
+  ['craft bônus + foco', { city: 'ESPECIALISTA', focus: true }, 92, 0.479167],
+  ['refino bônus + foco', { ...FS, focus: true }, 117, 0.539171],
+  ['craft bônus + foco + dia 20', { city: 'ESPECIALISTA', focus: true, daily: 20 }, 112, 0.528302],
+  ['craft bônus + foco + dia 10', { city: 'ESPECIALISTA', focus: true, daily: 10 }, 102, 0.50495],
+  ['refino bônus + foco + dia 20', { ...FS, focus: true, daily: 20 }, 137, 0.578059],
+  ['refino bônus + dia 10', { ...FS, daily: 10 }, 68, 0.404762],
+];
+const build = (o) => ({ ...base, ...o, city: o.city === 'ESPECIALISTA' ? ESPECIALISTA() : (o.city ?? base.city) });
+
+describe('rrrFor (casos do dossiê §4)', () => {
+  it.each(cases)('%s', (_n, over, pb, r) => {
+    const out = rrrFor(build(over));
+    expect(out.pb).toBeCloseTo(pb, 6);
+    expect(out.rrr).toBeCloseTo(r, 4);
+  });
+
+  it('decompõe o PB em partes', () => {
+    const { parts } = rrrFor(build({ city: 'ESPECIALISTA', focus: true, daily: 20 }));
+    expect(parts.base).toBeCloseTo(18, 6);
+    expect(parts.specialty).toBeCloseTo(15, 6);
+    expect(parts.focus).toBeCloseTo(59, 6);
+    expect(parts.daily).toBeCloseTo(20, 6);
+  });
+});
+
+describe('isSpecialty', () => {
+  it('refino (aceita o refinado ou o recurso bruto)', () => {
+    expect(isSpecialty({ kind: 'refine', city: 'Fort Sterling', resource: 'PLANKS' })).toBe(true);
+    expect(isSpecialty({ kind: 'refine', city: 'Martlock', resource: 'PLANKS' })).toBe(false);
+    expect(isSpecialty({ kind: 'refine', city: 'Thetford', resource: 'ORE' })).toBe(true);
+    expect(isSpecialty({ kind: 'refine', city: 'Thetford', resource: 'METALBAR' })).toBe(true);
+  });
+  it('craft', () => {
+    expect(isSpecialty({ kind: 'craft', city: ESPECIALISTA(), category: 'weapons/sword' })).toBe(true);
+    expect(isSpecialty({ kind: 'craft', city: 'Martlock', category: 'weapons/sword' })).toBe(false);
+    expect(craftBonusCity('crafting/refinedresources')).toBeNull();
+    expect(isSpecialty({ kind: 'craft', city: 'Martlock', category: 'crafting/refinedresources' })).toBe(false);
+  });
+});
+
+describe('referenceTable', () => {
+  it('24 linhas únicas e consistentes', () => {
+    const t = referenceTable();
+    expect(t).toHaveLength(24);
+    expect(new Set(t.map((r) => r.key)).size).toBe(24);
+    t.forEach((r) => expect(r.per100).toBeCloseTo(r.rrr * 100, 9));
+  });
+  it('contém os casos do dossiê', () => {
+    const t = referenceTable();
+    for (const [, , pb, r] of cases) {
+      const row = t.find((x) => Math.abs(x.pb - pb) < 1e-6);
+      expect(row, `PB ${pb}`).toBeTruthy();
+      expect(row.rrr).toBeCloseTo(r, 4);
+    }
+  });
+});
