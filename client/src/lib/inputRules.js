@@ -139,3 +139,52 @@ export function validateInputs(input = {}, ctx = {}) {
 
   return { values, issues };
 }
+
+// RRR manual: a tela guarda string em %; '' = automático
+const rrrString = (raw, issues, value) => {
+  if (value == null) return '';
+  return issues.some((i) => i.field === 'customRRR') ? String(value * 100) : String(raw).trim();
+};
+
+/** Limpa a configuração do Craft (mesmas chaves, valores corrigidos). Não muta a original. */
+export function cleanCraftCfg(cfg, ctx = {}) {
+  const c = { ...ctx, kind: 'craft' };
+  const out = { ...cfg };
+  const all = [];
+  const main = validateInputs({ feePer100: cfg.feePer100, customRRR: cfg.customRRR, crafts: cfg.crafts }, c);
+  out.feePer100 = main.values.feePer100;
+  out.crafts = main.values.crafts;
+  out.customRRR = rrrString(cfg.customRRR, main.issues, main.values.customRRR);
+  all.push(...main.issues);
+  const rf = validateInputs({ feePer100: cfg.refineFee }, c);
+  out.refineFee = rf.values.feePer100;
+  all.push(...rf.issues.map((i) => ({ ...i, field: 'refineFee' })));
+  if (cfg.refineDaily) {
+    out.refineDaily = { ...cfg.refineDaily };
+    for (const type of Object.keys(cfg.refineDaily)) {
+      const d = validateInputs({ daily: cfg.refineDaily[type] }, c);
+      out.refineDaily[type] = d.values.daily;
+      all.push(...d.issues.map((i) => ({ ...i, field: `refineDaily.${type}` })));
+    }
+  }
+  if ('craftDaily' in cfg) {
+    const d = validateInputs({ daily: cfg.craftDaily }, c);
+    out.craftDaily = d.values.daily;
+    all.push(...d.issues.map((i) => ({ ...i, field: 'craftDaily' })));
+  }
+  return { cfg: out, issues: all };
+}
+
+/** Limpa a configuração do Refino (feePer100, customRRR, daily, qty). Não muta a original. */
+export function cleanRefineCfg(cfg, ctx = {}) {
+  const r = validateInputs({ feePer100: cfg.feePer100, customRRR: cfg.customRRR, daily: cfg.daily, crafts: cfg.qty }, { ...ctx, kind: 'refine' });
+  const issues = r.issues.map((i) => (i.field === 'crafts' ? { ...i, field: 'qty' } : i));
+  const out = {
+    ...cfg,
+    feePer100: r.values.feePer100,
+    customRRR: rrrString(cfg.customRRR, r.issues, r.values.customRRR),
+    daily: r.values.daily,
+    qty: r.values.crafts,
+  };
+  return { cfg: out, issues };
+}

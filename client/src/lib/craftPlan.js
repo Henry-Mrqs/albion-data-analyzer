@@ -1,6 +1,7 @@
 // Lógica de cálculo da tela de Craft (pura: sem React, fetch ou localStorage).
 import { REFINING, recipeValue, nameOf, refinedTypeOf, tierOf } from './catalog';
 import { SELL_CITIES, quote } from './market';
+import { cleanCraftCfg } from './inputRules';
 import { rrr as calcRRR, resolveRRR, refineUnit, refineChainIds, buyQuote, materialPlan, netSale, stationFee, roundFee } from './econ';
 
 export const keyOf = (uniq) => uniq.replace(/^T\d_/, '').replace(/_LEVEL\d$/, '');
@@ -43,7 +44,9 @@ function sub0(lines) {
   return out;
 }
 
-export function computeCraft({ rec, targetMid, prices, cfg, premium, bonusCity }) {
+export function computeCraft({ rec, targetMid, prices, cfg: rawCfg, premium, bonusCity, feeCeiling }) {
+  // IDEIA-060: entradas fora da faixa são corrigidas aqui (a lib se defende sozinha) e devolvidas como `issues`
+  const { cfg, issues } = cleanCraftCfg(rawCfg, { premium, feeCeiling });
   const rates = craftRates(cfg, bonusCity);
   const { crafts, craftRRR, refineRRRFor } = rates;
 
@@ -137,5 +140,5 @@ export function computeCraft({ rec, targetMid, prices, cfg, premium, bonusCity }
   const refinable = lines.filter((l) => l.cmp);
   const allBest = refinable.length > 0 && refinable.every((l) => l.mode === 'best');
 
-  return { rates, lines, matCost, fee, totalCost, units, unitCost, missing, options, best, ready, plan, used, refinable, allBest };
+  return { rates, lines, matCost, fee, totalCost, units, unitCost, missing, options, best, ready, plan, used, refinable, allBest, issues };
 }

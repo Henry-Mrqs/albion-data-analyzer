@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateInputs, MAX_QTY } from './inputRules';
+import { validateInputs, cleanCraftCfg, cleanRefineCfg, MAX_QTY } from './inputRules';
 import { stationFee } from './econ';
 
 const v = (input, ctx) => validateInputs(input, ctx);
@@ -144,5 +144,43 @@ describe('achados dos Testers', () => {
   it('teto configurável', () => {
     expect(v({ feePer100: 5000 }, { feeCeiling: 10000 }).values.feePer100).toBe(5000);
     expect(v({ feePer100: 5000 }, { feeCeiling: 10000 }).issues).toEqual([]);
+  });
+});
+
+describe('adaptadores', () => {
+  const craftCfg = (over = {}) => ({
+    craftCity: 'Lymhurst', specialty: null, focus: false, feePer100: 400, customRRR: '',
+    matCity: 'best', useOrders: false, crafts: 1,
+    refine: {}, refineFocus: false, refineFee: 400, refineCity: 'auto', refineDaily: {},
+    ...over,
+  });
+  it('cleanCraftCfg: corrige sem mutar a original', () => {
+    const raw = craftCfg({ feePer100: -400, refineFee: 5000, crafts: Infinity, customRRR: ' ', refineDaily: { PLANKS: 15 } });
+    const { cfg, issues } = cleanCraftCfg(raw, {});
+    expect(cfg).toMatchObject({ feePer100: 0, refineFee: 1000, crafts: 1e9, customRRR: '', refineDaily: { PLANKS: 0 } });
+    expect(raw.feePer100).toBe(-400);
+    expect(raw.refineDaily.PLANKS).toBe(15);
+    expect(issues.map((i) => i.field).sort()).toEqual(['crafts', 'feePer100', 'refineDaily.PLANKS', 'refineFee']);
+  });
+  it('cleanCraftCfg: RRR manual válido passa igual; acima do máximo vira o máximo em %; impossível vira vazio', () => {
+    expect(cleanCraftCfg(craftCfg({ customRRR: '30' })).cfg.customRRR).toBe('30');
+    expect(+cleanCraftCfg(craftCfg({ customRRR: '60' })).cfg.customRRR).toBeCloseTo((112 / 212) * 100, 9);
+    expect(cleanCraftCfg(craftCfg({ customRRR: '150' })).cfg.customRRR).toBe('');
+  });
+  it('cleanCraftCfg: craftDaily só se a chave existir', () => {
+    expect('craftDaily' in cleanCraftCfg(craftCfg()).cfg).toBe(false);
+    const r = cleanCraftCfg(craftCfg({ craftDaily: 15 }));
+    expect(r.cfg.craftDaily).toBe(0);
+    expect(r.issues.map((i) => i.field)).toEqual(['craftDaily']);
+  });
+  it('cleanRefineCfg: qty, daily, customRRR e taxa', () => {
+    const raw = { qty: '', daily: 15, customRRR: 150, feePer100: -1, type: 'PLANKS' };
+    const { cfg, issues } = cleanRefineCfg(raw, {});
+    expect(cfg).toMatchObject({ qty: 1, daily: 0, customRRR: '', feePer100: 0, type: 'PLANKS' });
+    expect(issues.map((i) => i.field).sort()).toEqual(['customRRR', 'daily', 'feePer100', 'qty']);
+    expect(raw.qty).toBe('');
+  });
+  it('cleanRefineCfg: RRR 55 aceito no refino (máx. 57,81)', () => {
+    expect(cleanRefineCfg({ qty: 100, daily: 0, customRRR: '55', feePer100: 400 }).issues).toEqual([]);
   });
 });
