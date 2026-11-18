@@ -1,6 +1,7 @@
 // Validação das entradas livres pelas faixas do jogo (IDEIA-060). Pura: sem React, fetch ou localStorage.
 // Política: CORRIGE e AVISA (nunca bloqueia, nunca calcula calado com valor impossível).
 import { rrr, netSale, SETUP_FEE, DEFAULT_FEE } from './econ';
+import { DEFAULT_SHARE_PCT } from './liquidity';
 
 export const MAX_QTY = 1e9; // teto técnico (não é regra do jogo): evita ∞/NaN
 export const FEE_CEILING = 1000; // teto da taxa de bancada por 100 de nutrição (post de desenvolvedor, confiança média)
@@ -47,7 +48,7 @@ export function maxRelists(premium = true) {
 
 /**
  * validateInputs(input, ctx) -> { values, issues }
- * input: { feePer100, customRRR (%), daily, crafts, relists, mode } (só as chaves presentes são validadas)
+ * input: { feePer100, customRRR (%), daily, crafts, relists, share (%), mode } (só as chaves presentes são validadas)
  * ctx: { kind: 'craft'|'refine', premium, feeCeiling, maxQty }
  * issues: [{ field, level: 'info'|'warn'|'error', code, msg, raw, used }]
  */
@@ -151,6 +152,22 @@ export function validateInputs(input = {}, ctx = {}) {
       }
     }
     values.relists = used;
+  }
+
+  if ('share' in input) {
+    // Parte do mercado que você espera capturar (%), IDEIA-010. Vazio = padrão sem aviso; 0,5 é legítimo.
+    const raw = input.share;
+    let used = DEFAULT_SHARE_PCT;
+    if (!isEmpty(raw)) {
+      const n = toNum(raw);
+      if (Number.isNaN(n) || n <= 0) {
+        add('share', 'error', 'share-invalid', `Parte do mercado ${shown(raw)} é inválida (use um valor maior que 0, até 100): usando ${DEFAULT_SHARE_PCT}%.`, raw, DEFAULT_SHARE_PCT);
+      } else if (n > 100) {
+        used = 100;
+        add('share', 'warn', 'share-max', `Parte do mercado ${Number.isFinite(n) ? br(n) : 'infinita'}% acima de 100%: usando 100%.`, raw, used);
+      } else used = n;
+    }
+    values.share = used;
   }
 
   if ('mode' in input) {

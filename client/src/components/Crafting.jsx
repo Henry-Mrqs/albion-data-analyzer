@@ -1,13 +1,17 @@
 import { useState } from 'react';
 import { Route } from 'lucide-react';
 import { CRAFT_CITIES, REFINING, getItem, recipeVariants, marketId, nameOf, refinedTypeOf, craftBonusCity, categoryLabel } from '../lib/catalog';
-import { CITIES, cityLabel, usePrices } from '../lib/market';
+import { CITIES, SELL_CITIES, cityLabel, usePrices } from '../lib/market';
 import { fmt, pct, feeIsUnconfirmedDefault } from '../lib/econ';
 import { computeCraft, craftChainIds, keyOf, waitSavings } from '../lib/craftPlan';
 import { effectiveDaily, showDailyNote, DAILY_NOTE } from '../lib/dailyBonus';
-import { annotateOptions, pickExit } from '../lib/exits';
+import { annotateOptions, illusoryHint, pickExit } from '../lib/exits';
 import { pickCheapest, resolveVariant, returnBadge } from '../lib/recipeAlt';
+import { useHistory } from '../lib/history';
+import { loadedStats } from '../lib/liquidity';
+import { validateInputs } from '../lib/inputRules';
 import RecipePicker from './RecipePicker';
+import { GiroCard, GiroCell } from './Giro';
 import { useSettings, usePersisted } from '../lib/settings';
 import ItemSelector from './ItemSelector';
 import FeeField from './FeeField';
@@ -53,6 +57,12 @@ export default function Crafting() {
   const opts = annotateOptions(options, prices, targetMid);
   const { best: shown, bestReal } = pickExit(opts);
 
+  // Giro (IDEIA-010): histórico só do item final, só depois de os preços chegarem, uma requisição por item (cache de 1 h).
+  const { history, loading: histLoading, error: histError } = useHistory([targetMid], { cities: SELL_CITIES, enabled: !!rec && !!prices });
+  const statsOf = (city) => (history?.[targetMid] ? loadedStats(history, targetMid, city, { now }) : null);
+  const share = validateInputs({ share: cfg.share });
+  const giroRows = [...new Set(opts.map((o) => o.city))].map((city) => ({ city, stats: statsOf(city) })).filter((r) => r.stats);
+
   const tierOfMid = (mid) => +(mid.match(/^T(\d)/)?.[1] ?? 0);
   const setAllBest = () => set({ refine: Object.fromEntries(refinable.map((l) => [keyOf(l.uniq), 'best'])) });
 
@@ -62,7 +72,7 @@ export default function Crafting() {
         <h2>Craft</h2>
         <ItemSelector value={sel} onChange={(v) => { setSel(v); if (cfg.specialty !== null) set({ specialty: null }); if (v.id !== sel.id && cfg.recipeVariant !== undefined && cfg.recipeVariant !== 'auto') set({ recipeVariant: 'auto' }); }} onlyCraftable />
         {item && <div className="hint">{categoryLabel(item.c)} · <code>{targetMid}</code></div>}
-        <RecipePicker variants={variants} results={results} auto={auto} mode={pickerMode}onChange={(v) => set({ recipeVariant: v })} />
+        <RecipePicker variants={variants} results={results} auto={auto} mode={pickerMode} onChange={(v) => set({ recipeVariant: v })} />
 
         <hr className="sep" style={{ margin: 0 }} />
         <h3>Produção</h3>
@@ -276,6 +286,7 @@ export default function Crafting() {
                     <th>Lucro</th>
                     <th>Margem</th>
                     <th>Comprador</th>
+                    <th title="Vendas registradas por dia nos últimos 7 dias completos">Giro</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -297,6 +308,7 @@ export default function Crafting() {
                         {o.illusory && <small className="bad">ilusória</small>}
                         {o.stale && <small className="muted">dado velho</small>}
                       </td>
+                      <td><GiroCell stats={statsOf(o.city)} loading={histLoading} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -304,9 +316,19 @@ export default function Crafting() {
             </div>
             <p className="hint" style={{ marginTop: 10 }}>
               Ordem de venda: você lista o item (imposto {premium ? '4%' : '8%'} + 2,5% de taxa). Ordem de compra: vende na hora a um comprador (imposto {premium ? '4%' : '8%'}).
-              Ilusória: ordem de venda sem ordem de compra visível na cidade (dado com menos de 24 h). Giro (vendas/dia): sem dado.
+              {illusoryHint()} Giro: vendas registradas por dia nos últimos 7 dias completos (veja o cartão “Giro do item”).
             </p>
+            {histError && <Banner kind="warn">Giro indisponível: {histError}</Banner>}
           </div>
+        )}
+
+        {rec && options.length > 0 && giroRows.length > 0 && (
+          <GiroCard rows={giroRows} units={units} sharePct={share.values.share} best={best && { city: best.city, price: best.price }} loading={histLoading}>
+            <Field label="Parte do mercado que você espera capturar (%)" hint="Usada para estimar em quantos dias você vende o lote.">
+              <NumberInput min={0} step="0.5" value={cfg.share ?? ''} onChange={(v) => set({ share: v })} placeholder="10" />
+              <InputIssues issues={share.issues} field="share" />
+            </Field>
+          </GiroCard>
         )}
 
         {rec && <TargetPrice cost={unitCost} prices={prices} mid={targetMid} missing={missing.length > 0} />}

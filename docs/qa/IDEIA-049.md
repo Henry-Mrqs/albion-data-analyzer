@@ -69,3 +69,39 @@ Todas mortas, exceto 3 sobreviventes.
 5. `at` fora de faixa em `validateCatalog` e `recipeOf` com variante 1.5 (TypeError): robustez menor, opcional.
 
 Temporários em `%TEMP%\claude\...\scratchpad\qa` (fora do repositório).
+
+---
+
+# Re-teste do retrabalho nº 1 (D-041)
+
+**Veredito final: APROVADO.** Tip testado: 8e4df82 (commits 957f02d merge da 041, 1d3feff, 8e4df82). `npm run check`: 441 testes verdes, lint e build ok. Merge com a master atual (que inclui a 041): `git merge-tree` sem conflito.
+
+## 1. Mesclagem (Crafting.jsx) e diário x variante
+- Resolução conferida linha a linha: `daily`/`cfgEff` calculados antes; `results` de todas as variantes usam `cfgEff`; `idx = resolveVariant(...)`; `c = results[idx]`; `waitSavings({ rec, ..., cfg: cfgEff })` usa a MESMA receita escolhida; `DailyWait`, `TargetPrice`, nota do diário (`showDailyNote`) intactos.
+- Diferencial com a master atual (041): variante 0 com `craftDaily` 0/10/20 (e 5, '10', ausente): **4.500 combinações de `computeCraft` + 4.500 de `waitSavings` idênticas bit a bit**.
+- Diário x variantes 1+ contra oráculo próprio (RRR = pb/(100+pb), pb = 18 + especialização + foco + diário): **4.000 cenários, 0 divergências** em material, taxa, total de cada variante, escolha da mais barata e `waitSavings` da variante escolhida (3.339 com cartão). O diário nunca mudou a vencedora (pickDiffByDaily = 0): variantes diferem em 1 ingrediente que nunca retorna.
+- Casos à mão (T4_HEAD_CLOTH_KEEPER, UI ao vivo, diário +10%): RRR 21,875%; artefato 1.101 (tecido 6,25 x 176) + 596 + taxa 72 = 1.769; ficha 1.101 + 591 + 346 = 2.038; cartão "vale esperar" do artefato: +20% = 1.689 (economia 80); da ficha: 1.958 (economia 80), sempre a receita selecionada. RRR 24,81% / 30,07% / 34,64% para diário 0/10/20 (oráculo).
+
+## 2. Variante inválida
+Oráculo (inteiro >= 0 e < nº de variantes = válida; senão 0): **8.000 valores** (inteiros -2..5, -5, 1.5, NaN, ±Infinity, 'x', '', null, undefined, [], {}, true, false, 1e9, '1.5', '-1') x itens/níveis x `recipeOf` e `resolveVariant`: 0 divergências, 0 exceções. Item que perdeu variantes (salvo 2/'2', agora 1): 0. `resolveVariant` aceita texto numérico inteiro ('1'), porque o seletor grava `String(i)`; `recipeOf` direto com texto cai em 0 (ele não recebe texto na prática).
+Chamadores: `recipeOf(..., variant)` só é chamado por `recipeVariants` (índices inteiros válidos); os demais chamadores (`econ.js` x2, `RrrCalculator.jsx`) usam variante padrão. **Nada dependia do `null` antigo.**
+
+## 3. validateCatalog e alt.at
+`at` -1, 1.5, '1', null, NaN, Infinity, ausente: "alt malformado"; `at` = r.length, r.length+1, 99: "alt.at fora da receita" (aponta items[k]); 0, meio e último: válidos; alt sem `r`: rejeitado. Catálogo novo e o da master passam; todos os 605 `at` reais < r.length.
+
+## 4. Texto do aviso
+"A escolha depende da taxa de bancada (valor do artefato na taxa NÃO verificado)." na tela; nenhum D-0xx / IDEIA- / DT- em texto mostrado ao usuário (JSX e funções de texto; só em comentários). Confirmado na UI (regex no texto da página: nenhum).
+
+## 5. Mutações novas (nome do teste)
+Mortas: `isInteger` removido / teto removido / negativa->null / fora de faixa->null: `catalog.test.js > ...variante inválida 1.5 / 2 / -1 ... cai na variante 0, sem lançar`. `alt.at` aceito, `<=`: `catalogLoad.test.js > ...alt.at fora da receita (>= r.length)`. Texto do aviso (sem NÃO; com D-012): `recipeAlt.test.js > ...texto do aviso` e `...sem referência interna`. `resolveVariant` sem teto / sem >=0 / sem isInteger / texto / auto ignorado / lançando: `recipeAlt.test.js > resolveVariant: escolha salva no navegador ...` (6 grupos).
+**Sobreviventes (4):** (a) remover `Array.isArray(it.r)` na checagem de `alt.at` (item com `alt` e sem `r` faria `validateCatalog` lançar TypeError; formato impossível no build, baixo risco); (b) `cfg` no lugar de `cfgEff` nos resultados; (c) cartão "vale esperar" usando a receita 0; (d) cartão sem `cfgEff`: (b), (c) e (d) estão em `Crafting.jsx`, sem teste de componente (ambiente node). Cobertura por outros meios: oráculo de 4.000 cenários no nível da biblioteca e verificação na UI acima (totais e economia batem com a receita escolhida e com o diário). Recomendação opcional: teste de render ou função pura extraída para a escolha da receita do cartão.
+
+## 6. Estado salvo
+`albion:craft:cfg` com `recipeVariant` ausente (versão antiga), objeto, lista, true, 'x', -3, '2' (item com 2 receitas), null, '' e 1.5: a tela abre sem quebrar, sem erro no console, receita 0 (ou Automático quando ausente), total 1.769 igual ao esperado.
+
+## 7. UI (porta 5214, contexto isolado, só localStorage dessa porta, servidor parado)
+T4_HEAD_CLOTH_KEEPER, diário +10, variante 1.5 salva: abre na receita Artefato com seletor, aviso da taxa e cartão; trocar para Ficha e voltar mantém totais e economia conforme o item 1; a escolha salva passa a '0'. T4_MAIN_SWORD: sem seletor, cartão do diário presente, custo 3.036, 375 px sem rolagem horizontal; console limpo.
+
+## Observações
+- Cosmético: `mode={pickerMode}onChange` sem espaço no JSX de `Crafting.jsx` (funciona).
+- Variante salva inválida abre com o botão da receita 0 marcado (não "Automático"); aceitável.

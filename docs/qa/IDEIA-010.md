@@ -153,3 +153,22 @@ Medido com `fetch` falso chamando `request()`: histórico: "A API de histórico 
 | padrão de `request` vira "histórico" | morto (3 falhas) |
 | `unloaded`: cobertura "0 de 7" / texto "sem histórico" | mortos ("unloaded: texto '—', dica para carregar, sem cobertura…") |
 Sobreviventes: 2, ambos em `mergeHistory`; meu oráculo (5.000 pares) cobre os dois e a implementação atual está correta. Risco prático baixo (conflito só ocorre ao recarregar a mesma cidade/mid, e a mutação só importa se alguém reutilizar `a`), mas vale um teste de não mutação e de precedência.
+
+## R5. Estado salvo incompleto ou de versão antiga (`usePersisted` não mescla com os padrões)
+Medição na branch (aba nova, porta 5212, só o `localStorage` dessa porta; limpo ao final), uma tela por caso, iframe do mesmo origin, 2,5 a 3,5 s de espera. Critério: tela branca = `#root` vazio (exceção não tratada no console); parcial/visual = renderiza mas com `undefined`/`NaN`.
+
+**Formatos antigos reconstruídos do git** (primeiro commit de cada tela: Craft/Refino 8bf3014, Flipper 8bf3014, Preço-alvo 943c7c8, RRR 451f0fa; inclui `deep` no lugar de `route`/`refineCity`, `category: 'weapons/sword'`): **as 4 telas abrem normalmente** (craft, refine, rrr, flip). Preço-alvo tem os mesmos campos desde o início. Ou seja, quem tem configuração de versão antiga **não quebra**; o risco real é só estado parcial/corrompido.
+
+**Campo faltante, um por vez (partindo do padrão atual):**
+| Tela (chave) | Tela branca (erro de console, `TypeError`) | Só visual | Sem efeito |
+|---|---|---|---|
+| Flipper (`flip:cfg`) | `groups`, `tiers`, `enchs`, `buyCities`, `sellCities` (os 5 campos de lista) | — | `buyMode`, `sellMode`, `minProfit`, `minMargin`, `maxAge`, `budget` |
+| Craft (`craft:cfg`) | `refine` | — | os demais 11 (inclui `refineCity`, `refineDaily`) |
+| Refino (`refine:cfg`) | `type` | `tier` ausente mostra "Tundefined_PLANKS" e "T.0"; `ench` ausente mostra "(T4.undefined)" | os demais 11 |
+| Preço-alvo (`target:cfg`, dentro do Craft) | — (só `null` derruba) | — | todos os 5 |
+| RRR (`rrr:cfg`) | — (só `null` derruba) | — | todos os 8 |
+**Valores de tipo errado:** `{}` derruba Flipper, Craft e Refino (campos de lista/objeto ausentes); `null` derruba as 5 telas (Preço-alvo derruba o Craft inteiro); `[]` e `"x"`: derrubam Flipper, Craft e Refino, RRR e Preço-alvo abrem. O campo novo da 010 (`share` no `craft:cfg`) ausente/inválido não quebra (cai em 10% com aviso).
+**Gravidade:** tela branca na falha (sem tratamento de erro: nenhum error boundary; a aba inteira some, o usuário só se recupera limpando o `localStorage`), mas **só com estado parcial ou corrompido**, que não ocorre por upgrade de versão (todas as versões anteriores gravavam os campos de lista/objeto). Probabilidade baixa, impacto alto: vale um merge com os padrões em `usePersisted` (ou error boundary) numa ideia futura. Nada corrigido nem commitado aqui. A `master` não mudou nesse trecho (`settings.js` idêntico).
+
+## R6. Veredito final do re-teste
+**APROVADO** (mantido). 498/498; a mesclagem com a 041 preserva as duas ideias em `Crafting.jsx` e a única `now` mantém o comportamento do aviso de bônus; diferencial com a master atual idêntico em 4.500 combinações; o falso "sem histórico" do Flipper foi corrigido (oráculo de 20.000 casos, 0 divergências) e a tela reproduzida; textos de erro corretos; 2 mutantes sobrevivem em `mergeHistory` (não mutação, precedência), sem risco prático. Servidores parados.
