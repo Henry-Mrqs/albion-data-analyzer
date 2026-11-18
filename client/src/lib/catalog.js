@@ -5,6 +5,20 @@ let promise = null;
 let data = null;
 const byId = new Map();
 
+export function setCatalog(d) {
+  data = d;
+  for (const it of d.items) {
+    it._s = `${it.p} ${it.e} ${it.i}`.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    byId.set(it.i, it);
+  }
+}
+
+export function resetCatalog() {
+  data = null;
+  byId.clear();
+  promise = null;
+}
+
 export function loadCatalog() {
   if (!promise) {
     promise = fetch(`${import.meta.env.BASE_URL}data/catalog.json`)
@@ -13,11 +27,7 @@ export function loadCatalog() {
         return r.json();
       })
       .then((d) => {
-        data = d;
-        for (const it of d.items) {
-          it._s = `${it.p} ${it.e} ${it.i}`.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-          byId.set(it.i, it);
-        }
+        setCatalog(d);
         return d;
       })
       .catch((e) => {

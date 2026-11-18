@@ -1,16 +1,24 @@
-# React + Vite
+# Albion Data (client)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Ferramenta web de craft, refino e economia do Albion Online (React + Vite). Os preços vêm da API do Albion Online Data Project e o catálogo de itens/receitas de `public/data/catalog.json`.
 
-Currently, two official plugins are available:
+## Scripts
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Rode todos dentro de `client/`.
 
-## React Compiler
+- `npm run dev`: servidor de desenvolvimento.
+- `npm test`: roda os testes uma vez (Vitest, ambiente Node).
+- `npm run test:watch`: testes em modo observação.
+- `npm run check`: lint + testes + build. Rode antes de todo commit/PR.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Testes
 
-## Expanding the ESLint configuration
+Ficam ao lado do código (`src/**/*.test.js`). A lógica de cálculo mora em `src/lib/` (módulos puros: `econ.js`, `craftPlan.js`, `refinePlan.js`, `flip.js`); os componentes só montam a tela. Os testes usam uma fixture pequena do catálogo (`src/test/catalog.fixture.json`) e a injetam com `setCatalog`.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Para regenerar a fixture, a partir da raiz do repositório:
+
+```
+node scripts/build-test-fixture.mjs
+```
+
+Aviso: são testes de caracterização. Eles congelam o que o código faz hoje (para provar que um refactor não mudou números) e NÃO validam as fórmulas contra o jogo (RRR, taxa de bancada, impostos). Se uma constante for corrigida, altere o teste correspondente de propósito, no mesmo commit.

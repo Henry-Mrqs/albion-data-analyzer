@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 import { Route } from 'lucide-react';
 import { REFINING, marketId, nameOf } from '../lib/catalog';
-import { CITIES, SELL_CITIES, cityLabel, quote, usePrices } from '../lib/market';
-import { rrr as calcRRR, refineUnit, refineChainIds, netSale, fmt, pct } from '../lib/econ';
+import { CITIES, SELL_CITIES, cityLabel, usePrices } from '../lib/market';
+import { rrr as calcRRR, resolveRRR, refineChainIds, fmt, pct } from '../lib/econ';
+import { compareRoutes, evaluateTier, pickBestTier, routePath, usedCells } from '../lib/refinePlan';
 import { useSettings, usePersisted } from '../lib/settings';
 import PriceMatrix from './PriceMatrix';
 import { Age, Banner, Field, Money, NumberInput, PriceStatus, Segmented, Switch } from './ui';
@@ -14,26 +15,6 @@ const ROUTES = [
   { value: 'all', label: 'Produzir tudo', hint: 'Compra só o recurso bruto e refina a cadeia inteira até T2.' },
   { value: 'best', label: 'Melhor combinação', hint: 'Em cada nível escolhe o mais barato: comprar pronto ou refinar.' },
 ];
-
-// Percorre a cadeia e diz, nível a nível, se compra o refinado pronto ou produz.
-function routePath(unit, tier) {
-  const steps = [];
-  let node = unit;
-  let t = tier;
-  while (node) {
-    const l = node.lines.find((x) => x.refined);
-    steps.push({ tier: t, action: 'make', raw: node.lines.filter((x) => !x.refined) });
-    if (!l) break;
-    if (l.sub) {
-      node = l.sub;
-      t -= 1;
-    } else {
-      steps.push({ tier: t - 1, action: 'buy', unit: l.unit, city: l.city });
-      break;
-    }
-  }
-  return steps;
-}
 
 export default function Refining() {
   const { premium } = useSettings();
@@ -52,8 +33,7 @@ export default function Refining() {
 
   const specialty = info.city === cfg.refineCity;
   const autoRRR = calcRRR({ kind: 'refine', specialty, focus: cfg.focus, daily: +cfg.daily });
-  const custom = cfg.customRRR !== '' && !isNaN(+cfg.customRRR);
-  const rrrValue = custom ? +cfg.customRRR / 100 : autoRRR;
+  const rrrValue = resolveRRR(autoRRR, cfg.customRRR);
 
   // preços de todos os tiers (permite comparar) — uma única consulta
   const ids = useMemo(() => {
@@ -67,41 +47,25 @@ export default function Refining() {
 
   const ctx = { prices, city: cfg.buyCity, useOrders: cfg.useOrders, rrr: rrrValue, feePer100: +cfg.feePer100 || 0, route };
 
-  const evaluate = (tier) => {
-    const uniq = uniqOf(tier);
-    const mid = marketId(uniq);
-    const unit = refineUnit(uniq, ctx);
-    const sellCities = cfg.sellCity === 'best' ? SELL_CITIES : [cfg.sellCity];
-    let best = { price: 0, city: null, date: null };
-    for (const c of sellCities) {
-      const q = quote(prices, mid, c, c === 'Black Market' ? 'buy' : cfg.sellMode === 'instant' ? 'buy' : 'sell');
-      if (q.price > best.price) best = { ...q, city: c };
-    }
-    const mode = best.city === 'Black Market' || cfg.sellMode === 'instant' ? 'instant' : 'order';
-    const net = netSale(best.price, mode, premium);
-    const profit = net - unit.cost;
-    return { tier, uniq, mid, unit, sell: best, mode, net, profit, margin: unit.cost > 0 ? (profit / unit.cost) * 100 : 0 };
-  };
+  const evaluate = (tier) =>
+    evaluateTier({ tier, uniq: uniqOf(tier), prices, ctx, sellCity: cfg.sellCity, sellMode: cfg.sellMode, premium });
 
   const cur = prices ? evaluate(cfg.tier) : null;
   const rows = prices ? TIERS.map(evaluate) : [];
-  const bestTier = rows.filter((r) => r.sell.price > 0 && !r.unit.missing.length).sort((a, b) => b.profit - a.profit)[0];
+  const bestTier = pickBestTier(rows);
   const missing = cur ? [...new Set(cur.unit.missing)] : [];
   const ready = cur && missing.length === 0 && cur.sell.price > 0;
 
   // ----- rotas: comprar refinado pronto x produzir tudo x melhor combinação -----
   const curUniq = uniqOf(cfg.tier);
-  const routes = prices
-    ? ROUTES.map((r) => ({ ...r, unit: refineUnit(curUniq, { ...ctx, route: r.value }) })).map((r) => ({ ...r, ok: !r.unit.missing.length }))
-    : [];
-  const bestRoute = routes.filter((r) => r.ok).sort((a, b) => a.unit.cost - b.unit.cost)[0];
+  const compared = prices ? compareRoutes(curUniq, ctx) : { routes: [], best: undefined };
+  const routes = compared.routes.map((r) => ({ ...ROUTES.find((x) => x.value === r.value), ...r }));
+  const bestRoute = routes.find((r) => r.value === compared.best?.value);
   const path = cur ? routePath(cur.unit, cfg.tier) : [];
 
   // ----- tabela de preços por cidade dos itens usados nesta cadeia -----
   const chainMids = refineChainIds(curUniq, true);
-  const usedCells = new Set();
-  const walk = (unit) => unit.lines.forEach((l) => (l.sub ? walk(l.sub) : l.city && usedCells.add(`${l.mid}|${l.city}`)));
-  if (cur) walk(cur.unit);
+  const usedCellSet = cur ? usedCells(cur.unit) : new Set();
 
   const renderLines = (lines, level = 0) =>
     lines.map((l) => (
@@ -407,7 +371,7 @@ export default function Refining() {
           <p className="hint" style={{ marginTop: 10 }}>Clique numa linha para detalhar o tier. Usa as cidades e bônus escolhidos ao lado.</p>
         </div>
 
-        {prices && <PriceMatrix title={`Preços por cidade · itens desta cadeia (T${cfg.tier}.${ench})`} prices={prices} mids={chainMids} used={usedCells} useOrders={cfg.useOrders} targetMid={cur?.mid} />}
+        {prices && <PriceMatrix title={`Preços por cidade · itens desta cadeia (T${cfg.tier}.${ench})`} prices={prices} mids={chainMids} used={usedCellSet}useOrders={cfg.useOrders} targetMid={cur?.mid} />}
       </div>
     </div>
   );
