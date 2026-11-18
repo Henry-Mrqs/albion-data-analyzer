@@ -105,3 +105,38 @@ T4_HEAD_CLOTH_KEEPER, diário +10, variante 1.5 salva: abre na receita Artefato 
 ## Observações
 - Cosmético: `mode={pickerMode}onChange` sem espaço no JSX de `Crafting.jsx` (funciona).
 - Variante salva inválida abre com o botão da receita 0 marcado (não "Automático"); aceitável.
+
+---
+
+# Re-teste da mesclagem com a 010
+
+**Veredito final: APROVADO.** Tip testado: 481cbd9 (merge da master com 010 e 041; merge-base = tip da master, a branch está em dia). `npm run check`: 568 testes verdes, lint limpo; `npm test` 2x: 568/568.
+
+## 1. Revisão de `Crafting.jsx` (`git diff master...feat/IDEIA-049`, 21 linhas alteradas, 6 hunks)
+| Hunk | Classe |
+|---|---|
+| imports: `recipeOf` -> `recipeVariants`; + `pickCheapest, resolveVariant, returnBadge`; + `RecipePicker`. **`SELL_CITIES`, `illusoryHint`, `useHistory`, `loadedStats`, `validateInputs`, `GiroCard/GiroCell` seguem importados e usados** (linhas 4, 8, 10-14, 61-63, 311, 319, 326) | 049 |
+| `rec` -> `variants`; `ids` = união das cadeias | 049 |
+| bloco de cálculo: `results` por variante com `cfgEff`, `auto`, `resolveVariant`, `rec`/`c` da escolhida; `savings` e nota do diário inalterados (usam `rec` escolhida e `cfgEff`) | 049 |
+| `ItemSelector.onChange`: volta a 'auto' ao trocar de item | 049 |
+| `<RecipePicker .../>` abaixo do item | 049 |
+| selo "não retorna" via `returnBadge` (mesma saída de texto) | 049 (DT-009) |
+Nenhuma linha da 010, 041, 060 ou 066 foi removida; nada de "outro". Sem uso órfão de `recipeOf`/`SELL_CITIES`/`illusoryHint`, sem variável indefinida, sem import sem uso. Único `eslint-disable-line no-unused-vars` novo da branch está num TESTE da 049 (`catalog.test.js`, desestruturação `{ alt, ...semAlt }`), não no componente; aceitável.
+Testes: só acréscimos (única linha removida: lista de imports de `catalog.test.js`, reformatada).
+
+## 2. Coexistência na tela (porta 5214, contexto isolado, só localStorage dessa porta)
+- `T4_2H_ARCANESTAFF_HELL` (diário +10): seletor, mais barata (artefato 11.964 + 403 = 12.367 x ficha 21.122), cartão "Vale esperar", coluna Comprador, coluna e cartão Giro, aviso "Ilusória...", **1 requisição de histórico**.
+- `T4_MAIN_SWORD` com resposta de preços substituída na minha aba (ordem de venda 5.000 em Lymhurst sem comprador): **sem seletor**; linha "Ordem de venda · comprador: nenhum visível · ilusória · sem venda registrada (último 10/11) · 0 de 7 dias com dados"; Giro presente; **2 requisições de histórico** (limite).
+- `T4_ARMOR_PLATE_ROYAL` a 375 px: Base 1 "sem preço" não marcada, Base 3 mais barata; Giro, cartão, Comprador e aviso presentes; sem rolagem horizontal (scrollWidth 375); console sem erros/avisos.
+
+## 3. Diferencial contra a master atual (010 inclusa)
+Byte a byte idênticos à master: `flip.js`, `exits.js`, `liquidity.js`, `history.js`, `inputRules.js`, `econ.js`, `market.js`, `craftPlan.js`, `dailyBonus.js`, `settings.js`, `Giro.jsx`, `DailyWait.jsx`, `TargetPrice.jsx`, `PriceMatrix.jsx`. Execução com variante 0: 3.000 combinações de `annotateOptions`/`pickExit`/`bestBuyer`/`illusoryHint`/`exitsFor`/`waitSavings`/`loadedStats`/`mergeHistory`/`flipRows` + 4.500 de `computeCraft` e `waitSavings` com diário 0/10/20: 0 diferenças.
+
+## 4. Sem regressão da 049
+8.000 variantes inválidas (0 exceções, 0 divergências), 4.000 cenários diário x variantes contra o oráculo (mais barata, opção sem preço nunca vence, `waitSavings` da escolhida), bordas de `alt.at`: tudo igual ao laudo anterior.
+
+## 5. Mutações da mesclagem
+Sem teste de componente (ambiente node): remover o uso de `illusoryHint`/`SELL_CITIES`, perder o Giro, ou usar `cfg` no lugar de `cfgEff` no seletor **sobrevivem** nos testes unitários (remover só o uso deixaria import sem uso e o lint reprovaria; `cfg` no lugar de `cfgEff` não). Cobertura: leitura do código (acima) e tela (diário +10, Giro, Comprador, ilusória, requisições de histórico). Mutações de biblioteca da 049 continuam mortas como antes.
+
+## 6. Perdas de comportamento
+Nenhum comportamento da 010, 066 ou 041 foi perdido.
