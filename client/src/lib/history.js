@@ -44,6 +44,12 @@ export function historyUrl({ server, ids, cities, scale = 24, qualities = '1' })
   return `https://${server}.albion-online-data.com/api/v2/stats/history/${ids.map(encodeURIComponent).join(',')}?locations=${encodeURIComponent(cities.join(','))}&time-scale=${scale}&qualities=${encodeURIComponent(qualities)}`;
 }
 
+/** Flipper: ids e cidades de venda só das primeiras `n` linhas mostradas (nunca o catálogo todo). */
+export function topHistoryRequest(rows, n = HISTORY_TOP_N) {
+  const top = rows.slice(0, n);
+  return { ids: [...new Set(top.map((r) => r.mid))], cities: [...new Set(top.map((r) => r.sell))] };
+}
+
 // ---------- fetch com cache próprio ----------
 const cache = new Map(); // `${server}|${cidades ordenadas}|${id}` -> { t, series: { [cidade]: série } }
 export const clearHistoryCache = () => cache.clear();

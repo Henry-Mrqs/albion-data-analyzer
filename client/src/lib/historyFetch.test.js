@@ -1,6 +1,6 @@
 // fetchHistory: cache, fila e limites (requestFn falso e `now` injetados; sem rede).
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { HISTORY_CONCURRENCY, HISTORY_MAX_REQUESTS, HISTORY_TOP_N, HISTORY_TTL_MS, clearHistoryCache, fetchHistory, historyDeps, historyUrl } from './history';
+import { HISTORY_CONCURRENCY, HISTORY_MAX_REQUESTS, HISTORY_TOP_N, HISTORY_TTL_MS, clearHistoryCache, fetchHistory, historyDeps, historyUrl, topHistoryRequest } from './history';
 import { MarketError, request as marketRequest } from './market';
 
 const idsOf = (url) => decodeURIComponent(url.split('/history/')[1].split('?')[0]).split(',');
@@ -10,6 +10,19 @@ const echo = () => vi.fn(async (url) => rowsFor(url));
 const manyIds = (n) => Array.from({ length: n }, (_, i) => `T4_ITEM_${String(i).padStart(4, '0')}`);
 const T0 = 1e12;
 const base = { cities: ['Caerleon'], now: T0, server: 'west' };
+
+describe('topHistoryRequest (Flipper: só as linhas mostradas, nunca o catálogo)', () => {
+  const row = (mid, sell) => ({ mid, sell });
+  it('pega só as primeiras N linhas, sem ids repetidos, e as cidades de venda delas', () => {
+    const rows = [row('A', 'Caerleon'), row('B', 'Black Market'), row('A', 'Lymhurst'), row('C', 'Caerleon'), row('D', 'Thetford')];
+    expect(topHistoryRequest(rows, 3)).toEqual({ ids: ['A', 'B'], cities: ['Caerleon', 'Black Market', 'Lymhurst'] });
+  });
+  it('usa HISTORY_TOP_N por padrão (30) e nunca passa disso', () => {
+    const rows = Array.from({ length: 100 }, (_, i) => row(`T4_X${i}`, 'Caerleon'));
+    expect(topHistoryRequest(rows).ids).toHaveLength(HISTORY_TOP_N);
+  });
+  it('sem linhas: nada a pedir', () => expect(topHistoryRequest([])).toEqual({ ids: [], cities: [] }));
+});
 
 describe('fetchHistory', () => {
   beforeEach(() => clearHistoryCache());

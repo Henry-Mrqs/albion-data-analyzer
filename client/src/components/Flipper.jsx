@@ -5,6 +5,10 @@ import { CITIES, SELL_CITIES, cityLabel, fetchPrices, ageLabel, ageClass } from 
 import { fmt } from '../lib/econ';
 import { flipRows } from '../lib/flip';
 import { useSettings, usePersisted } from '../lib/settings';
+import { DEFAULT_MAX_AGE_H } from '../lib/exits';
+import { HISTORY_TOP_N, fetchHistory, topHistoryRequest } from '../lib/history';
+import { windowStats } from '../lib/liquidity';
+import { GiroCell } from './Giro';
 import { Banner, Field, NumberInput, Segmented } from './ui';
 
 const GROUPS = {
@@ -25,7 +29,7 @@ export default function Flipper() {
   const [cfg, setCfg] = usePersisted('flip:cfg', {
     groups: ['weapons', 'armors'], tiers: [6, 7, 8], enchs: [0, 1],
     buyCities: [...CITIES], sellCities: ['Black Market', 'Caerleon'],
-    buyMode: 'instant', sellMode: 'any', minProfit: 2000, minMargin: 10, maxAge: 24, budget: '',
+    buyMode: 'instant', sellMode: 'any', minProfit: 2000, minMargin: 10, maxAge: DEFAULT_MAX_AGE_H, budget: '',
   });
   const set = (patch) => setCfg((c) => ({ ...c, ...patch }));
   const toggle = (key, v) => set({ [key]: cfg[key].includes(v) ? cfg[key].filter((x) => x !== v) : [...cfg[key], v] });
@@ -63,12 +67,34 @@ export default function Flipper() {
     }
   }
 
+  // Giro sob demanda (IDEIA-010): só as HISTORY_TOP_N primeiras linhas mostradas, só com clique, pela fila/cache do market.js.
+  const [hist, setHist] = useState({ running: false, done: 0, total: 0, data: null, error: null, truncated: false });
+  const histAbort = useRef(null);
+  const [histNow, setHistNow] = useState(Date.now);
+
   const rows = useMemo(() => {
     if (!scan.prices) return [];
     const out = [...flipRows(scan.prices, cfg, premium)];
     out.sort((a, b) => (a[sort.key] - b[sort.key]) * sort.dir);
     return out;
   }, [scan.prices, cfg, premium, sort]);
+
+  async function loadGiro() {
+    const { ids: topIds, cities } = topHistoryRequest(rows);
+    if (!topIds.length) return;
+    histAbort.current?.abort();
+    const c = new AbortController();
+    histAbort.current = c;
+    setHistNow(Date.now());
+    setHist((h) => ({ ...h, running: true, done: 0, total: 1, error: null }));
+    try {
+      const r = await fetchHistory(topIds, { cities, signal: c.signal, onProgress: (done, total) => setHist((h) => ({ ...h, done, total })) });
+      setHist((h) => ({ ...h, running: false, data: { ...h.data, ...r.data }, truncated: r.truncated }));
+    } catch (e) {
+      if (e.name === 'AbortError') return setHist((h) => ({ ...h, running: false }));
+      setHist((h) => ({ ...h, running: false, error: e.message }));
+    }
+  }
 
   const th = (key, label) => (
     <th className="sortable" onClick={() => setSort((s) => ({ key, dir: s.key === key ? -s.dir : -1 }))}>
@@ -156,7 +182,22 @@ export default function Flipper() {
 
           {scan.prices && (
             <>
-              <div className="hint">{rows.length} oportunidades{rows.length > 300 ? ' (mostrando 300)' : ''}</div>
+              <div className="card-head">
+                <div className="hint">{rows.length} oportunidades{rows.length > 300 ? ' (mostrando 300)' : ''}</div>
+                <button className="btn sm" onClick={loadGiro} disabled={hist.running || !rows.length} title="Busca o histórico de vendas (7 dias) só das linhas do topo, em poucas consultas">
+                  Carregar giro das {HISTORY_TOP_N} primeiras
+                </button>
+              </div>
+              {hist.running && (
+                <div className="progress">
+                  <div style={{ width: `${(hist.done / hist.total) * 100}%` }} />
+                </div>
+              )}
+              {hist.error && (
+                <Banner kind="err" title="Giro interrompido">
+                  {hist.error}
+                </Banner>
+              )}
               <div className="table-wrap" style={{ maxHeight: '70vh' }}>
                 <table>
                   <thead>
@@ -167,6 +208,7 @@ export default function Flipper() {
                       {th('cost', 'Custo')}
                       {th('profit', 'Lucro')}
                       {th('margin', 'Margem')}
+                      <th title="Vendas registradas por dia nos últimos 7 dias completos, na cidade de venda da linha">Giro (un./dia)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -187,6 +229,7 @@ export default function Flipper() {
                         <td className="num">{fmt(r.cost)}</td>
                         <td className="num good">+{fmt(r.profit)}</td>
                         <td className="num">{r.margin.toFixed(0)}%</td>
+                        <td>{hist.data?.[r.mid] ? <GiroCell stats={windowStats(hist.data[r.mid][r.sell], { now: histNow })} /> : null}</td>
                       </tr>
                     ))}
                   </tbody>
