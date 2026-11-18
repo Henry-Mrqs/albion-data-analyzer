@@ -114,5 +114,10 @@ O Executor da 019 parou por regra do briefing (correto): 2 testes da fundação 
 8. Pode remover `lowestListing` e seus testes, já que fica sem uso. Os testes removidos devem ser listados no commit e o Tester confere que nenhuma asserção de comportamento sumiu sem substituta.
 **Ordem de execução depois do deploy 2:** WIP 3 = **038** (catálogo, 057 e 039 em seguida) + **060** + **066** (060 e 066 tocam `Crafting.jsx`/`TargetPrice.jsx` em regiões distintas). A **041** espera a 060 estar mesclada, porque ambas editam `craftPlan.js`; o Executor da 041 parte da `master` já atualizada.
 
+## D-022 — IDEIA-019 aprovada com ressalvas; deploys separados; retrabalho nº 1
+**Laudo:** APROVADO. Mas exijo corrigir antes do deploy: (1) **bug de migração**: quem já tinha taxa salva (sem `feeSet`) vê "Valor padrão (400)" com outro número no campo; inclui o usuário deste projeto e é informação errada na tela, mesmo sem afetar o cálculo; (2) uma mutação real sobrevive: o `refineFee` do Craft pode ser ignorado sem falhar teste (os testes só usam 400); (3) rótulos do Refino confundem taxa da última etapa × taxa do lote. A ressalva de "sem teste de componente do aviso" fica como **DT-002** (não há jsdom no projeto; resolver pela função pura do item 1).
+**Deploys separados:** 023 e 030 são independentes da 019, então sobem agora como deploy 2; a 019 sobe no deploy 3 depois do retrabalho e de um re-teste curto. Consequência na fila: 038 (precisa da 023) e 066 (precisa da 030) podem começar após o deploy 2; 060 e 041 esperam o deploy 3 (060 edita `FeeField.jsx` e `craftPlan.js` da 019).
+**Retrabalho:** 1 de no máximo 2 (regra do briefing do usuário).
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.
