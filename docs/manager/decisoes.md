@@ -44,5 +44,16 @@ Correções de cálculo que passam pelo pipeline completo (dossiê, plano, QA, d
 ## D-012 — Pontos que só o usuário consegue conferir em jogo
 O Pesquisador não achou fonte para: valor do artefato na taxa de bancada, taxa de itens com `amountcrafted` > 1 (poção/comida) e fama por craft. Isso vai para o usuário como pedido de medição (ver relatório do loop). Enquanto não houver medição, o app mostra o valor atual com aviso, sem mudar o cálculo.
 
+## D-013 — Planos 023, 030 e 031 aprovados; IDEIA-001 sobe primeiro
+Conferi de forma independente os números da 030 (C = 3.524,27; equilíbrio 3.770; lucro 1.000 por ordem 4.839, instantâneo 4.713; relistagem 4.972) e o exemplo da 031 (lucro 683 → preço mínimo 3.769, queda máxima de 16,2%). Batem. Respostas às perguntas do Planejador:
+1. **023:** Rest (base 15) e Ilha (base 0) ficam FORA: exigiriam mudar `rrr()` e conflitam com 019/041. Entram depois, como ideia própria, se o usuário usar essas zonas.
+2. **023:** nova aba "RRR", como o plano propõe.
+3. **030:** mantém o campo de relistagens (é exatamente o tipo de variável que o jogador esquece). Fonte só da wiki (MÉDIA-ALTA) e o caso 4.972 é derivado do texto: o Tester refaz à mão e a UI rotula o campo como "estimativa". Flipper fora.
+4. **031:** o "preço fixo de material" do dossiê é ambíguo; fica a interpretação do plano (perturba todos os materiais comprados), escrita com clareza na tela.
+5. **031 semáforo:** vermelho abaixo de 0, amarelo abaixo de 5% do custo, verde acima. **Decisão de produto do Gerente, sem fonte de jogo** (não é fórmula).
+6. **031:** Flipper e histórico fora, confirmado.
+**Ordem de entrega:** a IDEIA-001 (infra) sobe sozinha como o deploy 1, assim que o Tester aprovar, para que todas as outras branches partam de uma `master` com testes. Só então entram 038/019 etc.
+**Paralelismo:** 023 (só `App.jsx` + arquivos novos) é livre com tudo. 030 e 031 tocam `Crafting.jsx`/`Refining.jsx` em uma linha cada: rodam em sequência ou com merge simples, nunca junto de 038/019/041 no mesmo arquivo sem ordem.
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.

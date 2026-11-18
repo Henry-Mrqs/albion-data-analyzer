@@ -7,7 +7,7 @@
 | Loops concluídos | 0 |
 | Ideias no backlog | 44 (1 infra + 43 funcionais) |
 | Dossiês entregues | 8 + 1 auditoria |
-| Planos aprovados | 1 (IDEIA-001) |
+| Planos aprovados | 4 (001, 023, 030, 031) |
 | Em execução (WIP, limite 3) | 1 (IDEIA-001) |
 | Em produção | 0 |
 | VERIFICADA | 0 |
