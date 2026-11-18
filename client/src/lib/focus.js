@@ -1,6 +1,8 @@
 // Foco (IDEIA-002): custo em pontos, orçamento diário e prata por ponto. Puro: sem React, fetch ou localStorage.
 import { computeCraft } from './craftPlan';
 import { validateInputs } from './inputRules';
+import { focusOf, parseMarketId } from './catalog';
+import { refineUnit, materialPlan } from './econ';
 import { FOCUS_HALF_PER, DAILY_FOCUS_PREMIUM, MAX_FOCUS_EFFICIENCY } from './focusConsts';
 
 export { FOCUS_HALF_PER, DAILY_FOCUS_PREMIUM, MAX_FOCUS_EFFICIENCY };
@@ -76,5 +78,53 @@ export function craftFocusSummary({ rec, targetMid, prices, cfg, premium, bonusC
     profitOn: on.best ? on.best.profit : null,
     profitOff: off.best ? off.best.profit : null,
     verdict: verdictOf(source, silverPerPoint, reference),
+  };
+}
+
+/**
+ * Cartão "Foco" do Refino, por unidade do refinado `uniq` (ex.: T4_PLANKS). ctx = o contexto de refineUnit (sem rrr).
+ * Economia = custo da unidade com RRR sem foco − com foco (a taxa de bancada cancela). Pontos = soma das etapas da rota
+ * (materialPlan com o RRR com foco): a mesma eficiência vale em todas as etapas e o `override` do jogo vale só para a etapa final.
+ * `base` é o foco da etapa final; o das demais vem do catálogo (etapa sem dado conta 0 e entra em `stepsWithoutData`).
+ * null se faltam preços.
+ */
+export function refineFocusSummary({ uniq, ctx, rrrOn, rrrOff, base, efficiency, override, qty = 1, budget, reference }) {
+  if (!ctx?.prices) return null;
+  const unitOn = refineUnit(uniq, { ...ctx, rrr: rrrOn });
+  const unitOff = refineUnit(uniq, { ...ctx, rrr: rrrOff });
+  if (unitOn.missing.length || unitOff.missing.length || !(unitOn.cost > 0)) return null;
+  const final = focusPerCraft({ base, efficiency, override });
+  let stepsWithoutData = 0;
+  const steps = materialPlan(unitOn, 1, rrrOn).makes.map((m, k) => {
+    let p;
+    if (k === 0) p = final;
+    else {
+      const { base: b, ench } = parseMarketId(m.mid);
+      p = focusPerCraft({ base: focusOf(b, ench), efficiency });
+      if (p.source === 'none') stepsWithoutData++;
+    }
+    return { mid: m.mid, qty: m.qty, points: m.qty * p.points };
+  });
+  const pointsPerUnit = steps.reduce((s, x) => s + x.points, 0);
+  const savingsPerUnit = unitOff.cost - unitOn.cost;
+  const silverPerPoint = pointsPerUnit > 0 ? savingsPerUnit / pointsPerUnit : null;
+  const q = Math.max(1, +qty || 1);
+  return {
+    source: final.source,
+    steps,
+    stepsWithoutData,
+    pointsPerUnit,
+    pointsLot: pointsPerUnit * q,
+    savingsPerUnit,
+    savingsLot: savingsPerUnit * q,
+    silverPerPoint,
+    unitsInBudget: craftsWithBudget(budget, pointsPerUnit),
+    budget: Number.isFinite(budget) ? budget : 0,
+    reference: reference > 0 ? reference : null,
+    costOn: unitOn.cost,
+    costOff: unitOff.cost,
+    profitOn: null,
+    profitOff: null,
+    verdict: verdictOf(final.source, silverPerPoint, reference),
   };
 }

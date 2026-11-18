@@ -1,11 +1,13 @@
 import { useMemo } from 'react';
 import { Route } from 'lucide-react';
-import { REFINING, marketId, nameOf } from '../lib/catalog';
+import { REFINING, focusOf, marketId, nameOf } from '../lib/catalog';
 import { CITIES, SELL_CITIES, cityLabel, usePrices } from '../lib/market';
 import { rrr as calcRRR, resolveRRR, refineChainIds, fmt, pct, feeIsUnconfirmedDefault } from '../lib/econ';
 import { compareRoutes, evaluateTier, lotFee, pickBestTier, routePath, usedCells } from '../lib/refinePlan';
 import { useSettings, usePersisted } from '../lib/settings';
 import { cleanRefineCfg } from '../lib/inputRules';
+import { focusValues, refineFocusSummary } from '../lib/focus';
+import FocusCard, { FocusFields } from './FocusCard';
 import FeeField from './FeeField';
 import InputIssues, { CorrectedBadge } from './InputIssues';
 import PriceMatrix from './PriceMatrix';
@@ -64,6 +66,11 @@ export default function Refining() {
 
   // ----- rotas: comprar refinado pronto x produzir tudo x melhor combinação -----
   const curUniq = uniqOf(cfg.tier);
+  // Foco (IDEIA-002): campos validados (060) e cartão; não altera nenhum outro número da tela
+  const fv = focusValues(cfg);
+  const fbase = focusOf(`T${cfg.tier}_${cfg.type}`, ench);
+  const rrrAt = (focus) => calcRRR({ kind: 'refine', specialty, focus, daily: vcfg.daily });
+  const fs = prices ? refineFocusSummary({ uniq: curUniq, ctx, rrrOn: rrrAt(true), rrrOff: rrrAt(false), base: fbase, qty: vcfg.qty, ...fv.values }) : null;
   const compared = prices ? compareRoutes(curUniq, ctx) : { routes: [], best: undefined };
   const routes = compared.routes.map((r) => ({ ...ROUTES.find((x) => x.value === r.value), ...r }));
   const bestRoute = routes.find((r) => r.value === compared.best?.value);
@@ -160,6 +167,7 @@ export default function Refining() {
         <hr className="sep" style={{ margin: 0 }} />
         <h3>Bônus e taxas</h3>
         <Switch label="Usar foco" hint="+59% de bônus de produção" checked={cfg.focus} onChange={(v) => set({ focus: v })} />
+        <FocusFields cfg={cfg} set={set} issues={fv.issues} overrideHint="Foco da etapa final mostrado na janela de refino do jogo (vence a fórmula)." />
         <div className="cols-2">
           <Field label="Bônus diário">
             <select className="input" value={cfg.daily} onChange={(e) => set({ daily: +e.target.value })}>
@@ -282,6 +290,8 @@ export default function Refining() {
         </div>
 
         {cur && <TargetPrice cost={cur.unit.cost} prices={prices} mid={cur.mid} missing={missing.length > 0} />}
+
+        {cur && <FocusCard summary={fs} ench={ench} hasBase={fbase != null} unit="refino" />}
 
         {routes.length > 0 && (
           <div className="card stack">

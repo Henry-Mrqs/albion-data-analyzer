@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { recipeOf } from './catalog';
-import { craftFocusSummary, craftsWithBudget, focusCost, focusPerCraft, focusValues } from './focus';
-import { loadFixtureCatalog, mkPrices } from '../test/helpers';
+import { focusOf, recipeOf } from './catalog';
+import { craftFocusSummary, craftsWithBudget, focusCost, focusPerCraft, focusValues, refineFocusSummary } from './focus';
+import { loadFixtureCatalog, mkPrices, planksSpec } from '../test/helpers';
 
 beforeEach(loadFixtureCatalog);
 
@@ -151,5 +151,70 @@ describe('IDEIA-002: focusValues (campos de foco salvos no navegador)', () => {
     const r = focusValues({ focusEff: '99999', focusPoints: '-3', focusBudget: 'x', focusRef: '-1' });
     expect(r.values).toEqual({ efficiency: 31000, override: null, budget: 10000, reference: null });
     expect(r.issues.map((i) => i.field).sort()).toEqual(['focusBudget', 'focusEff', 'focusPoints', 'focusRef']);
+  });
+});
+
+// Refino: Cenário A da 001 (Tábua T4: 2 Madeira T4 + 1 Tábua T3), cidade especializada: RRR sem foco 58/158, com foco 117/217.
+const RRR_OFF = 58 / 158;
+const RRR_ON = 117 / 217;
+const rctx = (over = {}) => ({ prices: mkPrices(planksSpec()), city: 'best', useOrders: false, feePer100: 400, route: 'buy', ...over });
+const R = (o = {}) => refineFocusSummary({ uniq: 'T4_PLANKS', ctx: rctx(), rrrOn: RRR_ON, rrrOff: RRR_OFF, base: focusOf('T4_PLANKS', 0), qty: 1, ...o });
+
+describe('IDEIA-002: refineFocusSummary', () => {
+  it('Tábua T4, rota buy: pontos por unidade = f(T4_PLANKS) = 54 com eficiência 0', () => expect(R().pointsPerUnit).toBeCloseTo(54, 9));
+  it('economia por unidade = bruto 110 × (0,632911 − 0,460829) = 18,93 → 0,35 prata por ponto', () => {
+    const s = R();
+    expect(s.savingsPerUnit).toBeCloseTo(18.929, 3);
+    expect(s.silverPerPoint).toBeCloseTo(0.3505, 4);
+  });
+  it('rota all soma o foco de cada etapa: T4 + T3 e T2 pelas quantidades do plano com foco', () => {
+    const s = R({ ctx: rctx({ route: 'all' }) });
+    const k = 1 - RRR_ON;
+    expect(s.pointsPerUnit).toBeCloseTo(focusOf('T4_PLANKS', 0) + focusOf('T3_PLANKS', 0) * k + focusOf('T2_PLANKS', 0) * k * k, 9);
+    expect(s.pointsPerUnit).toBeCloseTo(54 + 31 * k + 18 * k * k, 9);
+    expect(s.steps).toHaveLength(3);
+  });
+  it('eficiência vale em todas as etapas (cada 10.000 divide ao meio)', () => {
+    const a = R({ ctx: rctx({ route: 'all' }) });
+    const b = R({ ctx: rctx({ route: 'all' }), efficiency: 10000 });
+    expect(b.pointsPerUnit).toBeCloseTo(a.pointsPerUnit / 2, 9);
+  });
+  it('encanto .1 usa ef: T4_PLANKS_LEVEL1 (94)', () => {
+    const prices = mkPrices({ ...planksSpec(), 'T4_WOOD_LEVEL1@1': 40, 'T3_PLANKS_LEVEL1@1': 70, 'T4_PLANKS_LEVEL1@1': 200 });
+    const s = refineFocusSummary({ uniq: 'T4_PLANKS_LEVEL1', ctx: rctx({ prices }), rrrOn: RRR_ON, rrrOff: RRR_OFF, base: focusOf('T4_PLANKS', 1), qty: 1 });
+    expect(s.pointsPerUnit).toBeCloseTo(94, 9);
+  });
+  it('sem foco no catálogo (base null): verdict = nofocus', () => {
+    expect(R({ base: null }).verdict).toBe('nofocus');
+    expect(R({ base: 0 }).verdict).toBe('nofocus');
+  });
+  it('lote: qty multiplica pontos e economia; a razão por ponto não muda', () => {
+    const s = R();
+    const l = R({ qty: 100 });
+    expect(l.pointsLot).toBeCloseTo(100 * s.pointsPerUnit, 6);
+    expect(l.savingsLot).toBeCloseTo(100 * s.savingsPerUnit, 6);
+    expect(l.silverPerPoint).toBeCloseTo(s.silverPerPoint, 9);
+  });
+  it('orçamento: 54 pontos por unidade, 10.000 de foco = 185 unidades', () => expect(R({ budget: 10000 }).unitsInBudget).toBe(185));
+  it('override do jogo vale só para a etapa final: 40 na final + 31 do T3 (rota all, eficiência 0)', () => {
+    const s = R({ ctx: rctx({ route: 'all' }), override: 40 });
+    const k = 1 - RRR_ON;
+    expect(s.pointsPerUnit).toBeCloseTo(40 + 31 * k + 18 * k * k, 9);
+    expect(s.source).toBe('override');
+  });
+  it('veredito pela referência: 0,35 por ponto: referência 0,3 → worth; 1 → notworth; sem referência → info', () => {
+    expect(R({ reference: 0.3 }).verdict).toBe('worth');
+    expect(R({ reference: 1 }).verdict).toBe('notworth');
+    expect(R().verdict).toBe('info');
+  });
+  it('sem preços ou preço faltando: null', () => {
+    expect(R({ ctx: rctx({ prices: null }) })).toBeNull();
+    expect(R({ ctx: rctx({ prices: mkPrices(planksSpec({ T4_WOOD: null })) }) })).toBeNull();
+  });
+  it('campos ausentes (estado antigo): eficiência undefined = 0, orçamento ausente = 0, sem NaN', () => {
+    const s = R({ efficiency: undefined, budget: undefined });
+    expect(s.pointsPerUnit).toBeCloseTo(54, 9);
+    expect(s.unitsInBudget).toBe(0);
+    expect(Number.isFinite(s.silverPerPoint)).toBe(true);
   });
 });
