@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { targetPrice, marketGap, lowestListing } from './targetPrice';
+import { targetPrice, marketGap } from './targetPrice';
 import { netSale } from './econ';
-import { mkPrices } from '../test/helpers';
 
 // Caso do dossiê §4: barra 200 x16 + couro 150 x8, RRR 33/133, taxa 384 x 0,1125 x 5 = 216.
 const C = 4400 * (100 / 133) + 216; // 3524,2707
@@ -60,16 +59,5 @@ describe('IDEIA-060: entradas inválidas', () => {
   it('relistagens acima do derivado: null; no limite continua válido', () => {
     expect(targetPrice({ cost: C, premium: true, mode: 'order', profit: 1000, relists: 38 })).toBeNull();
     expect(targetPrice({ cost: C, premium: true, mode: 'order', profit: 1000, relists: 37 })).not.toBeNull();
-  });
-});
-
-describe('lowestListing', () => {
-  it('menor preço de venda entre cidades reais, ignorando zero e Black Market', () => {
-    const prices = mkPrices({ T4_MAIN_SWORD: { Martlock: { s: 4600, sd: 111 }, Caerleon: { s: 4500, sd: 222 }, Lymhurst: { s: 0 }, 'Black Market': { s: 100 } } });
-    expect(lowestListing(prices, 'T4_MAIN_SWORD')).toEqual({ price: 4500, city: 'Caerleon', date: 222 });
-  });
-  it('sem preços retorna null', () => {
-    expect(lowestListing(null, 'T4_MAIN_SWORD')).toBeNull();
-    expect(lowestListing(mkPrices({}), 'T4_MAIN_SWORD')).toBeNull();
   });
 });

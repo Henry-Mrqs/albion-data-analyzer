@@ -7,18 +7,22 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'client', 'public', 'data', 'catalog.json');
-const BASE = 'https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master';
+// Dump fixado (SHA = HEAD de master em 2026-11-02): a geração do catálogo é reprodutível.
+const REF = '0483dd97f1581dfaf02eed42f25f5ea2a3cb75e5';
+const REF_DATE = '2026-11-02';
+const BASE = `https://raw.githubusercontent.com/ao-data/ao-bin-dumps/${REF}`;
 
-async function cached(url, name) {
-  const file = path.join(os.tmpdir(), `albion-${name}`);
+async function download(url, name) {
+  const file = path.join(os.tmpdir(), `albion-${REF.slice(0, 8)}-${name}`);
   if (!fs.existsSync(file)) {
     console.log('baixando', url);
     const res = await fetch(url);
     if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
     fs.writeFileSync(file, Buffer.from(await res.arrayBuffer()));
   }
-  return JSON.parse(fs.readFileSync(file, 'utf8'));
+  return fs.readFileSync(file, 'utf8');
 }
+const cached = async (url, name) => JSON.parse(await download(url, name));
 
 const arr = (x) => (x === undefined ? [] : Array.isArray(x) ? x : [x]);
 const num = (x, d = 0) => (x === undefined || x === '' || isNaN(+x) ? d : +x);
@@ -31,6 +35,29 @@ const nameOf = (id) => {
   const n = names.get(id) || names.get(id.replace(/@\d$/, '')) || {};
   return [n['PT-BR'] || n['EN-US'] || id, n['EN-US'] || id];
 };
+
+// categoria de craft -> cidade com +15% de produção, lida do craftingmodifiers.xml do dump.
+// clusterid -> cidade: comentários do próprio XML (<!--thetford--> 0000, ...); Rests ficam de fora.
+const CRAFT_CLUSTERS = {
+  '0000': 'Thetford', '1000': 'Lymhurst', '2000': 'Bridgewatch', '3004': 'Martlock',
+  '4000': 'Fort Sterling', '3003': 'Caerleon', '5000': 'Brecilien',
+};
+function parseCityOf(xml) {
+  const cityOf = {};
+  for (const m of xml.matchAll(/<craftinglocation\s+clusterid="(\d+)"[^>]*>([\s\S]*?)<\/craftinglocation>/g)) {
+    const city = CRAFT_CLUSTERS[m[1]];
+    if (!city) continue;
+    for (const mod of m[2].matchAll(/<craftingmodifier\s+name="([^"]+)"\s+value="([\d.]+)"/g)) {
+      if (+mod[2] !== 0.15) continue; // ignora +40 (refino) e carne (0.10)
+      if (cityOf[mod[1]] && cityOf[mod[1]] !== city) throw new Error(`categoria ${mod[1]} em duas cidades: ${cityOf[mod[1]]} e ${city}`);
+      cityOf[mod[1]] = city;
+    }
+  }
+  const n = Object.keys(cityOf).length;
+  if (n !== 33) throw new Error(`cityOf deveria ter 33 categorias, tem ${n}: o XML mudou?`);
+  return cityOf;
+}
+const cityOf = parseCityOf(await download(`${BASE}/craftingmodifiers.xml`, 'craftingmodifiers.xml'));
 
 const KINDS = ['simpleitem', 'consumableitem', 'equipmentitem', 'weapon', 'farmableitem'];
 const all = new Map();
@@ -81,6 +108,7 @@ for (const [id, { it }] of all) {
     w: num(it['@weight']),
     v: num(it['@itemvalue']),
   };
+  if (it['@craftingcategory']) entry.cc = it['@craftingcategory'];
   const enchs = arr(it.enchantments?.enchantment);
   entry.x = enchs.length;
   if (base) {
@@ -142,6 +170,6 @@ for (const e of items) {
 }
 
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
-fs.writeFileSync(OUT, JSON.stringify({ built: new Date().toISOString().slice(0, 10), items, extra, vals, encNames }));
+fs.writeFileSync(OUT, JSON.stringify({ built: REF_DATE, src: REF, cityOf, items, extra, vals, encNames }));
 const kb = (fs.statSync(OUT).size / 1024).toFixed(0);
 console.log(`ok: ${items.length} itens, ${Object.keys(extra).length} extras, ${deviations} receitas encantadas fora da regra, ${kb} KB`);

@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { loadFixtureCatalog } from '../test/helpers';
-import { craftBonusCity, recipeOf } from './catalog';
-import { isSpecialty, recipeReturn, referenceTable, rrrFor } from './rrrCalc';
+import { cityOfCategory, getItem, recipeOf } from './catalog';
+import { isSpecialty, itemCraftInfo, recipeReturn, referenceTable, rrrFor } from './rrrCalc';
 
 beforeEach(loadFixtureCatalog);
 
-const ESPECIALISTA = () => craftBonusCity('weapons/sword');
-const base = { kind: 'craft', city: 'Martlock', category: 'weapons/sword', resource: 'PLANKS', focus: false, daily: 0 };
+const ESPECIALISTA = () => cityOfCategory('sword');
+const base = { kind: 'craft', city: 'Martlock', category: 'sword', resource: 'PLANKS', focus: false, daily: 0 };
 const FS = { kind: 'refine', city: 'Fort Sterling', resource: 'PLANKS' };
 const cases = [
   ['cidade sem bônus', { kind: 'refine', city: 'Martlock', resource: 'PLANKS' }, 18, 0.152542],
@@ -46,10 +46,26 @@ describe('isSpecialty', () => {
     expect(isSpecialty({ kind: 'refine', city: 'Thetford', resource: 'METALBAR' })).toBe(true);
   });
   it('craft', () => {
-    expect(isSpecialty({ kind: 'craft', city: ESPECIALISTA(), category: 'weapons/sword' })).toBe(true);
-    expect(isSpecialty({ kind: 'craft', city: 'Martlock', category: 'weapons/sword' })).toBe(false);
-    expect(craftBonusCity('crafting/refinedresources')).toBeNull();
-    expect(isSpecialty({ kind: 'craft', city: 'Martlock', category: 'crafting/refinedresources' })).toBe(false);
+    expect(isSpecialty({ kind: 'craft', city: ESPECIALISTA(), category: 'sword' })).toBe(true);
+    expect(isSpecialty({ kind: 'craft', city: 'Martlock', category: 'sword' })).toBe(false);
+    expect(isSpecialty({ kind: 'craft', city: 'Brecilien', category: 'bag' })).toBe(true);
+    expect(isSpecialty({ kind: 'craft', city: 'Martlock', category: undefined })).toBe(false);
+    expect(isSpecialty({ kind: 'craft', city: 'Martlock', category: '' })).toBe(false);
+  });
+});
+
+describe('itemCraftInfo (categoria do jogo do item escolhido)', () => {
+  it('escudo: categoria offhand, Martlock', () => {
+    expect(itemCraftInfo(getItem('T4_OFF_SHIELD'))).toEqual({ cc: 'offhand', label: 'Mão secundária (escudo, livro, tocha)', city: 'Martlock' });
+  });
+  it('bolsa: Brecilien', () => {
+    expect(itemCraftInfo(getItem('T4_BAG'))).toMatchObject({ cc: 'bag', city: 'Brecilien' });
+  });
+  it('item Royal: sem categoria e sem cidade', () => {
+    expect(itemCraftInfo(getItem('T4_ARMOR_PLATE_ROYAL'))).toMatchObject({ cc: undefined, city: null, label: expect.stringMatching(/sem categoria/i) });
+  });
+  it('item indefinido', () => {
+    expect(itemCraftInfo(undefined)).toBeNull();
   });
 });
 

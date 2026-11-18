@@ -119,5 +119,51 @@ O Executor da 019 parou por regra do briefing (correto): 2 testes da fundação 
 **Deploys separados:** 023 e 030 são independentes da 019, então sobem agora como deploy 2; a 019 sobe no deploy 3 depois do retrabalho e de um re-teste curto. Consequência na fila: 038 (precisa da 023) e 066 (precisa da 030) podem começar após o deploy 2; 060 e 041 esperam o deploy 3 (060 edita `FeeField.jsx` e `craftPlan.js` da 019).
 **Retrabalho:** 1 de no máximo 2 (regra do briefing do usuário).
 
+## D-023 — IDEIA-038: teste da poção muda de cidade (aprovado)
+O Executor da 038 parou (corretamente) porque o teste C5 da 001 (poção T6 em Caerleon) deixa de ter bônus: a 038 corrige poção, bolsa e capa para **Brecilien**. Aprovado trocar a cidade do teste para Brecilien (números esperados idênticos: a intenção do teste é "craft em cidade de bônus") **e acrescentar** um teste de regressão que mostra a mesma poção em Caerleon sem bônus (RRR 18/118). É o segundo caso do processo em que um teste herdado muda por uma premissa errada da fundação, resolvido por parada e decisão, sem alteração silenciosa. Contagem de itens sem `cc` (1.006 no relato do Executor) será comparada por shopcategory com a minha de 132 itens de equipamento (o restante deve ser artefato, consumível e recurso).
+
+## D-024 — DT-003: constante de idade do dado do Flipper
+O Flipper só tem o literal `maxAge: 24` em `Flipper.jsx`. O Executor da 066 criou `DEFAULT_MAX_AGE_H = 24` em `exits.js` (comentário aponta o Flipper). Hoje as duas fontes valem 24 e não divergem, mas são duas. **DT-003:** o Flipper passa a importar a constante de `exits.js` no primeiro plano que tocar `Flipper.jsx` (IDEIA-053 ou 062). Não bloqueia a 066.
+
+## D-025 — IDEIA-066 aprovada; observações do Tester
+**Aprovada** (deploy 4). Registro:
+1. **Correção ao D-019 (erro de premissa do Gerente):** o "Martlock paga 3.796" da poção T4 que o Tester da 030 citou era um preço de VENDA, não uma ordem de compra. O melhor comprador real da poção é Lymhurst a 1.225, e o alerta do preço-alvo, que agora compara com ele, dispara com sentido. A premissa do teste sintético da 030 não se confirma com dados reais; o teste continua válido como cenário construído.
+2. **Falso conforto (decisão de produto):** por regra do dossiê, uma ordem de venda nunca é "ilusória" se houver qualquer compra fresca na cidade, mesmo muito abaixo (poção em Lymhurst: venda 1.555, compra 1.225). Isso é um buraco de informação: a diferença entre o preço de venda e o melhor comprador é o risco real. Vai para a **IDEIA-065** (preço de saída realista) e a **061** (spread), que já tratam do tema; a 065 deve mostrar o spread ao lado do selo.
+3. **Texto do aviso do preço-alvo no modo ordem de venda** compara com o melhor comprador e a redação confunde: revisão de texto fica na 065.
+4. **DT-004:** 8 mutantes sobrevivem na `exits.js` (M2, M9b, M11, M12, M15, M16, M18, M19). O mais relevante é M15 (o teste de comprador velho usa valor menor que o fresco e não distingue). O código está certo (0 divergências em 5.000 cenários), mas os testes precisam ficar mais fortes: fecham na próxima ideia que tocar `exits.js` (062, 053 ou 065).
+5. **DT-003 ampliada:** além do `maxAge: 24` do Flipper, há "24 h" fixo no texto da dica da tabela. Resolver junto.
+
+## D-026 — IDEIA-038 aprovada; observações e ordem de deploy
+**Aprovada.** Este era o maior erro de dados em produção da auditoria (cidade de bônus de craft errada em 4 de 6 cidades). Observações, nenhuma bloqueia:
+1. **DT-005:** na aba RRR, 35 recursos refinados (ex.: `T6_PLANKS`) mostram a categoria crua "wood" com "sem cidade de bônus" e o aviso de categoria divergente. Um refinado usa o RRR de REFINO (cidade do recurso), não a categoria de craft de equipamento. A aba deve tratar refinados como refino. Entra no plano da 057 (mesmos arquivos de catálogo e RRR) ou em uma correção própria, a decidir ao planejar.
+2. O texto do plano ("Sem cidade de bônus") difere do código ("conhecida"): vale o do código (a própria Task 4 manda manter).
+3. `RrrCalculator.jsx` mudou sem estar na lista do plano; decorre da Task 4 e foi aprovado em D-020.
+**Registro de processo:** o Tester gravou por engano chaves de localStorage na produção porque o navegador embutido é compartilhado e foi redirecionado por outro agente; descartou as leituras, limpou as chaves e repetiu em localhost. Passo a exigir, em todo briefing, que o Tester verifique o host ANTES de gravar qualquer coisa no armazenamento.
+**Ordem de deploy:** deploy 4 (066) está em curso; deploy 5 = **038**. A 060 tem conflito provável com a 038 (`RrrCalculator.jsx`, `Crafting.jsx`, `craftPlan.test.js`): se a 060 for aprovada, o Executor dela faz rebase sobre a `master` já com 038 e 066, resolve com testes e o Tester confere o resultado do rebase. A 057 e a 039 começam depois do deploy 5.
+
+## D-027 — Deploy 5 verificado; cache do catálogo vira correção prioritária (IDEIA-067)
+O Deployer achou que `vercel.json` serve `/data/*` com `max-age=3600, stale-while-revalidate=86400`: depois do deploy 5, um navegador com o catálogo antigo em cache mostrou "Sem cidade de bônus" até forçar a busca nova. Conferi o cabeçalho em produção e o catálogo servido (correto: 2.292 itens, 1.286 `cc`, 33 `cityOf`). **Gravidade:** o app não quebra, mas mostra a MESMA informação errada que a 038 corrigiu, por até 1 h (24 h pelo stale-while-revalidate), para quem já visitou o site, **inclusive o usuário deste projeto**. E se repete em cada mudança de formato do catálogo (057 e 039 vêm aí). **Decisão:** entra como IDEIA-067, correção, pelo pipeline completo; o plano considera URL versionada com id de build, revalidação e checagem defensiva do formato. Enquanto não sai: forçar a atualização com Ctrl+F5.
+**057 em paralelo:** mexe em `build-catalog.mjs`, `catalog.json` e fixture; a 067 em `catalog.js` (URL), `vite.config.js` e `vercel.json`. Sem sobreposição.
+**Contador: 5 / 50** (023, 030, 019, 066, 038).
+**Registro de processo:** uma atualização minha dos documentos falhou no meio (um padrão de busca não achava o status da 057) e o commit saiu parcial; refeito em seguida. Passo a verificar o resultado dos scripts de documentação antes de commitar.
+
+## D-028 — Plano da 067 aprovado; respostas ao Planejador; segunda interrupção por limite de uso
+1. Id da URL por **hash do conteúdo** do catálogo: aprovado (só invalida quando o catálogo muda, sem variável de ambiente nem fallback de timestamp).
+2. **Sem campo `schema`** no catálogo: a validação estrutural usa o formato atual; 057 e 039 NÃO recebem adendo. Evita regenerar o catálogo e acoplar ideias.
+3. Aceito o 304 por visita (custo mínimo: ~150 KB comprimido só quando o catálogo muda).
+4. **A 067 sobe ANTES da 057 e da 039**, para que a próxima mudança do catálogo já chegue a todos sem janela de dado antigo.
+**Interrupção:** o limite de uso de 5 h da API cortou de novo o Executor da 057 e o Tester da 060; trabalho salvo, retomados com SendMessage. Antes de cortar, o Executor da 057 anotava "`vals` differs": a diferença em `vals` do catálogo regenerado não está prevista no plano, e ele foi instruído a investigar e PARAR se não estiver prevista (o diferencial deve mostrar só os 20 recursos mudando).
+
+## D-029 — IDEIA-057: diferença em `vals` aceita
+O Executor da 057 parou (corretamente) porque `vals` do catálogo regenerado ganhou 2 chaves, `T8_ROCK_LEVEL1` (51,2) e `T8_ROCK_LEVEL2` (102,4), e o plano previa `vals` idêntico. Causa: o build antigo lia só o primeiro requisito de cada variante; algumas variantes têm 2 requisitos de transmutação, e o segundo entra em `needed`/`vals`. **Verifiquei:** nenhuma receita (`r`/`er`) usa esses ids como ingrediente e os valores novos são iguais ao que `ingredientValue` já devolvia pelo fallback (`vals[T8_ROCK]`=25,6 × 2^n). Nenhum cálculo muda. **Aceito**, com teste de regressão de `ingredientValue` para os dois ids e conferência do Tester por diferencial. Alternativa descartada: excluir os ids de `tm` de `needed` (deixaria `tm` apontando para ids sem valor, ruim para a futura 050).
+O plano da 057 não previu variantes com 2 transmutações: lição para os planos que dependem de `vals`.
+
+## D-030 — IDEIA-060 aprovada com ressalvas; retrabalho nº 1 junto com o rebase
+**Laudo: APROVADO.** Diferencial master × branch em 9.500 combinações válidas: 0 diferenças e 0 avisos; achados (a)-(d) fechados; RRR ≥ 100% → automático e acima do máximo → clamp, consistente em dossiê, plano, código e tela; 32 de 34 mutações mortas (2 equivalentes); sem duplicação nem contradição com a 019.
+**Ressalvas (3) e decisão:** (1) o teto de taxa (`feeCeiling`) não é validado: taxa 1e300 + "Aceitar" + crafts 1e9 mostra ∞, teto null/0/negativo corrompe a validação e o teto aceito persiste sem indicação. Isso fura o propósito da ideia (nunca um número absurdo calado), então **exijo correção antes do deploy**: validar o teto (finito, > 0, máximo duro 1e6, senão volta a 1.000 e avisa), indicador visível permanente do teto aceito com botão de restaurar, e formatação segura de números enormes. (2) o selo "N valores corrigidos" contava correção invisível e a mensagem de modo inválido não dizia o valor usado: corrigir. (3) `daily` salvo inválido na aba RRR: mesma função de validação, mudança mínima.
+**Especificação (46 divergências do oráculo, todas iguais):** `mode` vazio/null/undefined é "ausente", usa 'order' sem aviso; só texto não vazio fora dos modos válidos avisa. Decisão de produto do Gerente; o plano sugeria erro e o Tester registrou como dúvida benigna.
+**Rebase:** a branch parte de antes da 019, 066 e 038 (todas em produção); o Executor faz o rebase preservando os três comportamentos, e o Tester reconfere o resultado no re-teste curto.
+**Retrabalho: 1 de no máximo 2.** (019 já usou 1 em outra ideia; a contagem é por ideia.)
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.

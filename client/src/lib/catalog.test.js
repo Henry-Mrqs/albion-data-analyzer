@@ -1,11 +1,31 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
-  craftBonusCity, getItem, ingredientValue, marketId, nameOf, recipeOf, recipeValue,
-  refinedTypeOf, resetCatalog, tierOf,
+  CRAFT_CITIES, cityOfCategory, craftBonusCity, craftCategoryLabel, getItem, ingredientValue, marketId, nameOf,
+  recipeOf, recipeValue, refinedTypeOf, resetCatalog, setCatalog, tierOf,
 } from './catalog';
 import { loadFixtureCatalog } from '../test/helpers';
 
 beforeEach(loadFixtureCatalog);
+
+// casos 1 a 16 do dossiê IDEIA-038 §4: [id, c, cc, cidade de bônus]
+const CASES_1_A_16 = [
+  ['T4_MAIN_SWORD', 'weapons/sword', 'sword', 'Lymhurst'],
+  ['T4_ARMOR_CLOTH_SET1', 'armors/cloth_armor', 'cloth_armor', 'Fort Sterling'],
+  ['T4_HEAD_CLOTH_SET1', 'head/cloth_helmet', 'cloth_helmet', 'Thetford'],
+  ['T4_SHOES_LEATHER_SET1', 'shoes/leather_shoes', 'leather_shoes', 'Lymhurst'],
+  ['T4_SHOES_CLOTH_SET1', 'shoes/cloth_shoes', 'cloth_shoes', 'Bridgewatch'],
+  ['T4_OFF_BOOK', 'offhands/booktype', 'offhand', 'Martlock'],
+  ['T4_OFF_TORCH', 'offhands/torchtype', 'offhand', 'Martlock'],
+  ['T4_OFF_SHIELD', 'offhands/shieldtype', 'offhand', 'Martlock'],
+  ['T4_BAG', 'bags/bags', 'bag', 'Brecilien'],
+  ['T4_BAG_INSIGHT', 'bags/satchels', 'bag', 'Brecilien'],
+  ['T4_CAPE', 'capes/accessoires_capes_capes', 'cape', 'Brecilien'],
+  ['T4_POTION_HEAL', 'consumables/potions', 'potion', 'Brecilien'],
+  ['T4_MEAL_SALAD', 'consumables/food', 'food', 'Caerleon'],
+  ['T4_2H_KNUCKLES_SET1', 'weapons/knuckles', 'knuckles', 'Caerleon'],
+  ['T4_CAPEITEM_FW_LYMHURST', 'capes/accessoires_capes_lymhurst', undefined, null],
+  ['T4_ARMOR_PLATE_ROYAL', 'armors/plate_armor', undefined, null],
+];
 
 describe('catalog.js', () => {
   it('marketId', () => {
@@ -55,12 +75,41 @@ describe('catalog.js', () => {
     expect(recipeOf('T4_WOOD', 0)).toBeNull();
     expect(recipeOf('XXX')).toBeNull();
   });
-  it('nameOf / craftBonusCity', () => {
+  it('nameOf', () => {
     expect(nameOf('T4_PLANKS')).toBe('Tábuas de Pinho');
     expect(nameOf('T4_WOOD_LEVEL1@1')).toBe('Troncos de Pinho Incomuns');
-    expect(craftBonusCity('weapons/bow')).toBe('Lymhurst');
-    expect(craftBonusCity('armors/plate_armor')).toBe('Bridgewatch');
-    expect(craftBonusCity('crafting/refinedresources')).toBeNull();
+  });
+  it.each(CASES_1_A_16)('craftBonusCity(%s)', (id, _c, _cc, city) => {
+    expect(craftBonusCity(getItem(id))).toBe(city);
+  });
+  it('craftBonusCity: arco = Lymhurst; recurso refinado e item sem cc ou indefinido = null', () => {
+    expect(craftBonusCity(getItem('T4_2H_BOW'))).toBe('Lymhurst');
+    expect(craftBonusCity(getItem('T4_PLANKS'))).toBeNull();
+    expect(craftBonusCity({})).toBeNull();
+    expect(craftBonusCity(undefined)).toBeNull();
+  });
+  it('ROYAL não herda bônus pela categoria de loja', () => {
+    expect(getItem('T4_ARMOR_PLATE_ROYAL').c).toBe('armors/plate_armor');
+    expect(craftBonusCity(getItem('T4_ARMOR_PLATE_ROYAL'))).toBeNull();
+  });
+  it('cityOfCategory: dagger = Bridgewatch (exceção C4); categoria desconhecida ou ausente = null', () => {
+    expect(cityOfCategory('dagger')).toBe('Bridgewatch');
+    expect(cityOfCategory('offhand')).toBe('Martlock');
+    expect(cityOfCategory('inexistente')).toBeNull();
+    expect(cityOfCategory(undefined)).toBeNull();
+  });
+  it('CRAFT_CITIES inclui Brecilien e as 6 cidades de CITIES', () => {
+    expect(CRAFT_CITIES).toEqual(['Martlock', 'Thetford', 'Fort Sterling', 'Lymhurst', 'Bridgewatch', 'Caerleon', 'Brecilien']);
+  });
+  it('craftCategoryLabel: rótulo em português por craftingcategory', () => {
+    expect(craftCategoryLabel('offhand')).toMatch(/secundária/i);
+    expect(craftCategoryLabel('sword')).toBe('Espada');
+    expect(craftCategoryLabel(undefined)).toMatch(/sem categoria/i);
+  });
+  it('catálogo sem cityOf não quebra', () => {
+    resetCatalog();
+    setCatalog({ items: [], extra: {}, vals: {}, encNames: {} });
+    expect(cityOfCategory('sword')).toBeNull();
   });
   it('resetCatalog esvazia', () => {
     resetCatalog();

@@ -1,6 +1,7 @@
 import { fmt, netSale, SETUP_FEE } from '../lib/econ';
 import { cityLabel } from '../lib/market';
-import { lowestListing, marketGap, targetPrice } from '../lib/targetPrice';
+import { bestBuyer } from '../lib/exits';
+import { marketGap, targetPrice } from '../lib/targetPrice';
 import { useSettings, usePersisted } from '../lib/settings';
 import { validateInputs } from '../lib/inputRules';
 import InputIssues from './InputIssues';
@@ -31,7 +32,8 @@ export default function TargetPrice({ cost, prices, mid, missing }) {
   const target = ok ? targetPrice({ cost, premium, mode, relists, ...goalArg }) : null;
 
   const net = target ? netSale(target, mode, premium) - (mode === 'order' ? relists * SETUP_FEE * target : 0) : 0;
-  const market = ok ? lowestListing(prices, mid) : null;
+  // Limitação: compara com o melhor comprador de TODAS as cidades (sem seletor de cidade).
+  const market = ok ? bestBuyer(prices, mid) : null;
   const gap = target && market ? marketGap(target, market.price) : null;
 
   return (
@@ -80,13 +82,20 @@ export default function TargetPrice({ cost, prices, mid, missing }) {
           {market ? (
             <>
               <div className="hint">
-                Menor preço de venda atual: <b>{fmt(market.price)}</b> em {cityLabel(market.city)} <Age ts={market.date} />
-                {gap != null && <> · alvo {(Math.abs(gap) * 100).toFixed(1)}% {gap >= 0 ? 'acima' : 'abaixo'} do mercado</>}
+                Melhor comprador atual (ordem de compra, entre todas as cidades): <b>{fmt(market.price)}</b> em {cityLabel(market.city)}{' '}
+                <Age ts={market.date} />
+                {gap != null && <> · alvo {(Math.abs(gap) * 100).toFixed(1)}% {gap >= 0 ? 'acima' : 'abaixo'} do melhor comprador</>}
               </div>
-              {gap != null && gap > 0 && <Banner kind="warn">Alvo acima do mercado: difícil de vender.</Banner>}
+              {gap != null && gap > 0 && (
+                <Banner kind="warn">
+                  {cfg.mode === 'instant'
+                    ? 'Nenhuma ordem de compra paga isso hoje.'
+                    : 'Alvo acima do melhor comprador atual: só vende se alguém criar uma ordem de compra maior.'}
+                </Banner>
+              )}
             </>
           ) : (
-            <div className="hint">Sem preço de venda atual deste item para comparar.</div>
+            <div className="hint">Nenhum comprador (ordem de compra) visível para este item: só há ordens de venda.</div>
           )}
         </>
       ) : (
