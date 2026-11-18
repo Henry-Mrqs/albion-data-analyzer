@@ -25,5 +25,13 @@ O Tester recebe apenas: dossiê, plano e o nome da branch. Não recebe o resumo 
 ## D-008 — Fórmulas existentes sem fonte
 O que já está em produção (RRR, taxa de bancada, imposto, setup fee, tabela de cidades) **não tem fonte citada**. O Pesquisador faz um dossiê de auditoria dessas constantes **antes** de qualquer ideia nova que dependa delas (IDEIA-019, IDEIA-023, IDEIA-005). Se alguma estiver errada, vira correção prioritária e entra no relatório.
 
+## D-009 — Revisão do plano IDEIA-001 (Loop 1)
+Plano aprovado. Conferi de forma independente (script próprio, sem usar o código do projeto) o Cenário A (T4 comprar/produzir/melhor = 76,6203 / 62,3530 / 61,5265), o craft C1 (custo 3.117.218,05, lucro 5.765.281,95, margem 184,95%), o C2 (lucro 7.172.162,72) e a taxa da espada (3.283): batem com o plano. Respostas às perguntas do Planejador:
+1. Vitest 5.x; cair para 4.1.12 só se o Node exigir.
+2. Pode substituir `client/README.md` (é o texto padrão do template).
+3. Task 6 (Flipper) fica: as próximas ideias de liquidez e confiança de preço mexem nele.
+4. Manter a espada com artefato e **acrescentar um caso de poção** (4 ingredientes, `amount` 5) em Task 4: unidades produzidas = amount × crafts é uma variável do cálculo que nada cobre. Conta feita à mão no teste.
+5. Confirmado: não há CI; `npm run check` é a porta de entrada.
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.
