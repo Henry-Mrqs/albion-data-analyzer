@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   CRAFT_CITIES, cityOfCategory, craftBonusCity, craftCategoryLabel, getItem, ingredientValue, marketId, nameOf,
-  recipeOf, recipeValue, refinedTypeOf, resetCatalog, setCatalog, tierOf,
+  recipeOf, recipeValue, refinedTypeOf, resetCatalog, searchItems, setCatalog, tierOf, weightOf,
 } from './catalog';
+import { refineChainIds } from './econ';
 import { loadFixtureCatalog } from '../test/helpers';
 
 beforeEach(loadFixtureCatalog);
@@ -115,5 +116,22 @@ describe('catalog.js', () => {
     resetCatalog();
     expect(getItem('T4_PLANKS')).toBeUndefined();
     expect(nameOf('T4_PLANKS')).toBe('T4_PLANKS');
+  });
+});
+
+describe('IDEIA-057: transmutação não é receita de craft', () => {
+  it('recurso bruto não é craftável: recipeOf e searchItems(onlyCraftable)', () => {
+    expect(recipeOf('T5_WOOD')).toBeNull();
+    expect(recipeOf('T5_WOOD', 1)).toBeNull();
+    expect(searchItems('t5_wood').map((i) => i.i)).toEqual(['T5_WOOD']); // Mercado continua achando
+    expect(searchItems('t5_wood', { onlyCraftable: true })).toEqual([]); // Craft não oferece
+  });
+  it('nome e peso do bruto seguem funcionando', () => {
+    expect(nameOf('T5_WOOD')).not.toBe('T5_WOOD');
+    expect(weightOf('T5_WOOD')).toBeGreaterThan(0);
+  });
+  it('Refino inalterado: cadeia T4_PLANKS usa só receitas de refino', () => {
+    expect(recipeOf('T4_PLANKS').res.map((r) => r.uniq)).toEqual(['T4_WOOD', 'T3_PLANKS']);
+    expect(refineChainIds('T4_PLANKS', true)).toEqual(['T4_PLANKS', 'T4_WOOD', 'T3_PLANKS', 'T3_WOOD', 'T2_PLANKS', 'T2_WOOD']);
   });
 });

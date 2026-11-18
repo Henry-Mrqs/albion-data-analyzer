@@ -638,29 +638,87 @@
    "w": 0.51,
    "v": 4,
    "x": 4,
-   "er": {
+   "tm": {
     "1": [
      [
       "T4_WOOD",
-      1
+      1500
      ]
     ],
     "2": [
      [
       "T4_WOOD_LEVEL1",
-      1
+      3000
      ]
     ],
     "3": [
      [
       "T4_WOOD_LEVEL2",
-      1
+      6000
      ]
     ],
     "4": [
      [
       "T4_WOOD_LEVEL3",
-      1
+      24000
+     ]
+    ]
+   }
+  },
+  {
+   "i": "T5_WOOD",
+   "p": "Troncos de Cedro",
+   "e": "Cedar Logs",
+   "c": "crafting/resources",
+   "t": 5,
+   "w": 0.76,
+   "v": 5.34,
+   "x": 4,
+   "tm": {
+    "0": [
+     [
+      "T4_WOOD",
+      781
+     ]
+    ],
+    "1": [
+     [
+      "T4_WOOD_LEVEL1",
+      1563
+     ],
+     [
+      "T5_WOOD",
+      2000
+     ]
+    ],
+    "2": [
+     [
+      "T4_WOOD_LEVEL2",
+      3125
+     ],
+     [
+      "T5_WOOD_LEVEL1",
+      4000
+     ]
+    ],
+    "3": [
+     [
+      "T4_WOOD_LEVEL3",
+      6250
+     ],
+     [
+      "T5_WOOD_LEVEL2",
+      8000
+     ]
+    ],
+    "4": [
+     [
+      "T4_WOOD_LEVEL4",
+      25000
+     ],
+     [
+      "T5_WOOD_LEVEL3",
+      32000
      ]
     ]
    }
@@ -1045,6 +1103,11 @@
   "T5_METALBAR_LEVEL3": 256,
   "T5_METALBAR_LEVEL4": 512,
   "T5_TEASEL": 40,
+  "T5_WOOD": 5.34,
+  "T5_WOOD_LEVEL1": 10.66,
+  "T5_WOOD_LEVEL2": 21.34,
+  "T5_WOOD_LEVEL3": 42.66,
+  "T5_WOOD_LEVEL4": 85.34,
   "T6_ARMOR_PLATE_SET1": 0,
   "T6_ARTEFACT_MAIN_SWORD_CRYSTAL": 5760,
   "T6_FOXGLOVE": 40,
@@ -1080,6 +1143,10 @@
   "T4_WOOD@2": "Troncos de Pinho Raros",
   "T4_WOOD@3": "Troncos de Pinho Excepcionais",
   "T4_WOOD@4": "Troncos de Pinho Prístino",
+  "T5_WOOD@1": "Troncos de Cedro Incomuns",
+  "T5_WOOD@2": "Troncos de Cedro Raros",
+  "T5_WOOD@3": "Troncos de Cedro Excepcionais",
+  "T5_WOOD@4": "Troncos de Cedro Prístinos",
   "T6_LEATHER@1": "Couro Endurecido Incomum",
   "T6_LEATHER@2": "Couro Endurecido Raro",
   "T6_LEATHER@3": "Couro Endurecido Excepcional",

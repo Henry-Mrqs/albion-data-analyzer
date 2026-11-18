@@ -10,7 +10,7 @@ const OUT = path.join(ROOT, 'client', 'src', 'test', 'catalog.fixture.json');
 
 // Lista fixa de ids. Cadeias de T6_METALBAR/T6_LEATHER abaixo do T6 ficam ausentes de propósito.
 const IDS = [
-  'T2_WOOD', 'T3_WOOD', 'T4_WOOD', 'T2_PLANKS', 'T3_PLANKS', 'T4_PLANKS',
+  'T2_WOOD', 'T3_WOOD', 'T4_WOOD', 'T5_WOOD', 'T2_PLANKS', 'T3_PLANKS', 'T4_PLANKS',
   'T4_2H_BOW', 'T6_MAIN_SWORD', 'T6_MAIN_SWORD_CRYSTAL', 'T6_ARTEFACT_MAIN_SWORD_CRYSTAL',
   'T6_ARMOR_PLATE_SET1', 'T6_METALBAR', 'T6_LEATHER',
   'T6_POTION_COOLDOWN', // poção com 4 ingredientes e amount 5
