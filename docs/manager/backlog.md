@@ -116,3 +116,9 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 | ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
 |---|---|---|---|---|---|---|---|
 | IDEIA-069 | **Testes de componente (jsdom + Testing Library)**: o mesmo buraco apareceu em 4 ideias (060 `CeilingNotice`/botão "Aceitar", 039 selo "não verificado", 041 avisos e nota no JSX, 049 seletor): mutantes que só a UI revela sobrevivem porque não há teste de componente. Infra, não conta para os 50 (D-001) | — | — | — | — | GATE de qualidade | NOVA (D-037; planejar depois de 010 e 049) |
+
+## Correção acrescentada no Loop 7 (achado do Gerente ao rever o relato da 010)
+
+| ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
+|---|---|---|---|---|---|---|---|
+| IDEIA-070 | **Estado salvo antigo ou incompleto**: `usePersisted` devolve o JSON salvo SEM mesclar com os padrões; cada ideia que acrescentou campo novo (bônus diário, cidade de refino, teto, rota...) depende de o código tolerar a falta. Quem tem configuração antiga salva no navegador (inclusive o usuário deste projeto) nunca foi testado por nenhum Tester. Mesclar com os padrões, validar tipos e versionar; testar com os formatos que as versões anteriores realmente salvaram (reconstruídos do histórico do git) | 4 | 5 | 4 | 2 | 15 | NOVA (medição da gravidade em curso no re-teste da 010; D-039) |
