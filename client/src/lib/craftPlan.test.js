@@ -37,6 +37,33 @@ const bowArgs = (over = {}) => ({
 });
 
 describe('craftRates', () => {
+  it.each([ // [focus, craftDaily, PB, RRR]   (dossiê §4: espada em cidade de bônus)
+    [false, 0, 33, 0.248120], [false, 10, 43, 0.300699], [false, 20, 53, 0.346405],
+    [true, 0, 92, 0.479167], [true, 10, 102, 0.504950], [true, 20, 112, 0.528302], // 52,8302% = exemplo da AFM
+  ])('foco=%s diário=%s → PB %s', (focus, craftDaily, pb, esperado) => {
+    const r = craftRates(craftCfg({ specialty: true, focus, craftDaily }), null);
+    expect(r.autoRRR).toBeCloseTo(esperado, 6);
+    expect(r.craftRRR).toBeCloseTo(esperado, 6);
+    expect(r.autoRRR).toBeCloseTo(pb / (100 + pb), 12);
+  });
+  it('craftDaily ausente, vazio ou inválido = 0; strings numéricas valem', () => {
+    for (const v of [undefined, '', 'x', null]) expect(craftRates(craftCfg({ specialty: true, craftDaily: v }), null).autoRRR).toBeCloseTo(33 / 133, 6);
+    expect(craftRates(craftCfg({ specialty: true, craftDaily: '20' }), null).autoRRR).toBeCloseTo(53 / 153, 6);
+  });
+  it('RRR manual continua vencendo o diário', () => expect(craftRates(craftCfg({ specialty: true, craftDaily: 20, customRRR: '30' }), null).craftRRR).toBeCloseTo(0.3, 6));
+  it('diário do craft e diário do recurso são independentes', () => {
+    const r = craftRates(craftCfg({ specialty: true, craftDaily: 20, refineDaily: { PLANKS: 10 } }), null);
+    expect(r.autoRRR).toBeCloseTo(53 / 153, 6); // craft: 18+15+20
+    expect(r.refineRRRFor('PLANKS')).toBeCloseTo(68 / 168, 6); // refino: 18+40+10 (cidade 'auto')
+  });
+  it('computeCraft (060): craftDaily fora de 0/10/20 avisa uma vez e usa 0; válido não avisa', () => {
+    const bad = computeCraft(sword({ craftDaily: 15 }));
+    expect(bad.rates.autoRRR).toBeCloseTo(33 / 133, 6);
+    expect(bad.issues.filter((i) => i.field === 'craftDaily')).toHaveLength(1);
+    const ok = computeCraft(sword({ craftDaily: 20 }));
+    expect(ok.rates.autoRRR).toBeCloseTo(53 / 153, 6);
+    expect(ok.issues).toEqual([]);
+  });
   it('especialização automática quando a cidade é a de bônus', () => {
     const r = craftRates(craftCfg(), 'Lymhurst');
     expect(r.specialty).toBe(true);

@@ -29,7 +29,7 @@ export function craftChainIds(rec, targetMid) {
 export function craftRates(cfg, bonusCity) {
   const specialty = cfg.specialty ?? (bonusCity === cfg.craftCity);
   const crafts = Math.max(1, +cfg.crafts || 1);
-  const autoRRR = calcRRR({ kind: 'craft', specialty, focus: cfg.focus });
+  const autoRRR = calcRRR({ kind: 'craft', specialty, focus: cfg.focus, daily: +cfg.craftDaily || 0 });
   const craftRRR = resolveRRR(autoRRR, cfg.customRRR);
   // RRR do refino por tipo de recurso: bônus base + bônus da cidade especializada (se refinar lá) + foco + bônus diário do recurso
   const refineRRRFor = (type, daily = +(cfg.refineDaily?.[type] ?? 0)) =>
