@@ -65,6 +65,7 @@ export function priceVsMedian(price, median) {
 }
 
 const LABELS = {
+  unloaded: 'giro não carregado',
   nodata: 'sem histórico',
   idle: 'sem venda registrada',
   sparse: 'dados insuficientes',
@@ -80,8 +81,19 @@ const ddmm = (ms) => {
   return `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
 };
 
+/**
+ * Estatística de uma célula de `data[mid][cidade]` (formato de fetchHistory). Série ausente = histórico NÃO pedido
+ * ('unloaded', nunca "sem histórico"); série [] = pedido e sem registros ('nodata'). Distinção exigida pela D-034.
+ */
+export function loadedStats(data, mid, city, opts) {
+  const series = data?.[mid]?.[city];
+  if (series === undefined) return { state: 'unloaded', volumePerDay: 0, points: 0, windowDays: opts?.days ?? HISTORY_DAYS, medianPrice: null, lastRecord: null };
+  return windowStats(series, opts);
+}
+
 /** "4 de 7 dias com dados": quantos dias da janela têm registro (dia ausente pode ser falta de dado, não de venda). */
 export function coverageLabel(stats) {
+  if (stats.state === 'unloaded') return '';
   if (stats.state === 'nodata') return verdictLabel('nodata');
   return `${stats.points} de ${stats.windowDays} dias com dados`;
 }
@@ -89,6 +101,7 @@ export function coverageLabel(stats) {
 /** Texto, tom e dica da célula "Giro". Só ok/low/none mostram número; sparse nunca vira "sem giro". */
 export function giroText(stats) {
   const { state } = stats;
+  if (state === 'unloaded') return { text: '—', tone: 'muted', title: 'Giro ainda não carregado para esta cidade: use "Carregar giro".' };
   if (state === 'idle') return { text: `${verdictLabel('idle')} (último ${ddmm(stats.lastRecord)})`, tone: 'muted', title: coverageLabel(stats) };
   if (state === 'ok' || state === 'low' || state === 'none') {
     const tone = { ok: 'good', low: 'warn', none: 'bad' }[state];

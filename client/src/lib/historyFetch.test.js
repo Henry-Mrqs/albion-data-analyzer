@@ -1,6 +1,7 @@
 // fetchHistory: cache, fila e limites (requestFn falso e `now` injetados; sem rede).
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { HISTORY_CONCURRENCY, HISTORY_MAX_REQUESTS, HISTORY_TOP_N, HISTORY_TTL_MS, clearHistoryCache, fetchHistory, historyDeps, historyUrl, topHistoryRequest } from './history';
+import { HISTORY_CONCURRENCY, HISTORY_MAX_REQUESTS, HISTORY_TOP_N, HISTORY_TTL_MS, clearHistoryCache, fetchHistory, historyDeps, historyUrl, mergeHistory, topHistoryRequest } from './history';
+import { loadedStats } from './liquidity';
 import { MarketError, request as marketRequest } from './market';
 
 const idsOf = (url) => decodeURIComponent(url.split('/history/')[1].split('?')[0]).split(',');
@@ -22,6 +23,35 @@ describe('topHistoryRequest (Flipper: só as linhas mostradas, nunca o catálogo
     expect(topHistoryRequest(rows).ids).toHaveLength(HISTORY_TOP_N);
   });
   it('sem linhas: nada a pedir', () => expect(topHistoryRequest([])).toEqual({ ids: [], cities: [] }));
+});
+
+describe('Flipper: carregar A, trocar para B (não carregada), voltar para A (retrabalho 1)', () => {
+  beforeEach(() => clearHistoryCache());
+  const now = Date.parse('2026-10-26T03:00:00Z');
+  const rowsAt = (url) =>
+    idsOf(url).flatMap((id) => decodeURIComponent(url.split('locations=')[1].split('&')[0]).split(',').map((location) =>
+      ({ location, item_id: id, quality: 1, data: Array.from({ length: 7 }, (_, i) => ({ item_count: 20, avg_price: 100, timestamp: `2026-10-${19 + i}T00:00:00` })) })));
+  it('B nunca consultada é unloaded (não nodata); depois de carregar B, A continua carregada e vem do cache', async () => {
+    const rq = vi.fn(async (url) => rowsAt(url));
+    const o = { requestFn: rq, now: T0, server: 'west' };
+    let data = mergeHistory(null, (await fetchHistory(['X'], { ...o, cities: ['Caerleon'] })).data);
+    expect(loadedStats(data, 'X', 'Caerleon', { now }).state).toBe('ok');
+    expect(loadedStats(data, 'X', 'Lymhurst', { now }).state).toBe('unloaded');
+    data = mergeHistory(data, (await fetchHistory(['X'], { ...o, cities: ['Lymhurst'] })).data);
+    expect(loadedStats(data, 'X', 'Lymhurst', { now }).state).toBe('ok');
+    expect(loadedStats(data, 'X', 'Caerleon', { now }).state).toBe('ok'); // não foi perdida na mesclagem
+    const calls = rq.mock.calls.length;
+    await fetchHistory(['X'], { ...o, cities: ['Caerleon'] }); // voltar para A: cache
+    expect(rq.mock.calls.length).toBe(calls);
+  });
+  it('mergeHistory não muta as entradas e junta cidades do mesmo item', () => {
+    const a = { X: { Caerleon: [1] } };
+    const b = { X: { Lymhurst: [2] }, Y: { Caerleon: [3] } };
+    const m = mergeHistory(a, b);
+    expect(m).toEqual({ X: { Caerleon: [1], Lymhurst: [2] }, Y: { Caerleon: [3] } });
+    expect(a).toEqual({ X: { Caerleon: [1] } });
+    expect(mergeHistory(undefined, undefined)).toEqual({});
+  });
 });
 
 describe('fetchHistory', () => {

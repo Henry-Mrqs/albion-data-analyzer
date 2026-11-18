@@ -50,6 +50,15 @@ export function topHistoryRequest(rows, n = HISTORY_TOP_N) {
   return { ids: [...new Set(top.map((r) => r.mid))], cities: [...new Set(top.map((r) => r.sell))] };
 }
 
+/** Junta dois `data` ({mid:{cidade:série}}) cidade a cidade, sem mutar: carregar a cidade B não apaga a A. */
+export function mergeHistory(a, b) {
+  const out = {};
+  for (const src of [a, b]) {
+    for (const [mid, byCity] of Object.entries(src ?? {})) out[mid] = { ...out[mid], ...byCity };
+  }
+  return out;
+}
+
 // ---------- fetch com cache próprio ----------
 const cache = new Map(); // `${server}|${cidades ordenadas}|${id}` -> { t, series: { [cidade]: série } }
 export const clearHistoryCache = () => cache.clear();

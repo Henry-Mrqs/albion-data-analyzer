@@ -7,7 +7,7 @@ import { computeCraft, craftChainIds, keyOf, waitSavings } from '../lib/craftPla
 import { effectiveDaily, showDailyNote, DAILY_NOTE } from '../lib/dailyBonus';
 import { annotateOptions, illusoryHint, pickExit } from '../lib/exits';
 import { useHistory } from '../lib/history';
-import { windowStats } from '../lib/liquidity';
+import { loadedStats } from '../lib/liquidity';
 import { validateInputs } from '../lib/inputRules';
 import { GiroCard, GiroCell } from './Giro';
 import { useSettings, usePersisted } from '../lib/settings';
@@ -51,7 +51,7 @@ export default function Crafting() {
 
   // Giro (IDEIA-010): histórico só do item final, só depois de os preços chegarem, uma requisição por item (cache de 1 h).
   const { history, loading: histLoading, error: histError } = useHistory([targetMid], { cities: SELL_CITIES, enabled: !!rec && !!prices });
-  const statsOf = (city) => (history?.[targetMid] ? windowStats(history[targetMid][city], { now }) : null);
+  const statsOf = (city) => (history?.[targetMid] ? loadedStats(history, targetMid, city, { now }) : null);
   const share = validateInputs({ share: cfg.share });
   const giroRows = [...new Set(opts.map((o) => o.city))].map((city) => ({ city, stats: statsOf(city) })).filter((r) => r.stats);
 

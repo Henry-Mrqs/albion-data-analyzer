@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_SHARE_PCT, HISTORY_DAYS, LOW_TURNOVER_PER_DAY, MIN_POINTS_IN_WINDOW, NO_TURNOVER_PER_DAY, PRICE_ABOVE_MEDIAN_WARN,
-  coverageLabel, giroText, daysToSell, priceVsMedian, verdictLabel, windowOf, windowStats,
+  coverageLabel, giroText, loadedStats, daysToSell, priceVsMedian, verdictLabel, windowOf, windowStats,
 } from './liquidity';
 
 // Dados REAIS do dossiê IDEIA-010 §4 (API West, 19 a 25/10/2026), usados como constantes.
@@ -212,6 +212,33 @@ describe('texto da tela (giroText, coverageLabel)', () => {
   it('giroText de ok/low/none inclui a mediana no title; estados sem mediana não', () => {
     expect(giroText(windowStats(BAG, { now })).title).toContain('4.779');
     expect(giroText(windowStats(undefined, { now })).title).not.toMatch(/mediana/);
+  });
+});
+
+describe('loadedStats: histórico NÃO pedido é "não carregado", nunca "sem histórico" (D-034, retrabalho 1)', () => {
+  const data = { X: { Caerleon: BAG, Lymhurst: [] } };
+  it('cidade pedida com série = estatística normal; pedida e vazia = sem histórico', () => {
+    expect(loadedStats(data, 'X', 'Caerleon', { now }).state).toBe('ok');
+    expect(loadedStats(data, 'X', 'Lymhurst', { now }).state).toBe('nodata');
+  });
+  it('cidade nunca consultada (mid conhecido, cidade ausente) = unloaded, distinto de nodata', () => {
+    const s = loadedStats(data, 'X', 'Thetford', { now });
+    expect(s.state).toBe('unloaded');
+    expect(s.state).not.toBe('nodata');
+  });
+  it('mid nunca consultado, ou nenhum dado ainda = unloaded', () => {
+    expect(loadedStats(data, 'Y', 'Caerleon', { now }).state).toBe('unloaded');
+    expect(loadedStats(null, 'X', 'Caerleon', { now }).state).toBe('unloaded');
+    expect(loadedStats(undefined, 'X', 'Caerleon', { now }).state).toBe('unloaded');
+  });
+  it('unloaded: texto "—", dica para carregar, sem cobertura e sem "sem histórico"/"sem giro"', () => {
+    const s = loadedStats(data, 'X', 'Thetford', { now });
+    const g = giroText(s);
+    expect(g.text).toBe('—');
+    expect(g.title).toMatch(/Carregar giro/);
+    expect(coverageLabel(s)).toBe('');
+    expect(verdictLabel('unloaded')).toBe('giro não carregado');
+    expect(`${g.text} ${g.title}`).not.toMatch(/sem histórico|sem giro/);
   });
 });
 

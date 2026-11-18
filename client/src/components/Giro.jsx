@@ -13,7 +13,7 @@ export function GiroCell({ stats, loading }) {
   return (
     <span title={g.title}>
       <span className={TONE[g.tone]}>{g.text}</span>
-      {stats.state !== 'nodata' && <small className="muted">{coverageLabel(stats)}</small>}
+      {!['nodata', 'unloaded'].includes(stats.state) && <small className="muted">{coverageLabel(stats)}</small>}
     </span>
   );
 }

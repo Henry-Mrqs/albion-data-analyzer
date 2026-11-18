@@ -6,8 +6,8 @@ import { fmt } from '../lib/econ';
 import { flipRows } from '../lib/flip';
 import { useSettings, usePersisted } from '../lib/settings';
 import { DEFAULT_MAX_AGE_H } from '../lib/exits';
-import { HISTORY_TOP_N, fetchHistory, topHistoryRequest } from '../lib/history';
-import { windowStats } from '../lib/liquidity';
+import { HISTORY_TOP_N, fetchHistory, mergeHistory, topHistoryRequest } from '../lib/history';
+import { loadedStats } from '../lib/liquidity';
 import { GiroCell } from './Giro';
 import { Banner, Field, NumberInput, Segmented } from './ui';
 
@@ -89,7 +89,7 @@ export default function Flipper() {
     setHist((h) => ({ ...h, running: true, done: 0, total: 1, error: null }));
     try {
       const r = await fetchHistory(topIds, { cities, signal: c.signal, onProgress: (done, total) => setHist((h) => ({ ...h, done, total })) });
-      setHist((h) => ({ ...h, running: false, data: { ...h.data, ...r.data }, truncated: r.truncated }));
+      setHist((h) => ({ ...h, running: false, data: mergeHistory(h.data, r.data), truncated: r.truncated }));
     } catch (e) {
       if (e.name === 'AbortError') return setHist((h) => ({ ...h, running: false }));
       setHist((h) => ({ ...h, running: false, error: e.message }));
@@ -229,7 +229,7 @@ export default function Flipper() {
                         <td className="num">{fmt(r.cost)}</td>
                         <td className="num good">+{fmt(r.profit)}</td>
                         <td className="num">{r.margin.toFixed(0)}%</td>
-                        <td>{hist.data?.[r.mid] ? <GiroCell stats={windowStats(hist.data[r.mid][r.sell], { now: histNow })} /> : null}</td>
+                        <td>{hist.data ? <GiroCell stats={loadedStats(hist.data, r.mid, r.sell, { now: histNow })} /> : null}</td>
                       </tr>
                     ))}
                   </tbody>
