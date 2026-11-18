@@ -239,5 +239,14 @@ Ao rever o relato do retrabalho da 010 (o Executor viu um erro de console causad
 **Conflitos encadeados:** 010 e 049 mexem em `Crafting.jsx` e esperam o deploy; o segundo a entrar na `master` faz o merge sobre o primeiro e o Tester reconfere.
 **Relação com a IDEIA-070:** a escolha de receita salva é mais um estado que o app lê sem validar; a 070 deve cobri-la.
 
+## D-042 — Plano da 070 aprovado; respostas ao Planejador
+**Achado novo do plano (erro de fidelidade que existe hoje):** um estado salvo antigo sem `refineCity` faz `cfg.refineCity === 'auto'` ser falso (`undefined`), então o refino é calculado SEM o bônus de especialização (RRR 18/118), enquanto a tela mostra o padrão "cada recurso na sua cidade" (58/158). Quem tem configuração salva por versões antigas calcula hoje o refino com RRR menor, em silêncio. A 070 corrige isso.
+1. **Preservar campos desconhecidos:** sim (`feeSet`, `craftDaily`, `waitCost` nunca estão nos padrões), exceto `__proto__`, `constructor` e `prototype`.
+2. **Mescla:** aprovada (rasa por campo; profunda só onde o padrão tem chaves; mapas abertos valem inteiros com validação das entradas; sem coerção de tipo do valor salvo).
+3. **Estado antigo sem `refineCity` (RRR 18/118 → 58/158): COM AVISO.** Os números mudam para quem tem estado antigo, e o usuário precisa saber por quê: aviso único e dispensável, "sua configuração antiga foi atualizada: o refino agora usa a cidade especializada de cada recurso (RRR +40)". A decisão do que avisar vem de uma função pura que devolve as notas de migração; a exibição é mínima (um `Banner` global em `App.jsx`, mostrado uma vez e lembrado). Se o plano precisar tocar `App.jsx` para isso, declare.
+4. **`_v` dentro do objeto:** aprovado (seguro em rollback).
+5. **070 antes da 069:** sim. Os testes de função pura entram agora; os de componente (incluindo o aviso de migração) ficam como as primeiras tarefas da 069.
+**Execução:** a 070 mexe só em `settings.js` e arquivos novos (e `App.jsx` se o aviso exigir): independe da 010 e da 049 em QA, então começa agora.
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.
