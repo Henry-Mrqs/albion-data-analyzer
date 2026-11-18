@@ -125,5 +125,13 @@ O Executor da 038 parou (corretamente) porque o teste C5 da 001 (poção T6 em C
 ## D-024 — DT-003: constante de idade do dado do Flipper
 O Flipper só tem o literal `maxAge: 24` em `Flipper.jsx`. O Executor da 066 criou `DEFAULT_MAX_AGE_H = 24` em `exits.js` (comentário aponta o Flipper). Hoje as duas fontes valem 24 e não divergem, mas são duas. **DT-003:** o Flipper passa a importar a constante de `exits.js` no primeiro plano que tocar `Flipper.jsx` (IDEIA-053 ou 062). Não bloqueia a 066.
 
+## D-025 — IDEIA-066 aprovada; observações do Tester
+**Aprovada** (deploy 4). Registro:
+1. **Correção ao D-019 (erro de premissa do Gerente):** o "Martlock paga 3.796" da poção T4 que o Tester da 030 citou era um preço de VENDA, não uma ordem de compra. O melhor comprador real da poção é Lymhurst a 1.225, e o alerta do preço-alvo, que agora compara com ele, dispara com sentido. A premissa do teste sintético da 030 não se confirma com dados reais; o teste continua válido como cenário construído.
+2. **Falso conforto (decisão de produto):** por regra do dossiê, uma ordem de venda nunca é "ilusória" se houver qualquer compra fresca na cidade, mesmo muito abaixo (poção em Lymhurst: venda 1.555, compra 1.225). Isso é um buraco de informação: a diferença entre o preço de venda e o melhor comprador é o risco real. Vai para a **IDEIA-065** (preço de saída realista) e a **061** (spread), que já tratam do tema; a 065 deve mostrar o spread ao lado do selo.
+3. **Texto do aviso do preço-alvo no modo ordem de venda** compara com o melhor comprador e a redação confunde: revisão de texto fica na 065.
+4. **DT-004:** 8 mutantes sobrevivem na `exits.js` (M2, M9b, M11, M12, M15, M16, M18, M19). O mais relevante é M15 (o teste de comprador velho usa valor menor que o fresco e não distingue). O código está certo (0 divergências em 5.000 cenários), mas os testes precisam ficar mais fortes: fecham na próxima ideia que tocar `exits.js` (062, 053 ou 065).
+5. **DT-003 ampliada:** além do `maxAge: 24` do Flipper, há "24 h" fixo no texto da dica da tabela. Resolver junto.
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.
