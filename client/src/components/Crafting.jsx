@@ -3,6 +3,7 @@ import { REFINING, getItem, recipeOf, marketId, nameOf, refinedTypeOf, craftBonu
 import { CITIES, cityLabel, usePrices } from '../lib/market';
 import { fmt, pct, feeIsUnconfirmedDefault } from '../lib/econ';
 import { computeCraft, craftChainIds, keyOf } from '../lib/craftPlan';
+import { annotateOptions, pickExit } from '../lib/exits';
 import { useSettings, usePersisted } from '../lib/settings';
 import ItemSelector from './ItemSelector';
 import FeeField from './FeeField';
@@ -30,6 +31,9 @@ export default function Crafting() {
   const c = computeCraft({ rec, targetMid, prices, cfg, premium, bonusCity });
   const { specialty, autoRRR, craftRRR } = c.rates;
   const { lines, fee, totalCost, units, unitCost, missing, options, best, ready, plan, used, refinable, allBest } = c;
+
+  const opts = annotateOptions(options, prices, targetMid);
+  const { best: shown, bestReal } = pickExit(opts);
 
   const tierOfMid = (mid) => +(mid.match(/^T(\d)/)?.[1] ?? 0);
   const setAllBest = () => set({ refine: Object.fromEntries(refinable.map((l) => [keyOf(l.uniq), 'best'])) });
@@ -186,6 +190,7 @@ export default function Crafting() {
               </div>
 
               {ready ? (
+                <>
                 <div className={`result ${best.profit > 0 ? 'profit' : 'loss'}`}>
                   <div>
                     <div className="label">Melhor destino</div>
@@ -201,6 +206,20 @@ export default function Crafting() {
                     <div className={best.profit > 0 ? 'good' : 'bad'}>{pct(best.margin)}</div>
                   </div>
                 </div>
+                {shown.illusory && (
+                  <Banner kind="warn">
+                    A melhor saída no papel ({cityLabel(shown.city)}, {fmt(shown.price)}) não tem ordem de compra visível.{' '}
+                    {bestReal ? (
+                      <>
+                        Saída com comprador: {cityLabel(bestReal.city)}, {bestReal.mode === 'instant' ? 'instantânea' : 'ordem de venda'}, lucro{' '}
+                        <Money value={bestReal.profit} signed />.
+                      </>
+                    ) : (
+                      'Nenhuma saída com comprador visível.'
+                    )}
+                  </Banner>
+                )}
+                </>
               ) : (
                 !loading && (
                   <Banner kind="warn">{options.length ? 'Preencha os preços ausentes para calcular o lucro.' : 'Sem preço de venda deste item em nenhuma cidade.'}</Banner>
@@ -222,11 +241,12 @@ export default function Crafting() {
                     <th>Líquido</th>
                     <th>Lucro</th>
                     <th>Margem</th>
+                    <th>Comprador</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {options.slice(0, 8).map((o, i) => (
-                    <tr key={o.city + o.mode} className={i === 0 ? 'best' : ''}>
+                  {opts.slice(0, 8).map((o, i) => (
+                    <tr key={o.city + o.mode} className={i === 0 ? 'best' : ''} style={o.illusory ? { opacity: 0.6 } : undefined}>
                       <td>
                         {cityLabel(o.city)}
                         <small>{o.label}</small>
@@ -238,6 +258,11 @@ export default function Crafting() {
                       <td><Money value={o.net} /></td>
                       <td><Money value={o.profit} signed /></td>
                       <td className={o.margin > 0 ? 'good' : 'bad'}>{pct(o.margin)}</td>
+                      <td>
+                        {o.mode === 'instant' ? `sim (ordem de compra ${fmt(o.price)})` : o.buyer ? 'sim' : 'nenhum visível'}
+                        {o.illusory && <small className="bad">ilusória</small>}
+                        {o.stale && <small className="muted">dado velho</small>}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -245,6 +270,7 @@ export default function Crafting() {
             </div>
             <p className="hint" style={{ marginTop: 10 }}>
               Ordem de venda: você lista o item (imposto {premium ? '4%' : '8%'} + 2,5% de taxa). Ordem de compra: vende na hora a um comprador (imposto {premium ? '4%' : '8%'}).
+              Ilusória: ordem de venda sem ordem de compra visível na cidade (dado com menos de 24 h). Giro (vendas/dia): sem dado.
             </p>
           </div>
         )}
