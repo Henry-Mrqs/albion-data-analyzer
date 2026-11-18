@@ -6,6 +6,7 @@ import { computeCraft, craftChainIds, keyOf } from '../lib/craftPlan';
 import { useSettings, usePersisted } from '../lib/settings';
 import ItemSelector from './ItemSelector';
 import PriceMatrix from './PriceMatrix';
+import TargetPrice from './TargetPrice';
 import { Age, Banner, Field, Money, NumberInput, PriceStatus, Segmented, Switch } from './ui';
 
 export default function Crafting() {
@@ -250,6 +251,8 @@ export default function Crafting() {
             </p>
           </div>
         )}
+
+        {rec && <TargetPrice cost={unitCost} prices={prices} mid={targetMid} missing={missing.length > 0} />}
 
         {rec && prices && plan.length > 0 && (
           <div className="card stack">
