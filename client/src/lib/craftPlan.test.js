@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { craftBonusCity, getItem, recipeOf } from './catalog';
-import { canRefineUniq, computeCraft, craftChainIds, craftRates, keyOf, modeOf } from './craftPlan';
+import { canRefineUniq, computeCraft, craftChainIds, craftRates, keyOf, modeOf, waitSavings, worthWaiting, GAIN_THRESHOLD } from './craftPlan';
 import { loadFixtureCatalog, mkPrices, planksSpec } from '../test/helpers';
 
 beforeEach(loadFixtureCatalog);
@@ -37,6 +37,33 @@ const bowArgs = (over = {}) => ({
 });
 
 describe('craftRates', () => {
+  it.each([ // [focus, craftDaily, PB, RRR]   (dossiê §4: espada em cidade de bônus)
+    [false, 0, 33, 0.248120], [false, 10, 43, 0.300699], [false, 20, 53, 0.346405],
+    [true, 0, 92, 0.479167], [true, 10, 102, 0.504950], [true, 20, 112, 0.528302], // 52,8302% = exemplo da AFM
+  ])('foco=%s diário=%s → PB %s', (focus, craftDaily, pb, esperado) => {
+    const r = craftRates(craftCfg({ specialty: true, focus, craftDaily }), null);
+    expect(r.autoRRR).toBeCloseTo(esperado, 6);
+    expect(r.craftRRR).toBeCloseTo(esperado, 6);
+    expect(r.autoRRR).toBeCloseTo(pb / (100 + pb), 12);
+  });
+  it('craftDaily ausente, vazio ou inválido = 0; strings numéricas valem', () => {
+    for (const v of [undefined, '', 'x', null]) expect(craftRates(craftCfg({ specialty: true, craftDaily: v }), null).autoRRR).toBeCloseTo(33 / 133, 6);
+    expect(craftRates(craftCfg({ specialty: true, craftDaily: '20' }), null).autoRRR).toBeCloseTo(53 / 153, 6);
+  });
+  it('RRR manual continua vencendo o diário', () => expect(craftRates(craftCfg({ specialty: true, craftDaily: 20, customRRR: '30' }), null).craftRRR).toBeCloseTo(0.3, 6));
+  it('diário do craft e diário do recurso são independentes', () => {
+    const r = craftRates(craftCfg({ specialty: true, craftDaily: 20, refineDaily: { PLANKS: 10 } }), null);
+    expect(r.autoRRR).toBeCloseTo(53 / 153, 6); // craft: 18+15+20
+    expect(r.refineRRRFor('PLANKS')).toBeCloseTo(68 / 168, 6); // refino: 18+40+10 (cidade 'auto')
+  });
+  it('computeCraft (060): craftDaily fora de 0/10/20 avisa uma vez e usa 0; válido não avisa', () => {
+    const bad = computeCraft(sword({ craftDaily: 15 }));
+    expect(bad.rates.autoRRR).toBeCloseTo(33 / 133, 6);
+    expect(bad.issues.filter((i) => i.field === 'craftDaily')).toHaveLength(1);
+    const ok = computeCraft(sword({ craftDaily: 20 }));
+    expect(ok.rates.autoRRR).toBeCloseTo(53 / 153, 6);
+    expect(ok.issues).toEqual([]);
+  });
   it('especialização automática quando a cidade é a de bônus', () => {
     const r = craftRates(craftCfg(), 'Lymhurst');
     expect(r.specialty).toBe(true);
@@ -339,5 +366,79 @@ describe('IDEIA-060: computeCraft blindado', () => {
     const c = computeCraft(bowArgs({ cfg: craftCfg({ crafts: 1000, refine: { PLANKS: 'buy' } }) }));
     expect(c.fee).toBe(230400);
     expect(c.issues).toEqual([]);
+  });
+});
+
+describe('waitSavings (IDEIA-041, dossiê §4)', () => {
+  const CFG = { specialty: true, refine: { METALBAR: 'buy', LEATHER: 'buy' }, feePer100: 400 };
+  // recipeOf depende do catálogo carregado no beforeEach: montar os argumentos só na hora do teste
+  const mk = () => ({ rec: recipeOf('T6_MAIN_SWORD'), targetMid: 'T6_MAIN_SWORD', prices: mkPrices({ T6_METALBAR: 200, T6_LEATHER: 150 }), premium: true, bonusCity: null });
+  const mat = (focus, craftDaily) => computeCraft({ ...mk(), cfg: craftCfg({ ...CFG, focus, craftDaily }) }).matCost;
+  const ws = (over) => waitSavings({ ...mk(), cfg: craftCfg({ ...CFG, ...over }) });
+
+  it('material líquido por cenário (dossiê §4)', () => {
+    expect(mat(false, 0)).toBeCloseTo(3308.27, 2); expect(mat(false, 10)).toBeCloseTo(3076.92, 2); expect(mat(false, 20)).toBeCloseTo(2875.82, 2);
+    expect(mat(true, 0)).toBeCloseTo(2291.67, 2); expect(mat(true, 10)).toBeCloseTo(2178.22, 2); expect(mat(true, 20)).toBeCloseTo(2075.47, 2);
+  });
+  it('erro de hoje: dia +20 com foco, o app sem o campo superestimava em 216,20 por craft', () => {
+    expect(mat(true, 0) - mat(true, 20)).toBeCloseTo(216.2, 1); // exato 216,195; o dossiê arredonda antes de subtrair
+  });
+  it('com foco: +10 → 113,45; +20 → 216,20', () => {
+    const w = ws({ focus: true });
+    expect(w.rows.map((r) => r.daily)).toEqual([10, 20]);
+    expect(w.rows[0].perCraft).toBeCloseTo(113.45, 2);
+    expect(w.rows[1].perCraft).toBeCloseTo(216.2, 1);
+    expect(w.rows.every((r) => r.gain)).toBe(true);
+  });
+  it('sem foco: +10 → 231,35; +20 → 432,45', () => {
+    const w = ws({ focus: false });
+    expect(w.rows[0].perCraft).toBeCloseTo(231.35, 2);
+    expect(w.rows[1].perCraft).toBeCloseTo(432.45, 2);
+  });
+  it('lote de 100 crafts com foco: +20 → 21.620', () => {
+    expect(ws({ focus: true, crafts: 100 }).rows[1].lot).toBeCloseTo(21619.5, 1);
+  });
+  it('já está em +20: nada a esperar; em +10: só o +20 ganha', () => {
+    expect(ws({ focus: true, craftDaily: 20 }).rows.map((r) => r.gain)).toEqual([false, false]);
+    const w10 = ws({ focus: true, craftDaily: 10 });
+    expect(w10.rows.map((r) => r.gain)).toEqual([false, true]);
+    expect(w10.rows[1].lot).toBeCloseTo(2178.22 - 2075.47, 2); // 102,75
+    expect(ws({ focus: true, craftDaily: 20 }).rows.every((r) => r.lot === 0)).toBe(true); // nunca negativo
+  });
+  it('retorna null sem preços, sem receita ou com preço faltando', () => {
+    expect(waitSavings({ ...mk(), prices: null, cfg: craftCfg(CFG) })).toBeNull();
+    expect(waitSavings({ ...mk(), rec: null, cfg: craftCfg(CFG) })).toBeNull();
+    expect(waitSavings({ ...mk(), prices: mkPrices({ T6_METALBAR: 200 }), cfg: craftCfg(CFG) })).toBeNull();
+  });
+  it('a taxa de bancada não entra na economia', () => {
+    expect(ws({ focus: true, feePer100: 0 }).rows[1].perCraft).toBeCloseTo(ws({ focus: true, feePer100: 400 }).rows[1].perCraft, 6);
+  });
+  it('o valor atual inválido (060) conta como 0 no cenário base', () => {
+    expect(ws({ focus: true, craftDaily: 15 }).rows[1].perCraft).toBeCloseTo(216.2, 1);
+  });
+});
+
+describe('worthWaiting', () => {
+  const row = { gain: true, lot: 1000 };
+  it('custo de esperar 0 (padrão): qualquer ganho marca', () => expect(worthWaiting(row, 0)).toBe(true));
+  it('só marca se a economia do lote supera o custo de esperar', () => {
+    expect(worthWaiting(row, 999)).toBe(true);
+    expect(worthWaiting(row, 1000)).toBe(false);
+    expect(worthWaiting(row, 5000)).toBe(false);
+  });
+  it('sem ganho nunca marca; custo inválido vale 0', () => {
+    expect(worthWaiting({ gain: false, lot: 0 }, 0)).toBe(false);
+    expect(worthWaiting(row, NaN)).toBe(true);
+    expect(worthWaiting(row, -50)).toBe(true);
+  });
+});
+
+describe('GAIN_THRESHOLD', () => {
+  it('limiar nomeado de meia prata (decisão de produto, igual ao do refino): abaixo disso não é ganho', () => {
+    expect(GAIN_THRESHOLD).toBe(0.5);
+    const base = { rec: recipeOf('T6_MAIN_SWORD'), targetMid: 'T6_MAIN_SWORD', premium: true, bonusCity: null };
+    const prices = mkPrices({ T6_METALBAR: 0.0001, T6_LEATHER: 0.0001 }); // custo ínfimo: economia < 0,5
+    const w = waitSavings({ ...base, prices, cfg: craftCfg({ specialty: true, refine: { METALBAR: 'buy', LEATHER: 'buy' }, feePer100: 0 }) });
+    expect(w.rows.every((r) => r.lot > 0 && r.lot < GAIN_THRESHOLD && !r.gain)).toBe(true);
   });
 });
