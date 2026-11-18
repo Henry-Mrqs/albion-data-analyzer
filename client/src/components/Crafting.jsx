@@ -6,12 +6,13 @@ import { computeCraft, craftChainIds, keyOf } from '../lib/craftPlan';
 import { useSettings, usePersisted } from '../lib/settings';
 import ItemSelector from './ItemSelector';
 import FeeField from './FeeField';
+import InputIssues, { CorrectedBadge } from './InputIssues';
 import PriceMatrix from './PriceMatrix';
 import TargetPrice from './TargetPrice';
 import { Age, Banner, Field, Money, NumberInput, PriceStatus, Segmented, Switch } from './ui';
 
 export default function Crafting() {
-  const { premium } = useSettings();
+  const { premium, feeCeiling } = useSettings();
   const [sel, setSel] = usePersisted('craft:item', { id: 'T6_MAIN_SWORD', ench: 0 });
   const [cfg, setCfg] = usePersisted('craft:cfg', {
     craftCity: 'Lymhurst', specialty: null, focus: false, feePer100: 400, customRRR: '',
@@ -27,9 +28,9 @@ export default function Crafting() {
   const ids = craftChainIds(rec, targetMid);
   const { prices, loading, error, updatedAt, refresh } = usePrices(ids);
 
-  const c = computeCraft({ rec, targetMid, prices, cfg, premium, bonusCity });
+  const c = computeCraft({ rec, targetMid, prices, cfg, premium, bonusCity, feeCeiling });
   const { specialty, autoRRR, craftRRR } = c.rates;
-  const { lines, fee, totalCost, units, unitCost, missing, options, best, ready, plan, used, refinable, allBest } = c;
+  const { issues, lines, fee, totalCost, units, unitCost, missing, options, best, ready, plan, used, refinable, allBest } = c;
 
   const tierOfMid = (mid) => +(mid.match(/^T(\d)/)?.[1] ?? 0);
   const setAllBest = () => set({ refine: Object.fromEntries(refinable.map((l) => [keyOf(l.uniq), 'best'])) });
@@ -58,12 +59,14 @@ export default function Crafting() {
         <div className="cols-2">
           <Field label="Nº de crafts">
             <NumberInput min={1} value={cfg.crafts} onChange={(v) => set({ crafts: v })} />
+            <InputIssues issues={issues} field="crafts" />
           </Field>
           <Field label="RRR manual (%)" hint="Opcional">
             <NumberInput step="0.1" value={cfg.customRRR} onChange={(v) => set({ customRRR: v })} placeholder={(autoRRR * 100).toFixed(1)} />
+            <InputIssues issues={issues} field="customRRR" />
           </Field>
         </div>
-        <FeeField label="Taxa da bancada (prata por 100 de nutrição)" value={cfg.feePer100} onChange={(v) => set({ feePer100: v })} touched={!feeIsUnconfirmedDefault(cfg.feePer100, cfg.feeSet)} onTouch={() => set({ feeSet: true })} />
+        <FeeField issues={issues.filter((i) => i.field === 'feePer100')} label="Taxa da bancada (prata por 100 de nutrição)" value={cfg.feePer100} onChange={(v) => set({ feePer100: v })} touched={!feeIsUnconfirmedDefault(cfg.feePer100, cfg.feeSet)} onTouch={() => set({ feeSet: true })} />
 
         <hr className="sep" style={{ margin: 0 }} />
         <h3>Materiais</h3>
@@ -95,9 +98,10 @@ export default function Crafting() {
                   <option value={10}>+10%</option>
                   <option value={20}>+20%</option>
                 </select>
+                <InputIssues issues={issues} field={`refineDaily.${type}`} />
               </Field>
             ))}
-            <FeeField label="Taxa da bancada de refino (por 100 nutrição)" value={cfg.refineFee} onChange={(v) => set({ refineFee: v })} touched={!feeIsUnconfirmedDefault(cfg.refineFee, cfg.refineFeeSet)} onTouch={() => set({ refineFeeSet: true })} />
+            <FeeField issues={issues.filter((i) => i.field === 'refineFee')} label="Taxa da bancada de refino (por 100 nutrição)" value={cfg.refineFee} onChange={(v) => set({ refineFee: v })} touched={!feeIsUnconfirmedDefault(cfg.refineFee, cfg.refineFeeSet)} onTouch={() => set({ refineFeeSet: true })} />
           </>
         )}
       </div>
@@ -109,6 +113,7 @@ export default function Crafting() {
               {nameOf(targetMid)} <span className="muted">T{item?.t}.{sel.ench}</span>
             </h2>
             <span className="num">
+              <CorrectedBadge issues={issues} />{' '}
               RRR <b className="good">{(craftRRR * 100).toFixed(1)}%</b>
             </span>
           </div>
