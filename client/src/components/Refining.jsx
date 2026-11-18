@@ -6,6 +6,7 @@ import { rrr as calcRRR, resolveRRR, refineChainIds, fmt, pct } from '../lib/eco
 import { compareRoutes, evaluateTier, pickBestTier, routePath, usedCells } from '../lib/refinePlan';
 import { useSettings, usePersisted } from '../lib/settings';
 import PriceMatrix from './PriceMatrix';
+import TargetPrice from './TargetPrice';
 import { Age, Banner, Field, Money, NumberInput, PriceStatus, Segmented, Switch } from './ui';
 
 const TYPES = Object.keys(REFINING);
@@ -268,6 +269,8 @@ export default function Refining() {
             </div>
           )}
         </div>
+
+        {cur && <TargetPrice cost={cur.unit.cost} prices={prices} mid={cur.mid} missing={missing.length > 0} />}
 
         {routes.length > 0 && (
           <div className="card stack">
