@@ -7,18 +7,22 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'client', 'public', 'data', 'catalog.json');
-const BASE = 'https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master';
+// Dump fixado (SHA = HEAD de master em 2026-11-02): a geração do catálogo é reprodutível.
+const REF = '0483dd97f1581dfaf02eed42f25f5ea2a3cb75e5';
+const REF_DATE = '2026-11-02';
+const BASE = `https://raw.githubusercontent.com/ao-data/ao-bin-dumps/${REF}`;
 
-async function cached(url, name) {
-  const file = path.join(os.tmpdir(), `albion-${name}`);
+async function download(url, name) {
+  const file = path.join(os.tmpdir(), `albion-${REF.slice(0, 8)}-${name}`);
   if (!fs.existsSync(file)) {
     console.log('baixando', url);
     const res = await fetch(url);
     if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
     fs.writeFileSync(file, Buffer.from(await res.arrayBuffer()));
   }
-  return JSON.parse(fs.readFileSync(file, 'utf8'));
+  return fs.readFileSync(file, 'utf8');
 }
+const cached = async (url, name) => JSON.parse(await download(url, name));
 
 const arr = (x) => (x === undefined ? [] : Array.isArray(x) ? x : [x]);
 const num = (x, d = 0) => (x === undefined || x === '' || isNaN(+x) ? d : +x);
@@ -142,6 +146,6 @@ for (const e of items) {
 }
 
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
-fs.writeFileSync(OUT, JSON.stringify({ built: new Date().toISOString().slice(0, 10), items, extra, vals, encNames }));
+fs.writeFileSync(OUT, JSON.stringify({ built: REF_DATE, src: REF, items, extra, vals, encNames }));
 const kb = (fs.statSync(OUT).size / 1024).toFixed(0);
 console.log(`ok: ${items.length} itens, ${Object.keys(extra).length} extras, ${deviations} receitas encantadas fora da regra, ${kb} KB`);
