@@ -119,5 +119,8 @@ O Executor da 019 parou por regra do briefing (correto): 2 testes da fundação 
 **Deploys separados:** 023 e 030 são independentes da 019, então sobem agora como deploy 2; a 019 sobe no deploy 3 depois do retrabalho e de um re-teste curto. Consequência na fila: 038 (precisa da 023) e 066 (precisa da 030) podem começar após o deploy 2; 060 e 041 esperam o deploy 3 (060 edita `FeeField.jsx` e `craftPlan.js` da 019).
 **Retrabalho:** 1 de no máximo 2 (regra do briefing do usuário).
 
+## D-023 — IDEIA-038: teste da poção muda de cidade (aprovado)
+O Executor da 038 parou (corretamente) porque o teste C5 da 001 (poção T6 em Caerleon) deixa de ter bônus: a 038 corrige poção, bolsa e capa para **Brecilien**. Aprovado trocar a cidade do teste para Brecilien (números esperados idênticos: a intenção do teste é "craft em cidade de bônus") **e acrescentar** um teste de regressão que mostra a mesma poção em Caerleon sem bônus (RRR 18/118). É o segundo caso do processo em que um teste herdado muda por uma premissa errada da fundação, resolvido por parada e decisão, sem alteração silenciosa. Contagem de itens sem `cc` (1.006 no relato do Executor) será comparada por shopcategory com a minha de 132 itens de equipamento (o restante deve ser artefato, consumível e recurso).
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.
