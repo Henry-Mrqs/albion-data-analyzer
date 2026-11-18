@@ -127,3 +127,13 @@ Sem exceção e sem NaN/Infinity em nenhum caso.
 
 ## 10. Evidências
 Scripts (fora do repo): `scratchpad/indep.mjs` (recálculo), `scratchpad/diff/run.diff.js` (diferencial), `scratchpad/mut/run-mut.mjs` (mutações). Causa provável de reprovação: não se aplica.
+
+## Adendo: Re-teste do retrabalho nº 1 (commits a555a91 e 8b88b90; tip anterior c2bf11e)
+
+**Veredito final: APROVADO** (as 2 ressalvas do §9 foram corrigidas; nenhuma nova).
+
+1. **Escopo** (`git diff c2bf11e..feat/IDEIA-019 --stat`): `econ.js` (+5: `DEFAULT_FEE` e `feeIsUnconfirmedDefault`), `econ.test.js`, `craftPlan.test.js`, `Crafting.jsx`, `Refining.jsx`. `stationFee`, `roundFee`, imposto e RRR não mudaram.
+2. **`feeIsUnconfirmedDefault`**: oráculo definido antes de ler o código (avisa só se `!feeSet` e valor numericamente 400, nunca para '', null, undefined). Tabela de 11 valores (400, 250, 0, '', null, undefined, '400', 400.0, '400.0', 399.9, '250') x feeSet true/false/undefined/null = 44 combinações, 0 divergências. UI (porta 5194): localStorage antigo com 250 e 300 sem `feeSet` NÃO mostra aviso (bug da ressalva 1 corrigido); 400 sem `feeSet` mostra; editar o campo (401) tira o aviso e grava `feeSet`.
+3. **Teste do `refineFee`** (arco, 1 craft, "Produzir tudo"): T4 = 32x100/133 = 24,06015 x (16x0,1125=1,8 por 100) = 43,308 (taxa 100) e 433,08 (taxa 1000); T3 = 24,06015x100/158 = 15,22795 x 0,9 = 13,705 e 137,05. Confere com o teste. Mutações: `refineFee` trocado por `feePer100` e `refineFee` ignorado são derrubadas. **As 14 mutações do laudo (X5 incluída) e as 6 da DT-001 continuam derrubadas; 0 sobreviventes** (mais 3 novas derrubadas, inclusive aviso sempre ativo).
+4. **Rótulos do Refino**: "Taxa da última etapa (por unidade)" e "Taxa do lote (todas as etapas, N un.)". Números iguais aos anteriores: Craft 17.280 e 69.120; Refino 1.000 un. = 1.800 (Comprar pronto, taxa 100), 2.550 (Produzir tudo, 100), 9.478 (Melhor, 400).
+5. **`npm run check` 2x**: lint limpo, 100/100 testes, build OK. Console da UI limpo, sem NaN. Servidor 5194 parado.
