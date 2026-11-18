@@ -12,6 +12,15 @@ const craftCfg = (over = {}) => ({
   ...over,
 });
 
+const sword = (over) => ({
+  rec: recipeOf('T6_MAIN_SWORD'),
+  targetMid: 'T6_MAIN_SWORD',
+  prices: mkPrices({ T6_METALBAR: 200, T6_LEATHER: 150 }),
+  cfg: craftCfg({ specialty: true, refine: { METALBAR: 'buy', LEATHER: 'buy' }, ...over }),
+  premium: true,
+  bonusCity: null,
+});
+
 const bowPrices = () =>
   mkPrices({
     ...planksSpec({ T4_PLANKS: { 'Fort Sterling': { s: 120 }, Martlock: { s: 130 } } }),
@@ -68,14 +77,14 @@ describe('computeCraft', () => {
     expect(l.total).toBeCloseTo(2887218.0451, 3);
     expect(l.rr).toBeCloseTo(58 / 158, 6);
     expect(l.cmp).toMatchObject({ buy: 120, bestIsMake: true });
-    expect(l.cmp.all).toBeCloseTo(62.353, 3);
-    expect(l.cmp.best).toBeCloseTo(61.5265, 3);
-    expect(l.cmp.d10).toBeCloseTo(57.496, 3);
-    expect(l.cmp.d20).toBeCloseTo(54.0016, 3);
-    expect(c.fee).toBe(230000); // arredonda por craft antes de multiplicar (230,4 -> 230)
+    expect(l.cmp.all).toBeCloseTo(62.2197, 3);
+    expect(l.cmp.best).toBeCloseTo(61.4734, 3);
+    expect(l.cmp.d10).toBeCloseTo(57.4579, 3);
+    expect(l.cmp.d20).toBeCloseTo(53.9769, 3);
+    expect(c.fee).toBe(230400); // 512*0,1125*4*1000 = 230.400, arredondado só no total
     expect(c.units).toBe(1000);
-    expect(c.totalCost).toBeCloseTo(3117218.0451, 3);
-    expect(c.unitCost).toBeCloseTo(3117.218, 3);
+    expect(c.totalCost).toBeCloseTo(3117618.0451, 3); // 2.887.218,0451 + 230.400
+    expect(c.unitCost).toBeCloseTo(3117.618, 3);
     expect(c.options.map((o) => [o.city, o.mode])).toEqual([
       ['Lymhurst', 'order'], ['Caerleon', 'order'], ['Black Market', 'instant'], ['Caerleon', 'instant'],
     ]);
@@ -83,8 +92,8 @@ describe('computeCraft', () => {
       expect.closeTo(8882500, 2), expect.closeTo(8415000, 2), expect.closeTo(8160000, 2), expect.closeTo(7680000, 2),
     ]);
     expect(c.best.net).toBeCloseTo(8882500, 2);
-    expect(c.best.profit).toBeCloseTo(5765281.9549, 3);
-    expect(c.best.margin).toBeCloseTo(184.9496, 3);
+    expect(c.best.profit).toBeCloseTo(5764881.9549, 3); // 8.882.500 - 3.117.618,0451
+    expect(c.best.margin).toBeCloseTo(184.913, 3);
     expect(c.ready).toBeTruthy();
     expect(c.missing).toEqual([]);
   });
@@ -92,19 +101,19 @@ describe('computeCraft', () => {
   it('C1 sem premium', () => {
     const c = computeCraft(bowArgs({ cfg: craftCfg({ crafts: 1000, refine: { PLANKS: 'buy' } }), premium: false }));
     expect(c.best.net).toBeCloseTo(8502500, 2); // 9500 * 0,895 * 1000
-    expect(c.best.profit).toBeCloseTo(5385281.9549, 3);
-    expect(c.best.margin).toBeCloseTo(172.7592, 3);
+    expect(c.best.profit).toBeCloseTo(5384881.9549, 3);
+    expect(c.best.margin).toBeCloseTo(172.7242, 3);
   });
 
   it('C2: modo best (produz T3, compra T2) e plano', () => {
     const c = computeCraft(bowArgs({ cfg: craftCfg({ crafts: 1000, refine: { PLANKS: 'best' } }) }));
     const l = c.lines[0];
     expect(l.useRefine).toBe(true);
-    expect(l.unit).toBeCloseTo(61.5265, 3);
-    expect(l.total).toBeCloseTo(1480337.2797, 3);
-    expect(c.totalCost).toBeCloseTo(1710337.2797, 3);
-    expect(c.best.profit).toBeCloseTo(7172162.7203, 3);
-    expect(c.best.margin).toBeCloseTo(419.342, 3);
+    expect(l.unit).toBeCloseTo(61.4734, 3);
+    expect(l.total).toBeCloseTo(1479058.1324, 3);
+    expect(c.totalCost).toBeCloseTo(1709458.1324, 3); // 1.479.058,1324 + 230.400
+    expect(c.best.profit).toBeCloseTo(7173041.8676, 3);
+    expect(c.best.margin).toBeCloseTo(419.6091, 3);
     expect(c.plan.map((p) => p.kind)).toEqual(['make', 'make', 'buy', 'buy', 'buy']);
     expect(c.plan.map((p) => p.mid)).toEqual(['T4_PLANKS', 'T3_PLANKS', 'T4_WOOD', 'T3_WOOD', 'T2_PLANKS']);
     expect(c.plan.map((p) => p.qty)).toEqual([
@@ -112,12 +121,65 @@ describe('computeCraft', () => {
       expect.closeTo(19275.8776, 4), expect.closeTo(9637.9388, 4),
     ]);
     expect(c.plan.map((p) => p.total)).toEqual([
-      expect.closeTo(168421.0526, 3), expect.closeTo(60911.7731, 3), expect.closeTo(913676.5966, 3),
+      expect.closeTo(173233.0827, 3), expect.closeTo(54820.5958, 3), expect.closeTo(913676.5966, 3),
       expect.closeTo(289138.1635, 3), expect.closeTo(48189.6939, 3),
     ]);
     const soma = c.plan.reduce((a, p) => a + p.total, 0) + c.fee;
     expect(Math.abs(soma - c.totalCost)).toBeLessThan(0.01);
     expect(c.used.has('T2_PLANKS|Fort Sterling')).toBe(true);
+  });
+
+  it('DT-001: empate exato entre comprar pronto e produzir (modo best) compra', () => {
+    const run = (planksPrice) => computeCraft(bowArgs({
+      prices: mkPrices({ ...planksSpec({ T4_PLANKS: planksPrice }), T4_2H_BOW: { Lymhurst: { s: 9500 } } }),
+      cfg: craftCfg({ crafts: 10, refine: { PLANKS: 'best' } }),
+    }));
+    // custo de produzir, lido de uma rodada em que comprar é muito mais caro
+    const makeCost = run(100000).lines[0].cmp.best;
+    expect(makeCost).toBeGreaterThan(0);
+    const tie = run(makeCost);
+    expect(tie.lines[0].cmp.bestIsMake).toBe(false);
+    expect(tie.lines[0].useRefine).toBe(false);
+    expect(tie.lines[0].unit).toBe(makeCost);
+    // com o pronto 1 centavo mais caro, passa a produzir
+    expect(run(makeCost + 0.01).lines[0].useRefine).toBe(true);
+  });
+
+  it('DT-001: Black Market nunca é ordem de venda, mesmo com preço de venda (s) > 0', () => {
+    const prices = mkPrices({
+      ...planksSpec(),
+      T4_2H_BOW: { Lymhurst: { s: 9500 }, 'Black Market': { s: 99999, b: 8500 } },
+    });
+    const c = computeCraft(bowArgs({ prices }));
+    expect(c.options.map((o) => [o.city, o.mode])).toEqual([['Lymhurst', 'order'], ['Black Market', 'instant']]);
+    expect(c.options.some((o) => o.city === 'Black Market' && o.mode === 'order')).toBe(false);
+  });
+
+  it('lote: 100 crafts, taxa 100 = 17.280 (antes 17.300)', () => expect(computeCraft(sword({ crafts: 100, feePer100: 100 })).fee).toBe(17280)); // 1536*0,1125*100
+  it('lote: 7 crafts, taxa 333 = 4.028 (antes 4.025)', () => expect(computeCraft(sword({ crafts: 7, feePer100: 333 })).fee).toBe(4028)); // 172,8*3,33*7 = 4027,968
+  it('1 craft: 691 (691,2 arredondado no total)', () => expect(computeCraft(sword({ crafts: 1, feePer100: 400 })).fee).toBe(691));
+  it('fee do plano de refino fica exato e soma ao total (C2)', () => {
+    const c = computeCraft(bowArgs({ cfg: craftCfg({ crafts: 1000, refine: { PLANKS: 'best' } }) }));
+    const makes = c.plan.filter((p) => p.kind === 'make').map((p) => p.total);
+    expect(makes[0]).toBeCloseTo(173233.0827, 3);
+    expect(makes[1]).toBeCloseTo(54820.5958, 3);
+    expect(c.totalCost).toBeCloseTo(c.matCost + 230400, 6);
+  });
+
+  it('refineFee (taxa do refino dentro do Craft) é usada nas etapas produzidas, ≠ 400', () => {
+    // 1 craft de arco T4, planks em modo 'all': 32 tábuas * (1 - 33/133) = 3200/133 = 24,06015 T4 a produzir.
+    // T3 a produzir: 24,06015 * (1 - 58/158) = 24,06015 * 100/158 = 15,22795.
+    // Taxa por unidade = valor * 0,1125 * taxa/100: T4 (valor 16) = 0,018 * taxa; T3 (valor 8) = 0,009 * taxa.
+    // taxa 100: T4 = 24,06015 * 1,8 = 43,30827; T3 = 15,22795 * 0,9 = 13,70516
+    // taxa 1000: T4 = 433,0827; T3 = 137,0516
+    const makes = (refineFee) => computeCraft(bowArgs({ cfg: craftCfg({ refineFee, refine: { PLANKS: 'all' } }) })).plan.filter((p) => p.kind === 'make');
+    const m100 = makes(100);
+    expect(m100.map((m) => m.mid)).toEqual(['T4_PLANKS', 'T3_PLANKS', 'T2_PLANKS']);
+    expect(m100[0].total).toBeCloseTo(43.30827, 3);
+    expect(m100[1].total).toBeCloseTo(13.70516, 3);
+    const m1000 = makes(1000);
+    expect(m1000[0].total).toBeCloseTo(433.0827, 2);
+    expect(m1000[1].total).toBeCloseTo(137.0516, 2);
   });
 
   it('C3: espada T6 com artefato (3 ingredientes), refinados em modo buy', () => {
@@ -146,10 +208,10 @@ describe('computeCraft', () => {
     // Preços (Fort Sterling): FOXGLOVE 10, TEASEL 20, COMFREY 30, MILK 40
     //   material = (72*10 + 36*20 + 36*30 + 18*40) * 100/133 = (720+720+1080+720) * 100/133 = 324000/133 = 2436,0902
     // Valor da receita = (24+12+12+6) * 40 = 2160; taxa por craft com 150/100 de nutrição:
-    //   2160 * 0,1125 * 1,5 = 364,5 -> Math.round = 365; 3 crafts = 1095 (arredonda antes de multiplicar)
-    // Custo total = 2436,0902 + 1095 = 3531,0902; unidades = 5 * 3 = 15; custo por unidade = 235,4060
+    //   2160 * 0,1125 * 1,5 = 364,5 por craft; 3 crafts = 1093,5 -> Math.round (meio sobe) = 1094 (IDEIA-019: arredonda só no total; antes 365 * 3 = 1095)
+    // Custo total = 2436,0902 + 1094 = 3530,0902; unidades = 5 * 3 = 15; custo por unidade = 3530,0902 / 15 = 235,3394
     // Venda em ordem em Caerleon a 400 (premium: 1 - 0,04 - 0,025 = 0,935): 400 * 0,935 * 15 = 5610
-    //   lucro = 5610 - 3531,0902 = 2078,9098; margem = 2078,9098 / 3531,0902 * 100 = 58,8744%
+    //   lucro = 5610 - 3530,0902 = 2079,9098; margem = 2079,9098 / 3530,0902 * 100 = 58,9195%
     const rec = recipeOf('T6_POTION_COOLDOWN');
     expect(rec.amount).toBe(5);
     expect(rec.res).toHaveLength(4);
@@ -170,14 +232,14 @@ describe('computeCraft', () => {
       expect.closeTo(7200 / 133, 4), expect.closeTo(3600 / 133, 4), expect.closeTo(3600 / 133, 4), expect.closeTo(1800 / 133, 4),
     ]);
     expect(c.matCost).toBeCloseTo(2436.0902, 3);
-    expect(c.fee).toBe(1095);
-    expect(c.totalCost).toBeCloseTo(3531.0902, 3);
+    expect(c.fee).toBe(1094);
+    expect(c.totalCost).toBeCloseTo(3530.0902, 3);
     expect(c.units).toBe(15);
-    expect(c.unitCost).toBeCloseTo(235.406, 3);
+    expect(c.unitCost).toBeCloseTo(235.3394, 3);
     expect(c.options.map((o) => [o.city, o.mode])).toEqual([['Caerleon', 'order']]);
     expect(c.best.net).toBeCloseTo(5610, 3);
-    expect(c.best.profit).toBeCloseTo(2078.9098, 3);
-    expect(c.best.margin).toBeCloseTo(58.8744, 3);
+    expect(c.best.profit).toBeCloseTo(2079.9098, 3);
+    expect(c.best.margin).toBeCloseTo(58.9195, 3);
   });
 
   it('C4: item sem preço', () => {

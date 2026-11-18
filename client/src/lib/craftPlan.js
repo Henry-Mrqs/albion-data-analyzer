@@ -1,7 +1,7 @@
 // Lógica de cálculo da tela de Craft (pura: sem React, fetch ou localStorage).
 import { REFINING, recipeValue, nameOf, refinedTypeOf, tierOf } from './catalog';
 import { SELL_CITIES, quote } from './market';
-import { rrr as calcRRR, resolveRRR, refineUnit, refineChainIds, buyQuote, materialPlan, netSale, stationFee } from './econ';
+import { rrr as calcRRR, resolveRRR, refineUnit, refineChainIds, buyQuote, materialPlan, netSale, stationFee, roundFee } from './econ';
 
 export const keyOf = (uniq) => uniq.replace(/^T\d_/, '').replace(/_LEVEL\d$/, '');
 export const canRefineUniq = (uniq) => !!refinedTypeOf(uniq) && tierOf(uniq) >= 2;
@@ -96,7 +96,7 @@ export function computeCraft({ rec, targetMid, prices, cfg, premium, bonusCity }
     : [];
 
   const matCost = lines.reduce((s, l) => s + l.total, 0);
-  const fee = rec ? stationFee(recipeValue(rec), +cfg.feePer100 || 0) * crafts : 0;
+  const fee = rec ? roundFee(stationFee(recipeValue(rec), +cfg.feePer100 || 0, crafts)) : 0;
   const totalCost = matCost + fee;
   const units = rec ? rec.amount * crafts : 0;
   const unitCost = units ? totalCost / units : 0;

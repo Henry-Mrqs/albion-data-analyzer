@@ -1,7 +1,7 @@
 // Lógica de cálculo da tela de Refino (pura: sem React, fetch ou localStorage).
 import { marketId } from './catalog';
 import { SELL_CITIES, quote } from './market';
-import { refineUnit, netSale } from './econ';
+import { refineUnit, netSale, materialPlan, roundFee } from './econ';
 
 // ordem das rotas (rótulos e hints ficam no componente)
 export const ROUTE_ORDER = ['buy', 'all', 'best'];
@@ -47,6 +47,9 @@ export function compareRoutes(uniq, ctx) {
   const best = routes.filter((r) => r.ok).sort((a, b) => a.unit.cost - b.unit.cost)[0];
   return { routes, best };
 }
+
+// taxa da bancada do lote: soma exata das etapas, arredondada uma única vez
+export const lotFee = (unit, qty, rrr) => roundFee(materialPlan(unit, qty, rrr).makes.reduce((s, m) => s + m.fee, 0));
 
 export const pickBestTier = (rows) =>
   rows.filter((r) => r.sell.price > 0 && !r.unit.missing.length).sort((a, b) => b.profit - a.profit)[0];

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
-  buyQuote, materialPlan, netSale, refineChainIds, refineUnit, resolveRRR, rrr, splitUniq, stationFee,
+  buyQuote, materialPlan, netSale, refineChainIds, refineUnit, resolveRRR, roundFee, rrr, feeIsUnconfirmedDefault, DEFAULT_FEE, splitUniq, stationFee,
 } from './econ';
 import { loadFixtureCatalog, mkPrices, planksSpec } from '../test/helpers';
 
@@ -42,15 +42,53 @@ describe('resolveRRR', () => {
   });
 });
 
-describe('stationFee', () => {
-  it('arredonda com Math.round', () => {
-    expect(stationFee(16, 400)).toBe(7); // 7,2
-    expect(stationFee(8, 400)).toBe(4); // 3,6
-    expect(stationFee(4, 400)).toBe(2); // 1,8
-    expect(stationFee(7296, 400)).toBe(3283); // 3283,2
-    expect(stationFee(1024, 400)).toBe(461); // 460,8
-    expect(stationFee(40, 100)).toBe(5); // 4,5 -> Math.round sobe
-    expect(stationFee(100, 0)).toBe(0);
+describe('stationFee / roundFee (IDEIA-019: arredonda só no total)', () => {
+  // dossiê §4: valor de item 384 (Broadsword T4 = 16*16 + 8*16), prancha T4 = 16
+  it('caso 1: 100 crafts, taxa 100 = 4.320 (antes 4.300)', () => expect(roundFee(stationFee(384, 100, 100))).toBe(4320)); // 384*0,1125=43,2; *100 = 4320
+  it('caso 2: 1 craft, taxa 100 = 43 (43,2 arredondado no total)', () => {
+    expect(stationFee(384, 100)).toBeCloseTo(43.2, 6);
+    expect(roundFee(stationFee(384, 100, 1))).toBe(43);
+  });
+  it('caso 3: 1.000 pranchas T4, taxa 100 = 1.800 (antes 2.000)', () => expect(roundFee(stationFee(16, 100, 1000))).toBe(1800)); // 16*0,1125*1000
+  it('caso 4: 7 crafts, taxa 333 = 1.007 (antes 1.008)', () => {
+    expect(stationFee(384, 333, 7)).toBeCloseTo(1006.992, 3); // 43,2*7*3,33
+    expect(roundFee(stationFee(384, 333, 7))).toBe(1007);
+  });
+  it('caso 5: 100 crafts, taxa 500 = 21.600 (igual)', () => expect(roundFee(stationFee(384, 500, 100))).toBe(21600));
+  it('por unidade é exata e n=1 por padrão', () => {
+    expect(stationFee(16, 400)).toBeCloseTo(7.2, 9);
+    expect(stationFee(8, 400)).toBeCloseTo(3.6, 9);
+    expect(stationFee(4, 400)).toBeCloseTo(1.8, 9);
+  });
+  it('valores grandes: exato e arredondado', () => {
+    expect(stationFee(7296, 400)).toBeCloseTo(3283.2, 6);
+    expect(stationFee(1024, 400)).toBeCloseTo(460.8, 6);
+    expect(roundFee(stationFee(7296, 400))).toBe(3283);
+    expect(roundFee(stationFee(1024, 400))).toBe(461);
+  });
+  it('taxa zero e meio sobe', () => {
+    expect(stationFee(100, 0, 5)).toBe(0);
+    expect(roundFee(stationFee(100, 0))).toBe(0);
+    expect(stationFee(40, 100)).toBeCloseTo(4.5, 9);
+    expect(roundFee(stationFee(40, 100))).toBe(5); // 4,5 sobe
+  });
+  it('linearidade: stationFee(v, r, n) === n * stationFee(v, r)', () => expect(stationFee(384, 333, 7)).toBeCloseTo(7 * stationFee(384, 333), 9));
+});
+
+describe('feeIsUnconfirmedDefault (aviso do padrão 400)', () => {
+  it('localStorage antigo: 250 salvo sem feeSet NÃO é o padrão (sem aviso)', () => {
+    expect(feeIsUnconfirmedDefault(250, undefined)).toBe(false);
+    expect(feeIsUnconfirmedDefault('250', undefined)).toBe(false);
+  });
+  it('400 sem feeSet: avisa; 400 com feeSet (usuário confirmou): não avisa', () => {
+    expect(DEFAULT_FEE).toBe(400);
+    expect(feeIsUnconfirmedDefault(400, undefined)).toBe(true);
+    expect(feeIsUnconfirmedDefault('400', false)).toBe(true);
+    expect(feeIsUnconfirmedDefault(400, true)).toBe(false);
+  });
+  it('campo vazio ou 0 não é o padrão', () => {
+    expect(feeIsUnconfirmedDefault('', false)).toBe(false);
+    expect(feeIsUnconfirmedDefault(0, false)).toBe(false);
   });
 });
 
@@ -110,8 +148,8 @@ describe('refineUnit (rota de refino)', () => {
 
   it('A buy', () => {
     const u = refineUnit('T4_PLANKS', ctx(A(), 'buy'));
-    expect(u.cost).toBeCloseTo(76.6203, 4);
-    expect(u.fee).toBe(7);
+    expect(u.cost).toBeCloseTo(76.8203, 4); // 110*0,632911 + 7,2
+    expect(u.fee).toBeCloseTo(7.2, 9);
     expect(u.missing).toEqual([]);
     expect(u.lines.map((l) => [l.mid, l.qty, l.unit, l.choice, l.refined])).toEqual([
       ['T4_WOOD', 2, 30, 'buy', false],
@@ -120,41 +158,41 @@ describe('refineUnit (rota de refino)', () => {
   });
   it('A all', () => {
     const u = refineUnit('T4_PLANKS', ctx(A(), 'all'));
-    expect(u.cost).toBeCloseTo(62.353, 4);
+    expect(u.cost).toBeCloseTo(62.2197, 4);
     expect(u.lines[1]).toMatchObject({ choice: 'make', alt: 50 });
-    expect(u.lines[1].unit).toBeCloseTo(27.4578, 4);
+    expect(u.lines[1].unit).toBeCloseTo(26.9312, 4);
     expect(u.lines[1].sub.lines[1]).toMatchObject({ choice: 'make', alt: 5 });
-    expect(u.lines[1].sub.lines[1].unit).toBeCloseTo(7.0633, 4);
+    expect(u.lines[1].sub.lines[1].unit).toBeCloseTo(6.8633, 4);
   });
   it('A best: faz T3, compra T2', () => {
     const u = refineUnit('T4_PLANKS', ctx(A(), 'best'));
-    expect(u.cost).toBeCloseTo(61.5265, 4);
+    expect(u.cost).toBeCloseTo(61.4734, 4);
     expect(u.lines[1]).toMatchObject({ choice: 'make', alt: 50 });
-    expect(u.lines[1].unit).toBeCloseTo(26.1519, 4);
+    expect(u.lines[1].unit).toBeCloseTo(25.7519, 4);
     const t2 = u.lines[1].sub.lines[1];
     expect(t2).toMatchObject({ choice: 'buy', unit: 5 });
-    expect(t2.alt).toBeCloseTo(7.0633, 4);
+    expect(t2.alt).toBeCloseTo(6.8633, 4);
   });
   it('B best: compra T3 a 20 (= rota buy)', () => {
     const B = () => mkPrices(planksSpec({ T3_PLANKS: 20 }));
     const u = refineUnit('T4_PLANKS', ctx(B(), 'best'));
-    expect(u.cost).toBeCloseTo(57.6329, 4);
+    expect(u.cost).toBeCloseTo(57.8329, 4);
     expect(u.lines[1]).toMatchObject({ choice: 'buy', unit: 20, sub: null });
-    expect(u.lines[1].alt).toBeCloseTo(26.1519, 4);
-    expect(refineUnit('T4_PLANKS', ctx(B(), 'all')).cost).toBeCloseTo(62.353, 4);
+    expect(u.lines[1].alt).toBeCloseTo(25.7519, 4);
+    expect(refineUnit('T4_PLANKS', ctx(B(), 'all')).cost).toBeCloseTo(62.2197, 4);
   });
   it('sem T3_WOOD: all acusa, best contorna', () => {
     const p = () => mkPrices(planksSpec({ T3_WOOD: null }));
     const all = refineUnit('T4_PLANKS', ctx(p(), 'all'));
-    expect(all.cost).toBeCloseTo(50.3357, 4);
+    expect(all.cost).toBeCloseTo(50.2024, 4);
     expect(all.missing).toEqual(['T3_WOOD']);
     const best = refineUnit('T4_PLANKS', ctx(p(), 'best'));
-    expect(best.cost).toBeCloseTo(76.6203, 4);
+    expect(best.cost).toBeCloseTo(76.8203, 4);
     expect(best.missing).toEqual([]);
   });
   it('sem T4_WOOD na rota buy', () => {
     const u = refineUnit('T4_PLANKS', ctx(mkPrices(planksSpec({ T4_WOOD: null })), 'buy'));
-    expect(u.cost).toBeCloseTo(38.6456, 4);
+    expect(u.cost).toBeCloseTo(38.8456, 4);
     expect(u.missing).toEqual(['T4_WOOD']);
   });
   it('sem receita', () => {
@@ -162,19 +200,29 @@ describe('refineUnit (rota de refino)', () => {
   });
   it('prices null não estoura', () => {
     const u = refineUnit('T4_PLANKS', ctx(null, 'best'));
-    expect(u.cost).toBeCloseTo(7, 6); // só a taxa: tudo sem preço
+    expect(u.cost).toBeCloseTo(7.2, 6); // só a taxa: tudo sem preço; valor 16 * 0,1125 * 4 = 7,2 (IDEIA-019: sem arredondar; antes 7)
     expect(u.missing).toEqual(['T4_WOOD', 'T3_PLANKS']);
   });
   it('deep legado: deep=true sem route equivale a all; sem ambos equivale a buy', () => {
-    expect(refineUnit('T4_PLANKS', ctx(A(), undefined, { deep: true })).cost).toBeCloseTo(62.353, 4);
-    expect(refineUnit('T4_PLANKS', ctx(A(), undefined)).cost).toBeCloseTo(76.6203, 4);
+    expect(refineUnit('T4_PLANKS', ctx(A(), undefined, { deep: true })).cost).toBeCloseTo(62.2197, 4);
+    expect(refineUnit('T4_PLANKS', ctx(A(), undefined)).cost).toBeCloseTo(76.8203, 4);
+  });
+  it('DT-001: empate exato entre produzir e comprar na rota best compra (usa <, não <=)', () => {
+    // rrr 0 e taxa 0: custo de produzir T3_PLANKS = 2 * T3_WOOD (15) + 1 * T2_PLANKS (5) = 35.
+    // T2_WOOD ausente: T2 não é produzível, só comprado a 5. T3_PLANKS pronto custa 35: empate exato.
+    const tie = () => mkPrices(planksSpec({ T2_WOOD: null, T3_PLANKS: 35 }));
+    const u = refineUnit('T4_PLANKS', ctx(tie(), 'best', { rrr: 0, feePer100: 0 }));
+    expect(u.lines[1]).toMatchObject({ mid: 'T3_PLANKS', choice: 'buy', unit: 35, sub: null, alt: 35 });
+    // um centavo mais barato produzir: passa a produzir (o teste do empate não é trivial)
+    const cheaper = mkPrices(planksSpec({ T2_WOOD: null, T3_PLANKS: 35.01 }));
+    expect(refineUnit('T4_PLANKS', ctx(cheaper, 'best', { rrr: 0, feePer100: 0 })).lines[1]).toMatchObject({ choice: 'make', unit: 35 });
   });
   it('materialPlan(best A, n=1000)', () => {
     const p = materialPlan(refineUnit('T4_PLANKS', ctx(A(), 'best')), 1000, 58 / 158);
     expect(p.makes.map((m) => m.mid)).toEqual(['T4_PLANKS', 'T3_PLANKS']);
-    expect(p.makes[0]).toMatchObject({ qty: 1000, fee: 7000 });
+    expect(p.makes[0]).toMatchObject({ qty: 1000, fee: 7200 }); // 1,8*... 7,2 * 1000
     expect(p.makes[1].qty).toBeCloseTo(632.9114, 4);
-    expect(p.makes[1].fee).toBeCloseTo(2531.6456, 4);
+    expect(p.makes[1].fee).toBeCloseTo(2278.481, 4); // 632,9114 * 3,6
     expect(p.buys.map((b) => [b.mid, b.unit])).toEqual([['T4_WOOD', 30], ['T3_WOOD', 15], ['T2_PLANKS', 5]]);
     expect(p.buys.map((b) => b.qty)).toEqual([
       expect.closeTo(1265.8228, 4), expect.closeTo(801.1537, 4), expect.closeTo(400.5768, 4),

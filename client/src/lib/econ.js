@@ -17,8 +17,16 @@ export const resolveRRR = (auto, raw) => {
   return custom ? +raw / 100 : auto;
 };
 
-/** Taxa de uso da bancada: valor do item * 0.1125 nutrição, cobrada por 100 de nutrição. */
-export const stationFee = (itemValue, feePer100) => Math.round(itemValue * 0.1125 * (feePer100 / 100));
+/** Taxa de uso da bancada, EXATA: valor do item * 0.1125 nutrição * n, cobrada por 100 de nutrição. Não arredonda. */
+export const stationFee = (itemValue, feePer100, n = 1) => itemValue * 0.1125 * n * (feePer100 / 100);
+
+export const DEFAULT_FEE = 400; // padrão do app (não é dado do jogo)
+
+/** Avisa só quando o valor em uso é o padrão não confirmado: 400 e o usuário nunca editou (sem feeSet). Valor salvo diferente de 400 já é do usuário. */
+export const feeIsUnconfirmedDefault = (value, feeSet) => !feeSet && value !== '' && +value === DEFAULT_FEE;
+
+/** Único ponto de arredondamento da taxa: no total do lote (meio sobe). */
+export const roundFee = (x) => Math.round(x);
 
 /** Líquido ao vender: 'order' (cria ordem de venda) ou 'instant' (vende numa ordem de compra). */
 export const netSale = (price, mode, premium) =>
