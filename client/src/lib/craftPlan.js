@@ -143,3 +143,22 @@ export function computeCraft({ rec, targetMid, prices, cfg: rawCfg, premium, bon
 
   return { rates, lines, matCost, fee, totalCost, units, unitCost, missing, options, best, ready, plan, used, refinable, allBest, issues };
 }
+
+/**
+ * IDEIA-041: quanto o lote economizaria se o bônus diário do item fosse +10% ou +20% (valor ABSOLUTO que substitui o atual).
+ * Reaproveita computeCraft em cada cenário (a taxa de bancada não depende do RRR, então não entra na diferença).
+ * null se não há receita, preços ou algum material do cenário atual está sem preço.
+ */
+export function waitSavings({ rec, targetMid, prices, cfg, premium, bonusCity, feeCeiling, levels = [10, 20] }) {
+  if (!rec || !prices) return null;
+  const args = { rec, targetMid, prices, premium, bonusCity, feeCeiling };
+  const now = computeCraft({ ...args, cfg });
+  if (now.missing.length) return null;
+  const crafts = now.rates.crafts;
+  const rows = levels.map((daily) => {
+    const totalCost = computeCraft({ ...args, cfg: { ...cfg, craftDaily: daily } }).totalCost;
+    const lot = Math.max(0, now.totalCost - totalCost);
+    return { daily, totalCost, perCraft: lot / crafts, lot, gain: lot > 0.5 };
+  });
+  return { base: now.totalCost, rows };
+}
