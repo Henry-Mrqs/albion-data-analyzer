@@ -72,5 +72,14 @@ O Tester aprovou. Cinco mutações sobreviveram, ou seja, faltam testes para: (1
 **Coordenação 030 × 059:** a 030 já tem o campo "relistagens" (2,5% por atualização). A 059 estende essa conta ao ciclo completo (cancelar, esperar). O Planejador da 059 deve **reutilizar** a função da 030, sem duplicar.
 **Pesquisador em espera (decisão do Gerente, o usuário pode reverter):** o backlog tem 62 ideias funcionais, 20 delas já com dossiê e bloqueios de dados. O gargalo agora é executar, não achar ideias. Enquanto houver mais de 12 ideias `TRIADA`/`PLANEJADA` esperando execução, o Pesquisador não gera dossiês novos; volta a rodar quando a fila cair abaixo disso, ou antes, se o Tester achar um erro de dados que precise de fonte. Isso muda o "sempre rodando" do briefing original para evitar dossiês que envelhecem (o jogo muda por patch).
 
+## D-017 — Planos 038, 057, 019, 041 aprovados; 039 aprovado com ajuste conservador
+Conferi no dump (cache local de `items.json`): `T4_MAIN_SWORD`=sword, `T4_2H_BOW`=bow, `T4_ARMOR_PLATE_SET1`=plate_armor, `T4_OFF_SHIELD` e `T4_OFF_BOOK`=offhand, `T4_BAG`=bag, `T4_POTION_HEAL`=potion, `T4_SHOES_CLOTH_SET1`=cloth_shoes; `T4_ARMOR_PLATE_ROYAL`, `T4_HEAD_CLOTH_ROYAL` e capas de cidade **sem** `craftingcategory`. São 132 itens de equipamento sem categoria: passam a ter "sem cidade de bônus", que é o correto. Respostas às perguntas do Planejador:
+1. **039 (765 itens "Artefato" passariam a retornar):** NÃO aplicar sem confirmação. Um erro aqui subestima o custo (otimista), que é a direção perigosa. A regra do app passa a ser **união**: não retorna se o dump marcar `maxreturnamount=0` **ou** se o ingrediente casar com os tokens antigos RUNE/SOUL/RELIC/SHARD. Os 765 itens ficam como estão, marcados "NÃO VERIFICADO" no plano e no relatório, até haver medição em jogo. O dossiê 039 dá MÉDIA-ALTA e a inferência "atributo ausente = retorna" não cobre esse caso.
+2. **019:** mantém o padrão 400 com aviso visível "valor padrão, confira o da sua bancada".
+3. **041:** confirmado: as colunas de bônus diário são cenários absolutos que substituem o valor escolhido (não somam), igual ao que já existe no refino.
+4. **023:** sem adendo. A 038 já lista `rrrCalc.js` entre os arquivos que altera; a ordem é 023 mesclada antes da 038.
+5. **Dossiê 050:** o Pesquisador corrige (a prata de transmutação difere por recurso; pedra T5 = 1.180). A 057 usa o valor do dump, então não é afetada.
+**Fila e WIP (limite 3):** em execução 023 e 030; entra a 019 (carrega a dívida DT-001: 4 testes de borda, só arquivos de teste). A 038 espera a 023 estar mesclada. 057 e 039 vêm depois da 038 (mesmos arquivos). 041 depois da 019.
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.
