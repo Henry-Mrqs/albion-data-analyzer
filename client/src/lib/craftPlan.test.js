@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { craftBonusCity, getItem, recipeOf } from './catalog';
-import { canRefineUniq, computeCraft, craftChainIds, craftRates, keyOf, modeOf, waitSavings, worthWaiting } from './craftPlan';
+import { canRefineUniq, computeCraft, craftChainIds, craftRates, keyOf, modeOf, waitSavings, worthWaiting, GAIN_THRESHOLD } from './craftPlan';
 import { loadFixtureCatalog, mkPrices, planksSpec } from '../test/helpers';
 
 beforeEach(loadFixtureCatalog);
@@ -430,5 +430,15 @@ describe('worthWaiting', () => {
     expect(worthWaiting({ gain: false, lot: 0 }, 0)).toBe(false);
     expect(worthWaiting(row, NaN)).toBe(true);
     expect(worthWaiting(row, -50)).toBe(true);
+  });
+});
+
+describe('GAIN_THRESHOLD', () => {
+  it('limiar nomeado de meia prata (decisão de produto, igual ao do refino): abaixo disso não é ganho', () => {
+    expect(GAIN_THRESHOLD).toBe(0.5);
+    const base = { rec: recipeOf('T6_MAIN_SWORD'), targetMid: 'T6_MAIN_SWORD', premium: true, bonusCity: null };
+    const prices = mkPrices({ T6_METALBAR: 0.0001, T6_LEATHER: 0.0001 }); // custo ínfimo: economia < 0,5
+    const w = waitSavings({ ...base, prices, cfg: craftCfg({ specialty: true, refine: { METALBAR: 'buy', LEATHER: 'buy' }, feePer100: 0 }) });
+    expect(w.rows.every((r) => r.lot > 0 && r.lot < GAIN_THRESHOLD && !r.gain)).toBe(true);
   });
 });

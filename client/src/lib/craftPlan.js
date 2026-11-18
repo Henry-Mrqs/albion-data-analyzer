@@ -144,6 +144,9 @@ export function computeCraft({ rec, targetMid, prices, cfg: rawCfg, premium, bon
   return { rates, lines, matCost, fee, totalCost, units, unitCost, missing, options, best, ready, plan, used, refinable, allBest, issues };
 }
 
+// Economia mínima (prata) para contar como ganho: decisão de produto sem fonte; o mesmo limiar do comparativo de refino da tela.
+export const GAIN_THRESHOLD = 0.5;
+
 /**
  * IDEIA-041: quanto o lote economizaria se o bônus diário do item fosse +10% ou +20% (valor ABSOLUTO que substitui o atual).
  * Reaproveita computeCraft em cada cenário (a taxa de bancada não depende do RRR, então não entra na diferença).
@@ -158,7 +161,7 @@ export function waitSavings({ rec, targetMid, prices, cfg, premium, bonusCity, f
   const rows = levels.map((daily) => {
     const totalCost = computeCraft({ ...args, cfg: { ...cfg, craftDaily: daily } }).totalCost;
     const lot = Math.max(0, now.totalCost - totalCost);
-    return { daily, totalCost, perCraft: lot / crafts, lot, gain: lot > 0.5 };
+    return { daily, totalCost, perCraft: lot / crafts, lot, gain: lot > GAIN_THRESHOLD };
   });
   return { base: now.totalCost, rows };
 }
