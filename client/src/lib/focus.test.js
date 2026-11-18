@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { recipeOf } from './catalog';
-import { craftFocusSummary, craftsWithBudget, focusCost, focusPerCraft } from './focus';
+import { craftFocusSummary, craftsWithBudget, focusCost, focusPerCraft, focusValues } from './focus';
 import { loadFixtureCatalog, mkPrices } from '../test/helpers';
 
 beforeEach(loadFixtureCatalog);
@@ -113,6 +113,10 @@ describe('IDEIA-002: craftFocusSummary (dossiê §4)', () => {
   it('o cfg.focus do usuário não altera o resultado (o cartão compara com e sem foco)', () => {
     expect(S({ efficiency: 31000 }, { focus: true })).toEqual(S({ efficiency: 31000 }, { focus: false }));
   });
+  it('devolve o orçamento e a referência usados (para o cartão mostrar)', () => {
+    expect(S({ efficiency: 0, budget: 9000, reference: 5 })).toMatchObject({ budget: 9000, reference: 5 });
+    expect(S({ efficiency: 0 })).toMatchObject({ budget: 0, reference: null });
+  });
   it('o cfg recebido não é mutado', () => {
     const cfg = craftCfg();
     const copy = structuredClone(cfg);
@@ -126,5 +130,26 @@ describe('IDEIA-002: craftFocusSummary (dossiê §4)', () => {
       expect(Number.isFinite(s.silverPerPoint)).toBe(true);
       expect(s.craftsInBudget).toBe(0);
     }
+  });
+});
+
+describe('IDEIA-002: focusValues (campos de foco salvos no navegador)', () => {
+  it('estado salvo antigo ({}): padrões, sem aviso e sem NaN', () => {
+    const r = focusValues({});
+    expect(r.values).toEqual({ efficiency: 0, override: null, budget: 10000, reference: null });
+    expect(r.issues).toEqual([]);
+  });
+  it('estado salvo nulo ou sem objeto: não lança', () => {
+    for (const c of [undefined, null]) expect(focusValues(c).values).toEqual({ efficiency: 0, override: null, budget: 10000, reference: null });
+  });
+  it('lê focusEff, focusPoints, focusBudget e focusRef; texto digitado vale', () => {
+    const r = focusValues({ focusEff: '31000', focusPoints: '120', focusBudget: '9000', focusRef: '5' });
+    expect(r.values).toEqual({ efficiency: 31000, override: 120, budget: 9000, reference: 5 });
+    expect(r.issues).toEqual([]);
+  });
+  it('fora de faixa avisa e usa o corrigido; os avisos levam o nome do campo da tela', () => {
+    const r = focusValues({ focusEff: '99999', focusPoints: '-3', focusBudget: 'x', focusRef: '-1' });
+    expect(r.values).toEqual({ efficiency: 31000, override: null, budget: 10000, reference: null });
+    expect(r.issues.map((i) => i.field).sort()).toEqual(['focusBudget', 'focusEff', 'focusPoints', 'focusRef']);
   });
 });

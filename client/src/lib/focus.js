@@ -1,5 +1,6 @@
 // Foco (IDEIA-002): custo em pontos, orçamento diário e prata por ponto. Puro: sem React, fetch ou localStorage.
 import { computeCraft } from './craftPlan';
+import { validateInputs } from './inputRules';
 import { FOCUS_HALF_PER, DAILY_FOCUS_PREMIUM, MAX_FOCUS_EFFICIENCY } from './focusConsts';
 
 export { FOCUS_HALF_PER, DAILY_FOCUS_PREMIUM, MAX_FOCUS_EFFICIENCY };
@@ -20,6 +21,19 @@ export function focusPerCraft({ base, efficiency = 0, override } = {}) {
   // estado salvo antigo ou lixo (undefined, NaN, null): sem eficiência = custo cheio
   const eff = Number.isFinite(efficiency) ? efficiency : 0;
   return { points: focusCost(base, eff), source: 'formula' };
+}
+
+/**
+ * Valores validados dos campos de foco guardados na cfg da tela (focusEff, focusPoints, focusBudget, focusRef).
+ * Campo ausente (estado salvo antigo) = padrão, sem aviso. `issues` usam o nome do campo da cfg.
+ */
+export function focusValues(cfg) {
+  const c = cfg ?? {};
+  const { values, issues } = validateInputs({ efficiency: c.focusEff, focusPoints: c.focusPoints, focusBudget: c.focusBudget, focusRef: c.focusRef });
+  return {
+    values: { efficiency: values.efficiency, override: values.focusPoints, budget: values.focusBudget, reference: values.focusRef },
+    issues: issues.map((i) => (i.field === 'efficiency' ? { ...i, field: 'focusEff' } : i)),
+  };
 }
 
 // veredito: só existe contra uma referência positiva digitada pelo usuário (o jogo não vende foco por prata)
@@ -53,6 +67,8 @@ export function craftFocusSummary({ rec, targetMid, prices, cfg, premium, bonusC
     savingsLot: savingsPerCraft * crafts,
     silverPerPoint,
     craftsInBudget: craftsWithBudget(budget, points),
+    budget: Number.isFinite(budget) ? budget : 0,
+    reference: reference > 0 ? reference : null,
     feeOn: on.fee,
     feeOff: off.fee,
     costOn: on.totalCost,

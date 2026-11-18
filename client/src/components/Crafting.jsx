@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Route } from 'lucide-react';
-import { CRAFT_CITIES, REFINING, getItem, recipeVariants, marketId, nameOf, refinedTypeOf, craftBonusCity, categoryLabel } from '../lib/catalog';
+import { CRAFT_CITIES, REFINING, focusOf, getItem, recipeVariants, marketId, nameOf, refinedTypeOf, craftBonusCity, categoryLabel } from '../lib/catalog';
 import { CITIES, SELL_CITIES, cityLabel, usePrices } from '../lib/market';
 import { fmt, pct, feeIsUnconfirmedDefault } from '../lib/econ';
 import { computeCraft, craftChainIds, keyOf, waitSavings } from '../lib/craftPlan';
@@ -10,6 +10,8 @@ import { pickCheapest, resolveVariant, returnBadge } from '../lib/recipeAlt';
 import { useHistory } from '../lib/history';
 import { loadedStats } from '../lib/liquidity';
 import { validateInputs } from '../lib/inputRules';
+import { craftFocusSummary, focusValues } from '../lib/focus';
+import FocusCard, { FocusFields } from './FocusCard';
 import RecipePicker from './RecipePicker';
 import { GiroCard, GiroCell } from './Giro';
 import { useSettings, usePersisted } from '../lib/settings';
@@ -50,6 +52,10 @@ export default function Crafting() {
   const rec = variants[idx]?.rec ?? null;
   const c = results[idx] ?? computeCraft({ rec: null, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling });
   const savings = waitSavings({ rec, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling });
+  // Foco (IDEIA-002): campos validados (060) e cartão; não altera nenhum outro número da tela
+  const fv = focusValues(cfg);
+  const fbase = item ? focusOf(sel.id, sel.ench) : null;
+  const fs = rec && prices ? craftFocusSummary({ rec, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling, base: fbase, ...fv.values }) : null;
   const note = showDailyNote({ craftDaily: cfg.craftDaily, hasCard: !!savings });
   const { specialty, autoRRR, craftRRR } = c.rates;
   const { issues, lines, fee, totalCost, units, unitCost, missing, options, best, ready, plan, used, refinable, allBest } = c;
@@ -88,6 +94,7 @@ export default function Crafting() {
         </Field>
         <Switch label="Bônus de especialização ativo" hint="Ajuste se o bônus da cidade for diferente" checked={specialty} onChange={(v) => set({ specialty: v })} />
         <Switch label="Usar foco" hint="+59% de bônus de produção" checked={cfg.focus} onChange={(v) => set({ focus: v })} />
+        <FocusFields cfg={cfg} set={set} issues={fv.issues} />
         <Field label="Bônus diário do item" hint={`RRR atual: ${(craftRRR * 100).toFixed(1)}%. Informe o bônus do dia da categoria deste item.`}>
           <select className="input" value={[10, 20].includes(+cfg.craftDaily) ? +cfg.craftDaily : 0} onChange={(e) => set({ craftDaily: +e.target.value, craftDailyAt: Date.now() })}>
             <option value={0}>Nenhum</option>
@@ -272,6 +279,8 @@ export default function Crafting() {
             </>
           )}
         </div>
+
+        {rec && <FocusCard summary={fs} ench={sel.ench} hasBase={fbase != null} />}
 
         {rec && options.length > 0 && (
           <div className="card">
