@@ -3,7 +3,7 @@
 // ordem de compra na cidade é saída "ilusória". O Black Market nunca gera ordem de venda.
 import { SELL_CITIES, quote } from './market';
 
-// Decisão de produto (não é dado do jogo): mesmo padrão do Flipper (maxAge: 24 em Flipper.jsx).
+// Decisão de produto (não é dado do jogo): limite padrão de idade do dado. Fonte única: o Flipper importa esta constante (DT-003).
 export const DEFAULT_MAX_AGE_H = 24;
 
 const H = 3600000;
@@ -54,6 +54,12 @@ export function annotateOptions(options, prices, mid, opts) {
     const buyer = x.mode === 'instant' ? true : cityBuyer(prices, mid, x.city, o).buyer;
     return { ...x, buyer, illusory: x.mode === 'order' && !buyer, stale: !isFresh(x.date, o.now, o.maxAgeH) };
   });
+}
+
+/** Texto da dica "ilusória" da tabela, com o limite de idade realmente usado (nunca um "24 h" escrito à mão). */
+export function illusoryHint(maxAgeH = DEFAULT_MAX_AGE_H) {
+  const age = maxAgeH ? `dado com menos de ${maxAgeH} h` : 'sem limite de idade do dado';
+  return `Ilusória: ordem de venda sem ordem de compra visível na cidade (${age}).`;
 }
 
 /** best = primeira (melhor no papel); bestReal = primeira que não é ilusória nem velha. */

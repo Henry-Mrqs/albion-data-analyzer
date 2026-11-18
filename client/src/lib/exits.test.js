@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { annotateOptions, bestBuyer, cityBuyer, DEFAULT_MAX_AGE_H, exitsFor, pickExit } from './exits';
+import { annotateOptions, bestBuyer, cityBuyer, DEFAULT_MAX_AGE_H, exitsFor, illusoryHint, pickExit } from './exits';
 import { marketGap } from './targetPrice';
 import { netSale } from './econ';
 import { mkPrices } from '../test/helpers';
@@ -108,5 +108,60 @@ describe('exits (saída com comprador real)', () => {
     expect(ref).toMatchObject({ price: 3796, city: 'Martlock' });
     expect(marketGap(2924, ref.price)).toBeCloseTo(-0.2297, 3); // 2924/3796 - 1
     expect(marketGap(2924, 1275)).toBeCloseTo(1.2933, 3); // lógica antiga (menor listado): alarme sem sentido
+  });
+});
+
+// DT-004: cada teste abaixo mata um dos 8 mutantes sobreviventes do laudo da 066 (o código já estava certo).
+describe('exits: mutantes do laudo da 066 (DT-004)', () => {
+  it('M15: comprador VELHO com valor MAIOR que o fresco não vence em bestBuyer', () => {
+    const p = mkPrices({ T4_X: { Martlock: { b: 9000, bd: now - 30 * H }, Caerleon: { b: 3000, bd: now - H } } });
+    expect(bestBuyer(p, 'T4_X', { now })).toMatchObject({ price: 3000, city: 'Caerleon' });
+  });
+  it('M2: compra 0 com data fresca não é comprador', () => {
+    expect(cityBuyer(mkPrices({ T4_X: { Caerleon: { b: 0, bd: now } } }), 'T4_X', 'Caerleon', { now }).buyer).toBe(false);
+  });
+  it('M9b: bestReal pula a saída VELHA mesmo sendo a primeira não ilusória', () => {
+    const opts = [{ city: 'A', mode: 'instant', illusory: false, stale: true }, { city: 'B', mode: 'instant', illusory: false, stale: false }];
+    expect(pickExit(opts).bestReal.city).toBe('B');
+  });
+  it('M11: saída instantânea anotada sempre tem comprador', () => {
+    expect(annotateOptions([{ city: 'Caerleon', mode: 'instant', price: 100, date: now }], mkPrices({}), 'T4_X', { now })[0]).toMatchObject({ buyer: true, illusory: false });
+  });
+  it('M12: annotateOptions não muta a entrada (buyer e illusory ausentes na original)', () => {
+    const o = [{ city: 'Caerleon', mode: 'order', price: 100, date: now }];
+    annotateOptions(o, mkPrices({}), 'T4_X', { now });
+    expect(o[0]).not.toHaveProperty('buyer');
+    expect(o[0]).not.toHaveProperty('illusory');
+  });
+  it('M16: empate de preço de compra: vence a primeira cidade na ordem de SELL_CITIES', () => {
+    const p = mkPrices({ T4_X: { Thetford: { b: 500, bd: now }, Martlock: { b: 500, bd: now } } });
+    expect(bestBuyer(p, 'T4_X', { now }).city).toBe('Martlock');
+  });
+  it('M18: ordem de venda cuja compra da cidade é VELHA fica ilusória', () => {
+    const p = mkPrices({ T4_X: { Caerleon: { s: 100, sd: now, b: 90, bd: now - 30 * H } } });
+    expect(annotateOptions([{ city: 'Caerleon', mode: 'order', price: 100, date: now }], p, 'T4_X', { now })[0]).toMatchObject({ buyer: false, illusory: true });
+  });
+  it('M19: stale da ordem usa a data da ordem, não a da compra', () => {
+    const p = mkPrices({ T4_X: { Caerleon: { s: 100, sd: now - 30 * H, b: 90, bd: now } } });
+    expect(exitsFor(p, 'T4_X', { now }).find((e) => e.mode === 'order').stale).toBe(true);
+  });
+  it('stale da ordem é falso quando a ordem é fresca e a compra é velha (a data da compra não vaza)', () => {
+    const p = mkPrices({ T4_X: { Caerleon: { s: 100, sd: now, b: 90, bd: now - 30 * H } } });
+    expect(exitsFor(p, 'T4_X', { now }).find((e) => e.mode === 'order').stale).toBe(false);
+  });
+});
+
+describe('DT-003: illusoryHint (texto da dica sem "24 h" fixo)', () => {
+  it('usa o limite recebido, não 24 fixo', () => {
+    expect(illusoryHint(12)).toMatch(/12 h/);
+    expect(illusoryHint(12)).not.toMatch(/24 h/);
+  });
+  it('sem argumento usa DEFAULT_MAX_AGE_H', () => expect(illusoryHint()).toMatch(new RegExp(`${DEFAULT_MAX_AGE_H} h`)));
+  it('mantém o texto da dica e não afirma giro (a nota "sem dado" saiu)', () => {
+    expect(illusoryHint()).toContain('Ilusória: ordem de venda sem ordem de compra visível na cidade');
+    expect(illusoryHint()).not.toMatch(/giro/i);
+  });
+  it('maxAge 0 (limite desligado) não fala em "0 h"', () => {
+    expect(illusoryHint(0)).not.toMatch(/\b0 h/);
   });
 });
