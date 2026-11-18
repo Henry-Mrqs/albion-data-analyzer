@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { catalogUrl, validateCatalog, fetchCatalog } from './catalogLoad';
+import { loadCatalog, resetCatalog } from './catalog';
 
 const ok = (d) => ({ ok: true, status: 200, json: async () => d });
 const GOOD = JSON.parse(readFileSync(new URL('../../public/data/catalog.json', import.meta.url)));
@@ -45,7 +46,47 @@ describe('validateCatalog', () => {
   });
 });
 
+describe('validateCatalog: itens e alt (DT-007, IDEIA-049)', () => {
+  const comItens = (items) => ({ ...GOOD, items });
+  const base = GOOD.items.slice(0, 3);
+  const arc = GOOD.items.find((i) => i.i === 'T4_2H_ARCANESTAFF_HELL');
+  it('item null, sem i ou com i não string: inválido, apontando o índice', () => {
+    for (const bad of [null, {}, { i: 5 }, 'x']) {
+      const r = validateCatalog(comItens([...base, bad]));
+      expect(r.ok).toBe(false);
+      expect(r.problems.join(' ')).toMatch(/items\[3\]/);
+    }
+  });
+  it('alt malformado: at não inteiro, v não lista, v[0] sem id', () => {
+    for (const alt of [{ at: 'x', v: [['A', 1, 1]] }, { at: 1.5, v: [['A', 1, 1]] }, { at: 2, v: 'x' }, { at: 2, v: [[]] }, { at: 2, v: [[7, 1]] }, { at: 2, v: [] }, 5, { at: -1, v: [['A', 1]] }]) {
+      const r = validateCatalog(comItens([...base, { ...arc, alt }]));
+      expect(r.ok).toBe(false);
+      expect(r.problems.join(' ')).toMatch(/alt/);
+    }
+  });
+  it('alt.at fora da receita (>= r.length) é inválido, com mensagem clara apontando o item', () => {
+    const n = arc.r.length;
+    for (const at of [n, n + 1, 99]) {
+      const r = validateCatalog(comItens([...base, { ...arc, alt: { at, v: arc.alt.v } }]));
+      expect(r.ok).toBe(false);
+      expect(r.problems.join(' ')).toMatch(/alt\.at fora da receita.*items\[3\]/);
+    }
+    expect(validateCatalog(comItens([...base, { ...arc, alt: { at: n - 1, v: arc.alt.v } }])).ok).toBe(true);
+  });
+  it('alt ausente é válido (catálogo antigo e novo); alt bom é válido', () => {
+    const { alt, ...semAlt } = arc; // eslint-disable-line no-unused-vars
+    expect(validateCatalog(comItens([...base, semAlt])).ok).toBe(true);
+    expect(validateCatalog(comItens([...base, arc])).ok).toBe(true);
+  });
+});
+
 describe('fetchCatalog', () => {
+  it('DT-007: corpo que não é JSON (HTML de erro, resposta cortada) dá a mensagem clara, não o erro cru de JSON.parse', async () => {
+    for (const texto of ['<!doctype html><html>', '{"items":[{"i":"T4_']) {
+      const f = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => JSON.parse(texto) });
+      await expect(fetchCatalog({ fetchFn: f, base: '/' })).rejects.toThrow(/A resposta do catálogo não é um JSON válido.*Recarregue a página \(Ctrl\+F5\)/s);
+    }
+  });
   it('catálogo bom: 1 requisição, URL versionada', async () => {
     const f = vi.fn().mockResolvedValue(ok(GOOD));
     const d = await fetchCatalog({ fetchFn: f, base: '/', id: 'abc' });
@@ -78,5 +119,23 @@ describe('fetchCatalog', () => {
   it('JSON quebrado: erro, não objeto vazio', async () => {
     const f = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => { throw new SyntaxError('x'); } });
     await expect(fetchCatalog({ fetchFn: f, base: '/' })).rejects.toThrow();
+  });
+});
+
+describe('DT-006: versionamento do catálogo em produção', () => {
+  it('vercel.json serve /data/ com revalidação sempre (max-age=0, must-revalidate)', () => {
+    const h = JSON.parse(readFileSync(new URL('../../vercel.json', import.meta.url))).headers.find((x) => x.source.startsWith('/data/'));
+    expect(h.headers.find((k) => k.key === 'Cache-Control').value).toBe('public, max-age=0, must-revalidate');
+  });
+  it('loadCatalog pede a URL com ?v= quando há id de build', async () => {
+    vi.stubEnv('VITE_CATALOG_V', 'abc123');
+    const f = vi.fn().mockResolvedValue(ok(GOOD));
+    vi.stubGlobal('fetch', f);
+    resetCatalog();
+    await loadCatalog();
+    expect(f.mock.calls[0][0]).toMatch(/data\/catalog\.json\?v=abc123$/);
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    resetCatalog();
   });
 });

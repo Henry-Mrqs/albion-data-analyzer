@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { Route } from 'lucide-react';
-import { CRAFT_CITIES, REFINING, getItem, recipeOf, marketId, nameOf, refinedTypeOf, craftBonusCity, categoryLabel } from '../lib/catalog';
+import { CRAFT_CITIES, REFINING, getItem, recipeVariants, marketId, nameOf, refinedTypeOf, craftBonusCity, categoryLabel } from '../lib/catalog';
 import { CITIES, SELL_CITIES, cityLabel, usePrices } from '../lib/market';
 import { fmt, pct, feeIsUnconfirmedDefault } from '../lib/econ';
 import { computeCraft, craftChainIds, keyOf, waitSavings } from '../lib/craftPlan';
 import { effectiveDaily, showDailyNote, DAILY_NOTE } from '../lib/dailyBonus';
 import { annotateOptions, illusoryHint, pickExit } from '../lib/exits';
+import { pickCheapest, resolveVariant, returnBadge } from '../lib/recipeAlt';
 import { useHistory } from '../lib/history';
 import { loadedStats } from '../lib/liquidity';
 import { validateInputs } from '../lib/inputRules';
+import RecipePicker from './RecipePicker';
 import { GiroCard, GiroCell } from './Giro';
 import { useSettings, usePersisted } from '../lib/settings';
 import ItemSelector from './ItemSelector';
@@ -31,16 +33,22 @@ export default function Crafting() {
   const set = (patch) => setCfg((c) => ({ ...c, ...patch }));
 
   const item = getItem(sel.id);
-  const rec = item ? recipeOf(sel.id, sel.ench) : null;
+  const variants = item ? recipeVariants(sel.id, sel.ench) : [];
   const targetMid = marketId(sel.id, sel.ench);
   const bonusCity = item ? craftBonusCity(item) : null;
-  const ids = craftChainIds(rec, targetMid);
+  // os preços de todas as receitas alternativas vão numa só consulta
+  const ids = [...new Set(variants.flatMap((v) => craftChainIds(v.rec, targetMid)))];
   const { prices, loading, error, updatedAt, refresh } = usePrices(ids);
 
   // bônus diário do item: o informado antes do último reset do servidor vale 0 (com aviso); a validação 0/10/20 é a da 060 (computeCraft)
   const daily = effectiveDaily({ value: cfg.craftDaily ?? 0, setAt: cfg.craftDailyAt, now, server });
   const cfgEff = { ...cfg, craftDaily: daily.value };
-  const c = computeCraft({ rec, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling });
+  const results = variants.map((v) => computeCraft({ rec: v.rec, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling }));
+  const auto = pickCheapest(results);
+  const idx = resolveVariant(cfg.recipeVariant, variants.length, auto);
+  const pickerMode = cfg.recipeVariant === undefined || cfg.recipeVariant === 'auto' ? 'auto' : idx;
+  const rec = variants[idx]?.rec ?? null;
+  const c = results[idx] ?? computeCraft({ rec: null, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling });
   const savings = waitSavings({ rec, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling });
   const note = showDailyNote({ craftDaily: cfg.craftDaily, hasCard: !!savings });
   const { specialty, autoRRR, craftRRR } = c.rates;
@@ -62,8 +70,9 @@ export default function Crafting() {
     <div className="grid-2">
       <div className="card stack">
         <h2>Craft</h2>
-        <ItemSelector value={sel} onChange={(v) => { setSel(v); if (cfg.specialty !== null) set({ specialty: null }); }} onlyCraftable />
+        <ItemSelector value={sel} onChange={(v) => { setSel(v); if (cfg.specialty !== null) set({ specialty: null }); if (v.id !== sel.id && cfg.recipeVariant !== undefined && cfg.recipeVariant !== 'auto') set({ recipeVariant: 'auto' }); }} onlyCraftable />
         {item && <div className="hint">{categoryLabel(item.c)} · <code>{targetMid}</code></div>}
+        <RecipePicker variants={variants} results={results} auto={auto} mode={pickerMode} onChange={(v) => set({ recipeVariant: v })} />
 
         <hr className="sep" style={{ margin: 0 }} />
         <h3>Produção</h3>
@@ -198,7 +207,7 @@ export default function Crafting() {
                               />
                             </div>
                           )}
-                          {!l.returnable && <small title={l.unverified ? 'O dump não marca este ingrediente; assumimos que não retorna até medir em jogo.' : undefined}>não retorna{l.unverified ? ' · não verificado' : ''}</small>}
+                          {(() => { const b = returnBadge(l); return b && <small title={b.title}>{b.text}</small>; })()}
                         </td>
                         <td className="num">{l.qty.toFixed(l.qty % 1 ? 1 : 0)}</td>
                         <td>

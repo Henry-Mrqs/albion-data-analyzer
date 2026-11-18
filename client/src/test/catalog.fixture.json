@@ -109,6 +109,16 @@
    "v": 0,
    "cc": "arcanestaff",
    "x": 4,
+   "alt": {
+    "at": 2,
+    "v": [
+     [
+      "T4_ARTEFACT_TOKEN_FAVOR_2",
+      1,
+      1
+     ]
+    ]
+   },
    "a": 1,
    "f": 1715,
    "r": [
@@ -197,6 +207,21 @@
    "w": 3.4,
    "v": 0,
    "x": 4,
+   "alt": {
+    "at": 0,
+    "v": [
+     [
+      "T4_ARMOR_PLATE_SET2",
+      1,
+      1
+     ],
+     [
+      "T4_ARMOR_PLATE_SET3",
+      1,
+      1
+     ]
+    ]
+   },
    "a": 1,
    "f": 0,
    "r": [
@@ -228,6 +253,62 @@
     [
      "T4_METALBAR",
      16
+    ]
+   ]
+  },
+  {
+   "i": "T4_ARMOR_PLATE_SET2",
+   "p": "Armadura de Cavaleiro do Adepto",
+   "e": "Adept's Knight Armor",
+   "c": "armors/plate_armor",
+   "t": 4,
+   "w": 3.4,
+   "v": 0,
+   "cc": "plate_armor",
+   "x": 4,
+   "a": 1,
+   "f": 858,
+   "r": [
+    [
+     "T4_METALBAR",
+     16
+    ]
+   ]
+  },
+  {
+   "i": "T4_ARMOR_PLATE_SET3",
+   "p": "Armadura de Guardião do Adepto",
+   "e": "Adept's Guardian Armor",
+   "c": "armors/plate_armor",
+   "t": 4,
+   "w": 3.4,
+   "v": 0,
+   "cc": "plate_armor",
+   "x": 4,
+   "a": 1,
+   "f": 858,
+   "r": [
+    [
+     "T4_METALBAR",
+     16
+    ]
+   ]
+  },
+  {
+   "i": "T4_ARTEFACT_2H_ARCANESTAFF_HELL",
+   "p": "Orbe Oculto do Adepto",
+   "e": "Adept's Occult Orb",
+   "c": "artefacts/weapons",
+   "t": 4,
+   "w": 2,
+   "v": 384,
+   "x": 0,
+   "a": 1,
+   "f": 0,
+   "r": [
+    [
+     "T4_SOUL",
+     50
     ]
    ]
   },
@@ -266,6 +347,16 @@
      50
     ]
    ]
+  },
+  {
+   "i": "T4_ARTEFACT_TOKEN_FAVOR_2",
+   "p": "Terrível Cristalizado do Adepto",
+   "e": "Adept's Crystallized Dread",
+   "c": "artefacts/favor",
+   "t": 4,
+   "w": 2,
+   "v": 896,
+   "x": 0
   },
   {
    "i": "T4_BAG",
@@ -629,6 +720,16 @@
    "v": 0,
    "cc": "offhand",
    "x": 4,
+   "alt": {
+    "at": 2,
+    "v": [
+     [
+      "T4_ARTEFACT_TOKEN_FAVOR_2",
+      1,
+      1
+     ]
+    ]
+   },
    "a": 1,
    "f": 429,
    "r": [
@@ -1273,9 +1374,12 @@
   "T3_WOOD": 2,
   "T4_ARMOR_CLOTH_SET1": 0,
   "T4_ARMOR_PLATE_SET1": 0,
+  "T4_ARMOR_PLATE_SET2": 0,
+  "T4_ARMOR_PLATE_SET3": 0,
   "T4_ARTEFACT_2H_ARCANESTAFF_HELL": 384,
   "T4_ARTEFACT_2H_COMBATSTAFF_MORGANA": 128,
   "T4_ARTEFACT_OFF_SHIELD_HELL": 96,
+  "T4_ARTEFACT_TOKEN_FAVOR_2": 896,
   "T4_BURDOCK": 40,
   "T4_CAPE": 0,
   "T4_CAPEITEM_FW_BRIDGEWATCH_BP": 32,

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
-  CRAFT_CITIES, cityOfCategory, craftBonusCity, craftCategoryLabel, getItem, ingredientValue, marketId, nameOf,
-  recipeOf, recipeValue, refinedTypeOf, resetCatalog, searchItems, setCatalog, tierOf, weightOf,
+  CRAFT_CITIES, allItems, cityOfCategory, craftBonusCity, craftCategoryLabel, getItem, ingredientValue, marketId, nameOf,
+  recipeOf, recipeValue, recipeVariants, refinedTypeOf, resetCatalog, searchItems, setCatalog, tierOf, weightOf,
 } from './catalog';
 import { refineChainIds } from './econ';
 import { loadFixtureCatalog } from '../test/helpers';
@@ -160,5 +160,66 @@ describe('IDEIA-039: não retorna por ingrediente (dump OU fragmento)', () => {
     resetCatalog();
     setCatalog({ built: 'x', src: 'x', cityOf: {}, items: [{ i: 'T4_X', p: 'X', e: 'X', c: 'weapons/sword', t: 4, w: 1, v: 1, x: 0, a: 1, f: 0, r: [['T4_Y', 1]] }], extra: {}, vals: {}, encNames: {} });
     expect(recipeOf('T4_X').res.map((x) => x.returnable)).toEqual([true]);
+  });
+});
+
+describe('IDEIA-049: recipeOf com variante e recipeVariants', () => {
+  const ret = (id, ench = 0, v = 0) => recipeOf(id, ench, v).res.map((x) => [x.uniq, x.returnable]);
+  it('variante 0 é igual à receita de sempre (para todos os itens e níveis da fixture)', () => {
+    for (const it of allItems()) for (let n = 0; n <= it.x; n++) if (it.r) expect(recipeOf(it.i, n, 0)).toEqual(recipeOf(it.i, n));
+  });
+  it('arcanestaff: variante 1 troca o artefato pela ficha; o resto idêntico', () => {
+    expect(ret('T4_2H_ARCANESTAFF_HELL', 0, 0)).toEqual([['T4_PLANKS', true], ['T4_METALBAR', true], ['T4_ARTEFACT_2H_ARCANESTAFF_HELL', false]]);
+    expect(ret('T4_2H_ARCANESTAFF_HELL', 0, 1)).toEqual([['T4_PLANKS', true], ['T4_METALBAR', true], ['T4_ARTEFACT_TOKEN_FAVOR_2', false]]);
+  });
+  it('39 não regride: ficha de favor e SET2/SET3 e o token Royal NÃO retornam', () => {
+    expect(ret('T4_ARMOR_PLATE_ROYAL', 0, 1)).toEqual([['T4_ARMOR_PLATE_SET2', false], ['QUESTITEM_TOKEN_ROYAL_T4', false]]);
+    expect(ret('T4_ARMOR_PLATE_ROYAL', 0, 2)[0]).toEqual(['T4_ARMOR_PLATE_SET3', false]);
+  });
+  it('encanto .1: a variante troca só o ingrediente especial; planks e barras ficam _LEVEL1', () => {
+    const r = recipeOf('T4_2H_ARCANESTAFF_HELL', 1, 1).res.map((x) => x.uniq);
+    expect(r).toEqual(['T4_PLANKS_LEVEL1', 'T4_METALBAR_LEVEL1', 'T4_ARTEFACT_TOKEN_FAVOR_2']);
+  });
+  it('recipeVariants: 2 (arcanestaff), 3 (Royal), 1 (espada), 0 (sem receita)', () => {
+    expect(recipeVariants('T4_2H_ARCANESTAFF_HELL')).toHaveLength(2);
+    expect(recipeVariants('T4_ARMOR_PLATE_ROYAL')).toHaveLength(3);
+    expect(recipeVariants('T4_MAIN_SWORD')).toHaveLength(1);
+    expect(recipeVariants('T4_WOOD')).toEqual([]);
+  });
+  it('recipeVariants: swapped é o ingrediente original de cada variante', () => {
+    expect(recipeVariants('T4_2H_ARCANESTAFF_HELL').map((v) => [v.variant, v.swapped])).toEqual([[0, 'T4_ARTEFACT_2H_ARCANESTAFF_HELL'], [1, 'T4_ARTEFACT_TOKEN_FAVOR_2']]);
+    expect(recipeVariants('T4_ARMOR_PLATE_ROYAL').map((v) => v.swapped)).toEqual(['T4_ARMOR_PLATE_SET1', 'T4_ARMOR_PLATE_SET2', 'T4_ARMOR_PLATE_SET3']);
+  });
+  it.each([[1.5], [-1], [-0.5], [2], [99], [NaN], [Infinity], ['1'], ['x'], [null], [undefined], [{}], [[]], [true]])(
+    'variante inválida %s (valor salvo no navegador): cai na variante 0, sem lançar',
+    (v) => {
+      expect(() => recipeOf('T4_2H_ARCANESTAFF_HELL', 0, v)).not.toThrow();
+      expect(recipeOf('T4_2H_ARCANESTAFF_HELL', 0, v)).toEqual(recipeOf('T4_2H_ARCANESTAFF_HELL', 0, 0));
+      expect(recipeOf('T4_MAIN_SWORD', 0, v)).toEqual(recipeOf('T4_MAIN_SWORD'));
+    },
+  );
+  it('item que perdeu variantes: o índice salvo cai na variante 0', () => {
+    expect(recipeOf('T4_MAIN_SWORD', 0, 1)).toEqual(recipeOf('T4_MAIN_SWORD', 0, 0));
+    expect(recipeOf('T4_ARMOR_PLATE_ROYAL', 0, 3)).toEqual(recipeOf('T4_ARMOR_PLATE_ROYAL', 0, 0));
+  });
+  it('variante válida continua valendo (0, 1 e 2 do Royal)', () => {
+    expect(recipeOf('T4_ARMOR_PLATE_ROYAL', 0, 2).res[0].uniq).toBe('T4_ARMOR_PLATE_SET3');
+  });
+  it('rec.variants conta as receitas', () => {
+    expect(recipeOf('T4_ARMOR_PLATE_ROYAL').variants).toBe(3);
+    expect(recipeOf('T4_MAIN_SWORD').variants).toBe(1);
+  });
+  it('38 não regride: a cidade de bônus é do item, não da receita', () => {
+    expect(craftBonusCity(getItem('T4_ARMOR_PLATE_ROYAL'))).toBeNull();
+    expect(craftBonusCity(getItem('T4_2H_ARCANESTAFF_HELL'))).toBe(cityOfCategory('arcanestaff'));
+    expect(craftBonusCity(getItem('T4_2H_ARCANESTAFF_HELL'))).toBe('Lymhurst');
+  });
+  it('ingredientValue dos novos ids: ficha 896 e artefato 384 (taxa usa o valor do dump)', () => {
+    expect(ingredientValue('T4_ARTEFACT_TOKEN_FAVOR_2')).toBe(896);
+    expect(ingredientValue('T4_ARTEFACT_2H_ARCANESTAFF_HELL')).toBe(384);
+  });
+  it('DT-009: ingrediente *_SHARD* sem flag continua NÃO retornando (regra conservadora) e não verificado', () => {
+    const res = recipeOf('T6_ARTEFACT_MAIN_SWORD_CRYSTAL').res;
+    expect(res.map((x) => [x.uniq, x.returnable, x.unverified])).toEqual([['T6_SHARD_CRYSTAL', false, true]]);
   });
 });

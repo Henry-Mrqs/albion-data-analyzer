@@ -107,30 +107,53 @@ export function weightOf(id) {
 const FRAGMENT_RE = /RUNE|SOUL|RELIC|SHARD/;
 const RULE_RE = /^T\d_(PLANKS|METALBAR|LEATHER|CLOTH|STONEBLOCK|WOOD|ORE|HIDE|FIBER|ROCK)$/;
 
-/** Receita do item (id base) em um encantamento. Retorna {amount, focus, res:[{uniq, mid, count, name, value, returnable}]} */
-export function recipeOf(baseId, ench = 0) {
+// ingrediente [uniq, count, nr?] -> linha da receita (mesma regra para a base e para as variantes)
+const toRes = ([uniq, count, nr]) => {
+  const mid = marketId(uniq);
+  return {
+    uniq,
+    mid,
+    count,
+    name: nameOf(mid),
+    value: ingredientValue(uniq),
+    // não retorna se o dump marca (nr = maxreturnamount 0) OU se for fragmento (RUNE/SOUL/RELIC/SHARD).
+    returnable: !nr && !FRAGMENT_RE.test(uniq),
+    // barrado só pelo token: o dump não confirma; assumimos que não retorna até medir em jogo.
+    unverified: !nr && FRAGMENT_RE.test(uniq),
+  };
+};
+
+// ingredientes (pares do catálogo) da receita do item no encanto, sem variante
+function baseEntries(it, ench) {
+  if (ench <= 0) return it.r;
+  return it.er?.[ench] ?? it.r.map(([id, c, nr]) => { const n = RULE_RE.test(id) ? `${id}_LEVEL${ench}` : id; return nr ? [n, c, nr] : [n, c]; });
+}
+
+/**
+ * Receita do item (id base) em um encantamento. Retorna {amount, focus, variants, res:[{uniq, mid, count, name, value, returnable}]}.
+ * variant 0 = receita de sempre; k>0 troca o ingrediente `alt.at` por `alt.v[k-1]` (IDEIA-049); variante inválida => variante 0.
+ */
+export function recipeOf(baseId, ench = 0, variant = 0) {
   const it = byId.get(baseId);
   if (!it?.r) return null;
-  let res = it.r;
-  if (ench > 0) res = it.er?.[ench] ?? res.map(([id, c, nr]) => { const n = RULE_RE.test(id) ? `${id}_LEVEL${ench}` : id; return nr ? [n, c, nr] : [n, c]; });
-  return {
-    amount: it.a || 1,
-    focus: it.f || 0,
-    res: res.map(([uniq, count, nr]) => {
-      const mid = marketId(uniq);
-      return {
-        uniq,
-        mid,
-        count,
-        name: nameOf(mid),
-        value: ingredientValue(uniq),
-        // não retorna se o dump marca (nr = maxreturnamount 0) OU se for fragmento (RUNE/SOUL/RELIC/SHARD).
-        returnable: !nr && !FRAGMENT_RE.test(uniq),
-        // barrado só pelo token: o dump não confirma; assumimos que não retorna até medir em jogo.
-        unverified: !nr && FRAGMENT_RE.test(uniq),
-      };
-    }),
-  };
+  const nVar = 1 + (it.alt?.v.length ?? 0);
+  // o índice vem do navegador (estado salvo): qualquer valor inválido ou fora de faixa cai na receita de sempre
+  if (!Number.isInteger(variant) || variant < 0 || variant >= nVar) variant = 0;
+  let entries = baseEntries(it, ench);
+  if (variant > 0) entries = entries.map((e, k) => (k === it.alt.at ? it.alt.v[variant - 1] : e));
+  return { amount: it.a || 1, focus: it.f || 0, variants: nVar, res: entries.map(toRes) };
+}
+
+/** Todas as receitas do item no encanto: [{ variant, rec, swapped }]; swapped = ingrediente da variante 0 que a variante troca. */
+export function recipeVariants(baseId, ench = 0) {
+  const it = byId.get(baseId);
+  if (!it?.r) return [];
+  const out = [];
+  for (let v = 0; v < 1 + (it.alt?.v.length ?? 0); v++) {
+    const rec = recipeOf(baseId, ench, v);
+    out.push({ variant: v, rec, swapped: it.alt ? rec.res[it.alt.at].uniq : null });
+  }
+  return out;
 }
 
 // valor de item (base da taxa de estação)

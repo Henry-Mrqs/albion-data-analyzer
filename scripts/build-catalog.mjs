@@ -79,17 +79,64 @@ function parseTransmute(cr) {
     .map((r) => [arr(r.craftresource)[0]['@uniquename'], num(r['@silver'])]);
 }
 
-function parseRecipe(cr) {
-  const r = arr(cr).find((x) => !isTransmute(x));
-  if (!r) return null;
-  // 3º elemento = 1 quando o dump marca maxreturnamount="0" (o ingrediente nunca retorna)
-  const res = arr(r.craftresource).map((c) => {
+// 3º elemento = 1 quando o dump marca maxreturnamount="0" (o ingrediente nunca retorna)
+const mapRes = (r) =>
+  arr(r.craftresource).map((c) => {
     const p = [c['@uniquename'], num(c['@count'], 1)];
     if (c['@maxreturnamount'] === '0') p.push(1);
     return p;
   });
+
+function parseRecipe(cr) {
+  const r = arr(cr).find((x) => !isTransmute(x));
+  if (!r) return null;
+  const res = mapRes(r);
   if (!res.length) return null;
   return { a: num(r['@amountcrafted'], 1), f: num(r['@craftingfocus']), s: num(r['@silver']), r: res };
+}
+
+// IDEIA-049: receitas alternativas (artefato OU ficha de favor; base Royal SET1/2/3).
+// Hipótese verificada aqui (e com erro se falhar): as receitas de um item diferem só em UM ingrediente,
+// na mesma posição, com mesma quantidade, mesmo flag, foco, tempo e amountcrafted, em todos os níveis.
+const sameIdx = (a, b) => a.map((x, k) => (x[0] === b[k]?.[0] ? -1 : k)).filter((k) => k >= 0);
+function levelRecipes(cr) {
+  return arr(cr).filter((x) => !isTransmute(x)).map((x) => ({
+    res: mapRes(x), a: num(x['@amountcrafted'], 1), f: num(x['@craftingfocus']), s: num(x['@silver']), t: x['@time'],
+  }));
+}
+function altOf(id, list) {
+  // list = receitas do nível; devolve { at, v } ou lança
+  const [first, ...others] = list;
+  let at = -1;
+  const v = others.map((o) => {
+    if (o.res.length !== first.res.length || o.a !== first.a || o.f !== first.f || o.s !== first.s || o.t !== first.t)
+      throw new Error(`${id}: receita alternativa difere em mais que um ingrediente (forma/foco/tempo)`);
+    const diff = sameIdx(first.res, o.res);
+    if (diff.length !== 1) throw new Error(`${id}: ${diff.length} ingredientes diferem (esperado 1)`);
+    const k = diff[0];
+    if (o.res[k][1] !== first.res[k][1] || (o.res[k][2] ?? 0) !== (first.res[k][2] ?? 0))
+      throw new Error(`${id}: quantidade ou flag diferente no ingrediente alternativo`);
+    for (let j = 0; j < o.res.length; j++) if (j !== k && JSON.stringify(o.res[j]) !== JSON.stringify(first.res[j])) throw new Error(`${id}: outro ingrediente difere`);
+    if (at >= 0 && at !== k) throw new Error(`${id}: posição do ingrediente alternativo muda entre as receitas`);
+    at = k;
+    return o.res[k];
+  });
+  return { at, v };
+}
+/** { at, v } | null; ignorado=true quando há várias receitas mas não é artefato/ficha/Royal (ex.: refinados). */
+function parseAlternatives(id, it) {
+  const lists = [levelRecipes(it.craftingrequirements)];
+  for (const en of arr(it.enchantments?.enchantment)) lists.push(levelRecipes(en.craftingrequirements));
+  if (!lists.some((l) => l.length > 1)) return { alt: null, ignored: false };
+  const qualifies = lists.some((l) => l.some((r) => r.res.some(([rid]) => /ARTEFACT/.test(rid)))) || /_ROYAL$/.test(id);
+  if (!qualifies) return { alt: null, ignored: true };
+  const base = altOf(id, lists[0]);
+  for (const l of lists.slice(1)) {
+    if (l.length < 2) continue;
+    const a = altOf(id, l);
+    if (a.at !== base.at || JSON.stringify(a.v) !== JSON.stringify(base.v)) throw new Error(`${id}: alternativas mudam entre níveis de encanto`);
+  }
+  return { alt: base, ignored: false };
 }
 
 // regra: item encantado usa recursos básicos encantados
@@ -99,6 +146,8 @@ const sameRes = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const items = [];
 const needed = new Set();
 let deviations = 0;
+let nAlt = 0;
+let nIgnored = 0;
 
 for (const [id, { it }] of all) {
   if (!/^T\d_/.test(id)) continue;
@@ -127,6 +176,13 @@ for (const [id, { it }] of all) {
   const enchs = arr(it.enchantments?.enchantment);
   entry.x = enchs.length;
   if (base) {
+    const { alt, ignored } = parseAlternatives(id, it);
+    if (ignored) nIgnored++;
+    if (alt) {
+      entry.alt = alt;
+      nAlt++;
+      alt.v.forEach(([rid]) => needed.add(rid));
+    }
     entry.a = base.a;
     entry.f = base.f;
     entry.r = base.r;
@@ -199,4 +255,4 @@ for (const e of items) {
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, JSON.stringify({ built: REF_DATE, src: REF, cityOf, items, extra, vals, encNames }));
 const kb = (fs.statSync(OUT).size / 1024).toFixed(0);
-console.log(`ok: ${items.length} itens, ${Object.keys(extra).length} extras, ${deviations} receitas encantadas fora da regra, ${kb} KB`);
+console.log(`ok: ${items.length} itens, ${Object.keys(extra).length} extras, ${deviations} receitas encantadas fora da regra, ${nAlt} alt, ${nIgnored} ignorados, ${kb} KB`);
