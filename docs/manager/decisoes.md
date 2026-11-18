@@ -165,5 +165,13 @@ O plano da 057 não previu variantes com 2 transmutações: lição para os plan
 **Rebase:** a branch parte de antes da 019, 066 e 038 (todas em produção); o Executor faz o rebase preservando os três comportamentos, e o Tester reconfere o resultado no re-teste curto.
 **Retrabalho: 1 de no máximo 2.** (019 já usou 1 em outra ideia; a contagem é por ideia.)
 
+## D-031 — IDEIA-067 aprovada; observações
+**Aprovada** (deploy 6, correção prioritária). O ponto decisivo do Tester: `validateCatalog` REJEITA o catálogo antigo (pré-038, cenário do bug) e ACEITA o catálogo da 057, então a 067 não bloqueia o deploy seguinte. Dívidas, nenhuma bloqueia:
+1. **DT-006:** 2 mutantes sobrevivem sem teste unitário (tirar o `id` de `catalog.js`; voltar o cabeçalho antigo em `vercel.json`); ficaram cobertos só pela simulação. Fechar com um teste que leia `vercel.json` e confira o cabeçalho de `/data/`, e um que confira que a URL tem `?v=` quando há id. Primeiro plano que tocar `catalog.js`.
+2. **DT-007:** `validateCatalog` só exige lista não vazia (aceita itens sem `i` ou `null`); HTML ou JSON truncado mostra no Banner o erro cru de `JSON.parse` e não a mensagem clara. Melhoria de mensagem: baixo impacto.
+3. Sem timeout: servidor que nunca responde deixa "Carregando…" para sempre. Igual a antes da 067; não é regressão. Anotado como ideia futura de robustez.
+4. No `vite dev` o `?v=` também é injetado (o plano já dizia): não é problema.
+**Para o usuário:** depois do deploy 6, quem ainda tem o catálogo antigo no cache do navegador o ignora (a URL com `?v=` nunca esteve em cache); não precisa mais de Ctrl+F5.
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.
