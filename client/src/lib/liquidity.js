@@ -73,3 +73,27 @@ const LABELS = {
   ok: 'giro ok',
 };
 export const verdictLabel = (state) => LABELS[state] ?? '';
+
+const num1 = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const ddmm = (ms) => {
+  const d = new Date(ms);
+  return `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+};
+
+/** "4 de 7 dias com dados": quantos dias da janela têm registro (dia ausente pode ser falta de dado, não de venda). */
+export function coverageLabel(stats) {
+  if (stats.state === 'nodata') return verdictLabel('nodata');
+  return `${stats.points} de ${stats.windowDays} dias com dados`;
+}
+
+/** Texto, tom e dica da célula "Giro". Só ok/low/none mostram número; sparse nunca vira "sem giro". */
+export function giroText(stats) {
+  const { state } = stats;
+  if (state === 'idle') return { text: `${verdictLabel('idle')} (último ${ddmm(stats.lastRecord)})`, tone: 'muted', title: coverageLabel(stats) };
+  if (state === 'ok' || state === 'low' || state === 'none') {
+    const tone = { ok: 'good', low: 'warn', none: 'bad' }[state];
+    const median = Number.isFinite(stats.medianPrice) ? ` · mediana do preço ${Math.round(stats.medianPrice).toLocaleString('pt-BR')}` : '';
+    return { text: `${num1(stats.volumePerDay)}/dia`, tone, title: `${verdictLabel(state)} · ${coverageLabel(stats)}${median}` };
+  }
+  return { text: verdictLabel(state), tone: 'muted', title: coverageLabel(stats) };
+}

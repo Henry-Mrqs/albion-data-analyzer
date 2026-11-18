@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_SHARE_PCT, HISTORY_DAYS, LOW_TURNOVER_PER_DAY, MIN_POINTS_IN_WINDOW, NO_TURNOVER_PER_DAY, PRICE_ABOVE_MEDIAN_WARN,
-  daysToSell, priceVsMedian, verdictLabel, windowOf, windowStats,
+  coverageLabel, giroText, daysToSell, priceVsMedian, verdictLabel, windowOf, windowStats,
 } from './liquidity';
 
 // Dados REAIS do dossiê IDEIA-010 §4 (API West, 19 a 25/10/2026), usados como constantes.
@@ -185,6 +185,34 @@ describe('daysToSell e priceVsMedian: entradas ruins nunca dão NaN/∞/negativo
     expect(priceVsMedian(NaN, 100)).toBeNull();
   });
   it('preço abaixo da mediana dá fração negativa', () => expect(priceVsMedian(50, 100)).toBeCloseTo(-0.5, 6));
+});
+
+describe('texto da tela (giroText, coverageLabel)', () => {
+  it('coverageLabel: "X de 7 dias com dados" (singular em 1)', () => {
+    expect(coverageLabel(windowStats(series([10, 10, 10, 10], [1, 2, 3, 4]), { now }))).toBe('4 de 7 dias com dados');
+    expect(coverageLabel(windowStats(BAG, { now }))).toBe('7 de 7 dias com dados');
+    expect(coverageLabel(windowStats(series([10], [1]), { now }))).toBe('1 de 7 dias com dados');
+    expect(coverageLabel(windowStats([{ t: D(1), n: 1, p: 1 }], { now }))).toBe('0 de 7 dias com dados');
+  });
+  it('coverageLabel de série ausente: "sem histórico" (não "0 de 7")', () => expect(coverageLabel(windowStats(undefined, { now }))).toBe('sem histórico'));
+  it('giroText ok/low/none: vendas por dia com 1 casa e vírgula', () => {
+    expect(giroText(windowStats(BAG, { now }))).toMatchObject({ text: '98,6/dia', tone: 'good' });
+    expect(giroText(windowStats(SWORD, { now }))).toMatchObject({ text: '10,9/dia', tone: 'warn' });
+    expect(giroText(windowStats(flat(28), { now }))).toMatchObject({ text: '4,0/dia', tone: 'bad' });
+  });
+  it('giroText sparse mostra "dados insuficientes", nunca "sem giro" nem um número de giro', () => {
+    const g = giroText(windowStats(series([1, 1], [1, 1]), { now }));
+    expect(g.text).toBe('dados insuficientes');
+    expect(g.text).not.toMatch(/sem giro|\/dia/);
+  });
+  it('giroText nodata e idle (com data do último registro, dd/mm em UTC)', () => {
+    expect(giroText(windowStats(null, { now })).text).toBe('sem histórico');
+    expect(giroText(windowStats([{ t: Date.parse('2026-10-10T00:00:00Z'), n: 5, p: 1 }], { now })).text).toBe('sem venda registrada (último 10/10)');
+  });
+  it('giroText de ok/low/none inclui a mediana no title; estados sem mediana não', () => {
+    expect(giroText(windowStats(BAG, { now })).title).toContain('4.779');
+    expect(giroText(windowStats(undefined, { now })).title).not.toMatch(/mediana/);
+  });
 });
 
 describe('verdictLabel', () => {
