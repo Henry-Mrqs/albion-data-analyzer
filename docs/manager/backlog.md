@@ -20,17 +20,17 @@ Status possíveis: `NOVA → TRIADA → PLANEJADA → EM_EXECUÇÃO → EM_QA �
 |---|---|---|---|---|---|---|---|
 | IDEIA-005 | **Auditor de variáveis**: painel em cada cálculo listando TODAS as variáveis consideradas (RRR, foco, bônus de cidade, taxa de bancada, imposto, setup fee, premium…) e as ignoradas/pressupostas, com avisos ("sem foco", "sem diário"), para resolver o problema de esquecer variável | 5 | 5 | 3 | 5 | 18 | NOVA |
 | IDEIA-006 | **Ponto de equilíbrio comprar × produzir**: preço máximo que compensa pagar pela barra/couro pronto em cada tier | 5 | 5 | 4 | 4 | 18 | NOVA |
-| IDEIA-002 | **Foco**: pontos de foco gastos por craft/refino, prata/lucro por ponto de foco, "vale usar foco?" | 5 | 5 | 3 | 4 | 17 | NOVA |
-| IDEIA-010 | **Liquidez**: volume vendido por dia (API history) em Craft/Flipper/Mercado, aviso de item sem giro | 5 | 4 | 3 | 5 | 17 | NOVA |
+| IDEIA-002 | **Foco**: pontos de foco gastos por craft/refino, prata/lucro por ponto de foco, "vale usar foco?" | 5 | 5 | 3 | 4 | 17 | TRIADA (dossiê MÉDIA-ALTA; valor de foco do jogo como override opcional) |
+| IDEIA-010 | **Liquidez**: volume vendido por dia (API history) em Craft/Flipper/Mercado, aviso de item sem giro | 5 | 4 | 3 | 5 | 17 | TRIADA (dossiê MÉDIA, observado na API real) |
 | IDEIA-012 | **Confiança do preço**: detecção de outlier, dado velho e preço isolado; selo de confiança por célula | 4 | 5 | 4 | 4 | 17 | NOVA |
-| IDEIA-003 | **Diários de trabalho (journals)**: diário vazio/cheio, prata por craft, entra no lucro | 5 | 4 | 3 | 4 | 16 | NOVA |
-| IDEIA-009 | **Encantar**: runa/alma/relíquia — comprar .0 e encantar × craftar já encantado | 5 | 4 | 2 | 5 | 16 | NOVA |
+| IDEIA-003 | **Diários de trabalho (journals)**: diário vazio/cheio, prata por craft, entra no lucro | 5 | 4 | 3 | 4 | 16 | TRIADA (escopo reduzido: capacidade, IDs e preço do diário; **fama fora** por confiança BAIXA) |
+| IDEIA-009 | **Encantar**: runa/alma/relíquia — comprar .0 e encantar × craftar já encantado | 5 | 4 | 2 | 5 | 16 | TRIADA (escopo reduzido: quantidades por passo e IDs; **taxa de encantar fora**, sem fonte) |
 | IDEIA-017 | **Peso e transporte**: peso total do plano, lucro por kg, capacidade de montaria | 4 | 4 | 4 | 4 | 16 | NOVA |
-| IDEIA-019 | **Taxa de bancada**: presets por cidade e auditoria da fórmula (qual "item value" o jogo usa) | 4 | 5 | 4 | 3 | 16 | NOVA |
-| IDEIA-023 | **Calculadora de RRR** isolada com tabela de referência de todos os bônus | 3 | 5 | 5 | 3 | 16 | NOVA |
+| IDEIA-019 | **Taxa de bancada**: presets por cidade e auditoria da fórmula (qual "item value" o jogo usa) | 4 | 5 | 4 | 3 | 16 | TRIADA (**redefinida**: arredondar a taxa só no total + override do usuário; **presets por cidade REJEITADOS**, sem fonte, ver D-010) |
+| IDEIA-023 | **Calculadora de RRR** isolada com tabela de referência de todos os bônus | 3 | 5 | 5 | 3 | 16 | TRIADA (dossiê ALTA) |
 | IDEIA-029 | **Craft em lote multi-item**: vários itens somando materiais e compras | 5 | 4 | 2 | 5 | 16 | NOVA |
-| IDEIA-030 | **Preço-alvo reverso**: por quanto preciso vender para lucrar X | 4 | 5 | 4 | 3 | 16 | NOVA |
-| IDEIA-031 | **Teste de estresse**: lucro se o preço de venda cair/subir ±N% | 4 | 4 | 4 | 4 | 16 | NOVA |
+| IDEIA-030 | **Preço-alvo reverso**: por quanto preciso vender para lucrar X | 4 | 5 | 4 | 3 | 16 | TRIADA (dossiê ALTA) |
+| IDEIA-031 | **Teste de estresse**: lucro se o preço de venda cair/subir ±N% | 4 | 4 | 4 | 4 | 16 | TRIADA (dossiê ALTA) |
 | IDEIA-034 | **"Como foi calculado"**: tooltip com a fórmula e os números de cada valor da tela | 4 | 5 | 4 | 3 | 16 | NOVA |
 | IDEIA-007 | **Lucro por hora**: tempo de produção e fila | 4 | 4 | 3 | 4 | 15 | NOVA |
 | IDEIA-011 | **Tendência e médias** 7/30 dias (API history) | 4 | 4 | 3 | 4 | 15 | NOVA |
@@ -54,4 +54,18 @@ Status possíveis: `NOVA → TRIADA → PLANEJADA → EM_EXECUÇÃO → EM_QA �
 | IDEIA-027 | **Histórico de cálculos** local | 2 | 2 | 4 | 2 | 10 | NOVA |
 | IDEIA-033 | **PWA / instalável / offline do catálogo** | 2 | 1 | 3 | 2 | 8 | NOVA |
 
-Total de sementes funcionais: 34. Meta: 50 `VERIFICADA`. O Pesquisador precisa acrescentar pelo menos ~30 ideias para sobrar margem.
+Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43. Meta: 50 `VERIFICADA`. O Pesquisador precisa acrescentar pelo menos ~30 ideias para sobrar margem.
+
+## Ideias acrescentadas no Loop 1 (origem: AUDITORIA-001 e Pesquisador)
+
+| ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
+|---|---|---|---|---|---|---|---|
+| IDEIA-038 | **Corrigir a tabela de cidades de bônus de craft** (4 de 6 linhas erradas em produção), incluir Brecilien e passar a usar o `craftingcategory` do dump em vez de subcategoria de loja. Base: AUDITORIA-001 §4.2, conferida pelo Gerente no dump | 5 | 5 | 4 | 3 | 17 | NOVA (dossiê formal pedido; **correção de bug em produção, 1ª da fila**) |
+| IDEIA-041 | **Bônus diário também no RRR do craft final** (hoje só entra no refino) e alerta "vale esperar o bônus do dia" | 4 | 5 | 4 | 3 | 16 | NOVA (dossiê formal pedido) |
+| IDEIA-039 | **"Não retorna recursos" por ingrediente** lido do dump (`maxreturnamount=0`) no lugar do regex | 4 | 5 | 4 | 2 | 15 | NOVA (dossiê formal pedido) |
+| IDEIA-044 | **Custo de viagem/teleporte** no lucro de transporte | 3 | 3 | 4 | 3 | 13 | NOVA |
+| IDEIA-046 | **Culinária e poções** com custo de nutrição | 4 | 3 | 2 | 4 | 13 | NOVA (fórmula de foco por nutrição NÃO VERIFICADA) |
+| IDEIA-042 | **Itens Royal e capas de cidade** (base e tokens não retornam) | 3 | 4 | 2 | 3 | 12 | NOVA |
+| IDEIA-043 | **Fragmentos** (runa → alma → relíquia) com retorno parcial | 3 | 3 | 2 | 3 | 11 | NOVA |
+| IDEIA-047 | **Fazenda e animais**: lucro por plantação/cria | 3 | 2 | 2 | 4 | 11 | NOVA |
+| IDEIA-045 | **Reciclagem (salvage) e reparo/durabilidade** | 2 | 3 | 2 | 3 | 10 | NOVA |

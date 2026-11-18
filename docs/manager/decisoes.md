@@ -33,5 +33,16 @@ Plano aprovado. Conferi de forma independente (script próprio, sem usar o códi
 4. Manter a espada com artefato e **acrescentar um caso de poção** (4 ingredientes, `amount` 5) em Task 4: unidades produzidas = amount × crafts é uma variável do cálculo que nada cobre. Conta feita à mão no teste.
 5. Confirmado: não há CI; `npm run check` é a porta de entrada.
 
+## D-010 — Triagem do lote 1 do Pesquisador
+**Aceitas (TRIADA):** 002, 003, 009, 010, 019, 023, 030, 031. **Escopo reduzido** por confiança BAIXA (gate de dados): 003 sem fama por craft; 009 sem taxa de encantar; 019 sem presets de taxa por cidade (nenhuma fonte publica; a taxa é definida por cada dono de bancada) — o item vira "arredondar só no total + valor do usuário". Registrado como **rejeição parcial**: presets por cidade.
+**Acrescentadas por achados da auditoria:** 038, 039, 041 (correções de fidelidade) e 042–047 (ideias de mercado do Pesquisador).
+**Verificação independente do Gerente:** conferi `craftingmodifiers.xml` do dump oficial (`ao-data/ao-bin-dumps`): Thetford = cloth_helmet, Lymhurst = leather_shoes, Bridgewatch = cloth_shoes, Martlock = `offhand`, Brecilien = cape/bag/potion, Caerleon = gatherergear/tools/food/knuckles/shapeshifterstaff. A `CRAFT_CITY` do app (escrita por mim de memória) estava errada em 4 de 6 cidades. **Erro meu, em produção.**
+
+## D-011 — Correções de fidelidade contam para a meta e furam a fila
+Correções de cálculo que passam pelo pipeline completo (dossiê, plano, QA, deploy, verificação) contam como melhoria (não são infra). Têm prioridade sobre funcionalidades novas, porque deixam o usuário decidindo com número errado. Ordem após a IDEIA-001: **038 → 019 → 041 → 039**, depois as funcionalidades TRIADAS. 038 e 039 mexem em `build-catalog.mjs`/`catalog.js` (sequenciais entre si); 019 e 041 mexem em `econ.js`/`craftPlan.js` (sequenciais entre si); os dois grupos podem rodar em paralelo.
+
+## D-012 — Pontos que só o usuário consegue conferir em jogo
+O Pesquisador não achou fonte para: valor do artefato na taxa de bancada, taxa de itens com `amountcrafted` > 1 (poção/comida) e fama por craft. Isso vai para o usuário como pedido de medição (ver relatório do loop). Enquanto não houver medição, o app mostra o valor atual com aviso, sem mudar o cálculo.
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.
