@@ -2,7 +2,8 @@ import { useMemo, useRef, useState } from 'react';
 import { Play, Square } from 'lucide-react';
 import { allItems, marketId, nameOf, categoryLabel } from '../lib/catalog';
 import { CITIES, SELL_CITIES, cityLabel, fetchPrices, ageLabel, ageClass } from '../lib/market';
-import { SETUP_FEE, netSale, fmt } from '../lib/econ';
+import { fmt } from '../lib/econ';
+import { flipRows } from '../lib/flip';
 import { useSettings, usePersisted } from '../lib/settings';
 import { Banner, Field, NumberInput, Segmented } from './ui';
 
@@ -64,36 +65,7 @@ export default function Flipper() {
 
   const rows = useMemo(() => {
     if (!scan.prices) return [];
-    const maxAgeMs = cfg.maxAge * 3600000;
-    const now = Date.now();
-    const fresh = (d) => d && (!cfg.maxAge || now - d <= maxAgeMs);
-    const budget = +cfg.budget || Infinity;
-    const out = [];
-    for (const [mid, cities] of Object.entries(scan.prices)) {
-      let best = null;
-      for (const b of cfg.buyCities) {
-        const bq = cities[b]?.[1];
-        if (!bq) continue;
-        const instantBuy = bq.s > 0 && fresh(bq.sd);
-        const orderBuy = bq.b > 0 && fresh(bq.bd);
-        const cost = cfg.buyMode === 'instant' ? (instantBuy ? bq.s : 0) : orderBuy ? bq.b * (1 + SETUP_FEE) : 0;
-        if (!cost || cost > budget) continue;
-        const bdate = cfg.buyMode === 'instant' ? bq.sd : bq.bd;
-        for (const s of cfg.sellCities) {
-          if (s === b) continue;
-          const sq = cities[s]?.[1];
-          if (!sq) continue;
-          const opts = [];
-          if (cfg.sellMode !== 'order' && sq.b > 0 && fresh(sq.bd)) opts.push({ mode: 'instant', price: sq.b, date: sq.bd });
-          if (cfg.sellMode !== 'instant' && s !== 'Black Market' && sq.s > 0 && fresh(sq.sd)) opts.push({ mode: 'order', price: sq.s, date: sq.sd });
-          for (const o of opts) {
-            const profit = netSale(o.price, o.mode, premium) - cost;
-            if (!best || profit > best.profit) best = { mid, buy: b, sell: s, mode: o.mode, cost, price: o.price, profit, margin: (profit / cost) * 100, bdate, sdate: o.date };
-          }
-        }
-      }
-      if (best && best.profit >= (+cfg.minProfit || 0) && best.margin >= (+cfg.minMargin || 0)) out.push(best);
-    }
+    const out = [...flipRows(scan.prices, cfg, premium)];
     out.sort((a, b) => (a[sort.key] - b[sort.key]) * sort.dir);
     return out;
   }, [scan.prices, cfg, premium, sort]);
