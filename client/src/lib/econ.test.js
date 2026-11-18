@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
-  buyQuote, materialPlan, netSale, refineChainIds, refineUnit, resolveRRR, roundFee, rrr, splitUniq, stationFee,
+  buyQuote, materialPlan, netSale, refineChainIds, refineUnit, resolveRRR, roundFee, rrr, feeIsUnconfirmedDefault, DEFAULT_FEE, splitUniq, stationFee,
 } from './econ';
 import { loadFixtureCatalog, mkPrices, planksSpec } from '../test/helpers';
 
@@ -73,6 +73,23 @@ describe('stationFee / roundFee (IDEIA-019: arredonda só no total)', () => {
     expect(roundFee(stationFee(40, 100))).toBe(5); // 4,5 sobe
   });
   it('linearidade: stationFee(v, r, n) === n * stationFee(v, r)', () => expect(stationFee(384, 333, 7)).toBeCloseTo(7 * stationFee(384, 333), 9));
+});
+
+describe('feeIsUnconfirmedDefault (aviso do padrão 400)', () => {
+  it('localStorage antigo: 250 salvo sem feeSet NÃO é o padrão (sem aviso)', () => {
+    expect(feeIsUnconfirmedDefault(250, undefined)).toBe(false);
+    expect(feeIsUnconfirmedDefault('250', undefined)).toBe(false);
+  });
+  it('400 sem feeSet: avisa; 400 com feeSet (usuário confirmou): não avisa', () => {
+    expect(DEFAULT_FEE).toBe(400);
+    expect(feeIsUnconfirmedDefault(400, undefined)).toBe(true);
+    expect(feeIsUnconfirmedDefault('400', false)).toBe(true);
+    expect(feeIsUnconfirmedDefault(400, true)).toBe(false);
+  });
+  it('campo vazio ou 0 não é o padrão', () => {
+    expect(feeIsUnconfirmedDefault('', false)).toBe(false);
+    expect(feeIsUnconfirmedDefault(0, false)).toBe(false);
+  });
 });
 
 describe('netSale (1000)', () => {

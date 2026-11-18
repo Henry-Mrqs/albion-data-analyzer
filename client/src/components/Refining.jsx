@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Route } from 'lucide-react';
 import { REFINING, marketId, nameOf } from '../lib/catalog';
 import { CITIES, SELL_CITIES, cityLabel, usePrices } from '../lib/market';
-import { rrr as calcRRR, resolveRRR, refineChainIds, fmt, pct } from '../lib/econ';
+import { rrr as calcRRR, resolveRRR, refineChainIds, fmt, pct, feeIsUnconfirmedDefault } from '../lib/econ';
 import { compareRoutes, evaluateTier, lotFee, pickBestTier, routePath, usedCells } from '../lib/refinePlan';
 import { useSettings, usePersisted } from '../lib/settings';
 import FeeField from './FeeField';
@@ -167,7 +167,7 @@ export default function Refining() {
             <NumberInput step="0.1" value={cfg.customRRR} onChange={(v) => set({ customRRR: v })} placeholder={(autoRRR * 100).toFixed(1)} />
           </Field>
         </div>
-        <FeeField label="Taxa da bancada (prata por 100 de nutrição)" value={cfg.feePer100} onChange={(v) => set({ feePer100: v })} touched={!!cfg.feeSet} onTouch={() => set({ feeSet: true })} />
+        <FeeField label="Taxa da bancada (prata por 100 de nutrição)" value={cfg.feePer100} onChange={(v) => set({ feePer100: v })} touched={!feeIsUnconfirmedDefault(cfg.feePer100, cfg.feeSet)} onTouch={() => set({ feeSet: true })} />
         <Switch label="Comprar com ordens de compra" hint="Mais barato, mas paga 2,5% de taxa de criação" checked={cfg.useOrders} onChange={(v) => set({ useOrders: v })} />
         <div className="field">
           <label>Rota de produção</label>
@@ -216,11 +216,11 @@ export default function Refining() {
                   <span className="num good">−{(rrrValue * 100).toFixed(1)}% dos materiais</span>
                 </div>
                 <div className="kv">
-                  <span>Taxa da bancada</span>
+                  <span>Taxa da última etapa (por unidade)</span>
                   <Money value={cur.unit.fee} />
                 </div>
                 <div className="kv">
-                  <span>Taxa da bancada do lote ({fmt(+cfg.qty || 0)} un.)</span>
+                  <span>Taxa do lote (todas as etapas, {fmt(+cfg.qty || 0)} un.)</span>
                   <Money value={lotFee(cur.unit, +cfg.qty || 0, rrrValue)} />
                 </div>
                 <div className="kv">

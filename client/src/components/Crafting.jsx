@@ -1,7 +1,7 @@
 import { Route } from 'lucide-react';
 import { REFINING, getItem, recipeOf, marketId, nameOf, refinedTypeOf, craftBonusCity, categoryLabel } from '../lib/catalog';
 import { CITIES, cityLabel, usePrices } from '../lib/market';
-import { fmt, pct } from '../lib/econ';
+import { fmt, pct, feeIsUnconfirmedDefault } from '../lib/econ';
 import { computeCraft, craftChainIds, keyOf } from '../lib/craftPlan';
 import { useSettings, usePersisted } from '../lib/settings';
 import ItemSelector from './ItemSelector';
@@ -62,7 +62,7 @@ export default function Crafting() {
             <NumberInput step="0.1" value={cfg.customRRR} onChange={(v) => set({ customRRR: v })} placeholder={(autoRRR * 100).toFixed(1)} />
           </Field>
         </div>
-        <FeeField label="Taxa da bancada (prata por 100 de nutrição)" value={cfg.feePer100} onChange={(v) => set({ feePer100: v })} touched={!!cfg.feeSet} onTouch={() => set({ feeSet: true })} />
+        <FeeField label="Taxa da bancada (prata por 100 de nutrição)" value={cfg.feePer100} onChange={(v) => set({ feePer100: v })} touched={!feeIsUnconfirmedDefault(cfg.feePer100, cfg.feeSet)} onTouch={() => set({ feeSet: true })} />
 
         <hr className="sep" style={{ margin: 0 }} />
         <h3>Materiais</h3>
@@ -96,7 +96,7 @@ export default function Crafting() {
                 </select>
               </Field>
             ))}
-            <FeeField label="Taxa da bancada de refino (por 100 nutrição)" value={cfg.refineFee} onChange={(v) => set({ refineFee: v })} touched={!!cfg.refineFeeSet} onTouch={() => set({ refineFeeSet: true })} />
+            <FeeField label="Taxa da bancada de refino (por 100 nutrição)" value={cfg.refineFee} onChange={(v) => set({ refineFee: v })} touched={!feeIsUnconfirmedDefault(cfg.refineFee, cfg.refineFeeSet)} onTouch={() => set({ refineFeeSet: true })} />
           </>
         )}
       </div>
