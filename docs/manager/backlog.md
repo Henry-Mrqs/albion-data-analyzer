@@ -12,7 +12,7 @@ Status possíveis: `NOVA → TRIADA → PLANEJADA → EM_EXECUÇÃO → EM_QA �
 
 | ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
 |---|---|---|---|---|---|---|---|
-| IDEIA-001 | **Fundação de testes**: Vitest + `npm test`, extrair a lógica de cálculo (RRR, taxas, cadeia de refino, plano de craft) de `Crafting.jsx`/`Refining.jsx` para módulos puros testáveis, casos numéricos de regressão do que já existe, script `npm run check` (lint+test+build) | — | — | — | — | **GATE** | EM_EXECUÇÃO (Executor #3) |
+| IDEIA-001 | **Fundação de testes**: Vitest + `npm test`, extrair a lógica de cálculo (RRR, taxas, cadeia de refino, plano de craft) de `Crafting.jsx`/`Refining.jsx` para módulos puros testáveis, casos numéricos de regressão do que já existe, script `npm run check` (lint+test+build) | — | — | — | — | **GATE** | EM_QA (Tester #6) |
 
 ## Funcionalidades (contam para a meta)
 
