@@ -85,5 +85,12 @@ Conferi no dump (cache local de `items.json`): `T4_MAIN_SWORD`=sword, `T4_2H_BOW
 O Executor da 019 parou por regra do briefing (correto): 2 testes da fundação mudaram de valor e não estavam na tabela do plano. Conferi à mão: (1) poção C5, 3 crafts, taxa 150: 1.095 → 1.094 (364,5 × 3 = 1.093,5 arredonda no total); (2) `refineUnit` de 1 unidade, valor 16, taxa 400: taxa 7 → 7,2 (exata; o arredondamento passa a ser só no total do lote). Mesma regra aprovada, plano incompleto na tabela. O Tester da 019 deve conferir explicitamente esses dois casos e a lista completa de testes alterados.
 **Registro de processo:** a regra "parar se um teste mudar fora do plano" funcionou como projetada e evitou uma alteração silenciosa.
 
+## D-019 — IDEIA-030 aprovada; observações do Tester
+**Aprovada.** Observações registradas, nenhuma bloqueia:
+1. **Aviso "difícil de vender" enganoso:** compara o preço-alvo com o MENOR preço de venda global (como o plano pedia). Na poção T4 o menor é 1.275 em Caerleon, mas Martlock paga 3.796, e o aviso dispara com alvo 2.924. Parece alarme sem sentido. É a mesma família de problema das ideias **066** (saída ilusória) e **065** (preço de saída realista): o aviso deve olhar a cidade de venda que o usuário escolheu, ou o melhor comprador real. Anotado para a 066; não corrijo antes, para não mexer em plano aprovado sem dossiê.
+2. A lib aceita relistagens negativas/decimais e trata modo inválido como instantâneo; só a UI sanitiza. Cobre-se pela **IDEIA-060** (validação de entradas).
+3. Aviso de processo: o navegador embutido é compartilhado entre Testers que rodam em paralelo (um chegou a ser redirecionado para a porta de outro). Passo a pedir portas distintas e que cada Tester confira a porta a cada leitura.
+**Deploy 2 (lote):** sobe quando 023 e 019 também estiverem aprovadas (agrupar reduz custo de verificação em produção).
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.
