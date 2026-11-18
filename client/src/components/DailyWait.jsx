@@ -1,5 +1,6 @@
 import { worthWaiting } from '../lib/craftPlan';
 import { fmt } from '../lib/econ';
+import { DAILY_NOTE } from '../lib/dailyBonus';
 import { Field, Money, NumberInput } from './ui';
 
 /** "Vale esperar o bônus do dia?": economia do lote se o bônus do item fosse +10% ou +20% (IDEIA-041). Some sem preços completos. */
@@ -37,6 +38,7 @@ export default function DailyWait({ savings, crafts, waitCost, onWaitCost }) {
         <NumberInput value={waitCost ?? ''} onChange={(v) => onWaitCost(v)} placeholder="0" />
       </Field>
       <p className="hint">O bônus diário vale para uma categoria por 24 h; informe o do dia (o app não consegue buscá-lo). O valor escolhido substitui o atual; não soma.</p>
+      <p className="hint warn" data-testid="daily-note-card">{DAILY_NOTE}</p>
     </div>
   );
 }

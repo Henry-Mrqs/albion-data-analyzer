@@ -4,7 +4,7 @@ import { CRAFT_CITIES, REFINING, getItem, recipeOf, marketId, nameOf, refinedTyp
 import { CITIES, cityLabel, usePrices } from '../lib/market';
 import { fmt, pct, feeIsUnconfirmedDefault } from '../lib/econ';
 import { computeCraft, craftChainIds, keyOf, waitSavings } from '../lib/craftPlan';
-import { effectiveDaily } from '../lib/dailyBonus';
+import { effectiveDaily, showDailyNote, DAILY_NOTE } from '../lib/dailyBonus';
 import { annotateOptions, pickExit } from '../lib/exits';
 import { useSettings, usePersisted } from '../lib/settings';
 import ItemSelector from './ItemSelector';
@@ -38,6 +38,7 @@ export default function Crafting() {
   const cfgEff = { ...cfg, craftDaily: daily.value };
   const c = computeCraft({ rec, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling });
   const savings = waitSavings({ rec, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling });
+  const note = showDailyNote({ craftDaily: cfg.craftDaily, hasCard: !!savings });
   const { specialty, autoRRR, craftRRR } = c.rates;
   const { issues, lines, fee, totalCost, units, unitCost, missing, options, best, ready, plan, used, refinable, allBest } = c;
 
@@ -75,7 +76,9 @@ export default function Crafting() {
             <option value={20}>+20%</option>
           </select>
           {daily.stale && <div className="hint warn">Bônus de ontem? Passou o reset diário do servidor: usando 0. Escolha o bônus de hoje de novo para confirmar.</div>}
+          {daily.future && <div className="hint warn">Data do bônus no futuro (relógio alterado ou data errada): usando 0. Escolha o bônus de hoje de novo para confirmar.</div>}
           <InputIssues issues={issues} field="craftDaily" />
+          {note && <div className="hint" data-testid="daily-note">{DAILY_NOTE}</div>}
         </Field>
         <div className="cols-2">
           <Field label="Nº de crafts">
