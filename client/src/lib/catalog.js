@@ -1,5 +1,6 @@
 // Catálogo oficial (gerado por scripts/build-catalog.mjs): itens, receitas, nomes em PT-BR.
 import { useEffect, useState } from 'react';
+import { fetchCatalog } from './catalogLoad';
 
 let promise = null;
 let data = null;
@@ -21,11 +22,7 @@ export function resetCatalog() {
 
 export function loadCatalog() {
   if (!promise) {
-    promise = fetch(`${import.meta.env.BASE_URL}data/catalog.json`)
-      .then((r) => {
-        if (!r.ok) throw new Error(`Catálogo indisponível (HTTP ${r.status})`);
-        return r.json();
-      })
+    promise = fetchCatalog({ fetchFn: fetch, base: import.meta.env.BASE_URL, id: import.meta.env.VITE_CATALOG_V })
       .then((d) => {
         setCatalog(d);
         return d;
