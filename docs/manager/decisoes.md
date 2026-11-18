@@ -173,5 +173,9 @@ O plano da 057 não previu variantes com 2 transmutações: lição para os plan
 4. No `vite dev` o `?v=` também é injetado (o plano já dizia): não é problema.
 **Para o usuário:** depois do deploy 6, quem ainda tem o catálogo antigo no cache do navegador o ignora (a URL com `?v=` nunca esteve em cache); não precisa mais de Ctrl+F5.
 
+## D-032 — IDEIA-057 aprovada; ordem de deploy
+**Aprovada.** Confirmado de forma independente o que aceitei em D-029 (`vals` com 2 chaves novas, nenhuma receita as usa, `ingredientValue` idêntico em 1.311 ids). Observações, nenhuma bloqueia: (1) a busca "Madeira" no Craft dá 0 também na master porque os itens se chamam "Troncos de ..."; tábuas e barras seguem craftáveis como antes; (2) o dossiê 050 R3 ("prata igual para todos") não vale para pedra, já corrigido no dossiê; (3) `refineUnit` chamado direto em um recurso bruto agora devolve "sem receita": a UI nunca faz essa chamada.
+**Ordem:** deploy 6 = 067 (em curso), deploy 7 = 057. A 039 (planejada com a regra conservadora D-017) e a 031 (preço de fixture compartilhada) só começam depois do deploy 7, porque mexem em `build-catalog.mjs`/fixture. A 041 espera a 060 estar mesclada.
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.
