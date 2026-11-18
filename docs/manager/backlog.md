@@ -12,7 +12,7 @@ Status possíveis: `NOVA → TRIADA → PLANEJADA → EM_EXECUÇÃO → EM_QA �
 
 | ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
 |---|---|---|---|---|---|---|---|
-| IDEIA-001 | **Fundação de testes**: Vitest + `npm test`, extrair a lógica de cálculo (RRR, taxas, cadeia de refino, plano de craft) de `Crafting.jsx`/`Refining.jsx` para módulos puros testáveis, casos numéricos de regressão do que já existe, script `npm run check` (lint+test+build) | — | — | — | — | **GATE** | APROVADA (Tester #6); deploy 1 em curso |
+| IDEIA-001 | **Fundação de testes**: Vitest + `npm test`, extrair a lógica de cálculo (RRR, taxas, cadeia de refino, plano de craft) de `Crafting.jsx`/`Refining.jsx` para módulos puros testáveis, casos numéricos de regressão do que já existe, script `npm run check` (lint+test+build) | — | — | — | — | **GATE** | **VERIFICADA em produção (infra, não conta para os 50)**; deploy 1 |
 
 ## Funcionalidades (contam para a meta)
 
@@ -27,9 +27,9 @@ Status possíveis: `NOVA → TRIADA → PLANEJADA → EM_EXECUÇÃO → EM_QA �
 | IDEIA-009 | **Encantar**: runa/alma/relíquia — comprar .0 e encantar × craftar já encantado | 5 | 4 | 2 | 5 | 16 | TRIADA (escopo reduzido: quantidades por passo e IDs; **taxa de encantar fora**, sem fonte) |
 | IDEIA-017 | **Peso e transporte**: peso total do plano, lucro por kg, capacidade de montaria | 4 | 4 | 4 | 4 | 16 | NOVA |
 | IDEIA-019 | **Taxa de bancada**: presets por cidade e auditoria da fórmula (qual "item value" o jogo usa) | 4 | 5 | 4 | 3 | 16 | TRIADA (**redefinida**: arredondar a taxa só no total + override do usuário; **presets por cidade REJEITADOS**, sem fonte, ver D-010) |
-| IDEIA-023 | **Calculadora de RRR** isolada com tabela de referência de todos os bônus | 3 | 5 | 5 | 3 | 16 | PLANEJADA (plano aprovado, D-013) |
+| IDEIA-023 | **Calculadora de RRR** isolada com tabela de referência de todos os bônus | 3 | 5 | 5 | 3 | 16 | EM_EXECUÇÃO (Executor #10) |
 | IDEIA-029 | **Craft em lote multi-item**: vários itens somando materiais e compras | 5 | 4 | 2 | 5 | 16 | NOVA |
-| IDEIA-030 | **Preço-alvo reverso**: por quanto preciso vender para lucrar X | 4 | 5 | 4 | 3 | 16 | PLANEJADA (plano aprovado, D-013) |
+| IDEIA-030 | **Preço-alvo reverso**: por quanto preciso vender para lucrar X | 4 | 5 | 4 | 3 | 16 | EM_EXECUÇÃO (Executor #11) |
 | IDEIA-031 | **Teste de estresse**: lucro se o preço de venda cair/subir ±N% | 4 | 4 | 4 | 4 | 16 | PLANEJADA (plano aprovado, D-013) |
 | IDEIA-034 | **"Como foi calculado"**: tooltip com a fórmula e os números de cada valor da tela | 4 | 5 | 4 | 3 | 16 | NOVA |
 | IDEIA-007 | **Lucro por hora**: tempo de produção e fila | 4 | 4 | 3 | 4 | 15 | NOVA |
