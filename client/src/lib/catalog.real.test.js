@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { ingredientValue, resetCatalog, setCatalog } from './catalog';
+import { validateCatalog } from './catalogLoad';
 
 const cat = JSON.parse(fs.readFileSync(new URL('../../public/data/catalog.json', import.meta.url), 'utf8'));
 const byId = Object.fromEntries(cat.items.map((i) => [i.i, i]));
@@ -173,4 +174,41 @@ describe('catalog.json real: não retorna por ingrediente (IDEIA-039)', () => {
     const lvl = byId.T4_2H_ARCANESTAFF_HELL.er?.[1] ?? byId.T4_2H_ARCANESTAFF_HELL.r;
     expect(lvl.filter((x) => x[2] === 1).map((x) => x[0])).toEqual(['T4_ARTEFACT_2H_ARCANESTAFF_HELL']);
   });
+});
+
+describe('catalog.json real: receitas alternativas (IDEIA-049)', () => {
+  const withAlt = cat.items.filter((i) => i.alt);
+  it('contagem do parser (dossiê §4): arcanestaff 2 receitas, Royal 3, espada 1', () => {
+    expect(1 + byId.T4_2H_ARCANESTAFF_HELL.alt.v.length).toBe(2);
+    expect(1 + byId.T4_ARMOR_PLATE_ROYAL.alt.v.length).toBe(3);
+    expect(byId.T4_MAIN_SWORD.alt).toBeUndefined();
+  });
+  it('formato: arcanestaff at 2 com a ficha 2; Royal at 0 com SET2 e SET3', () => {
+    expect(byId.T4_2H_ARCANESTAFF_HELL.alt).toEqual({ at: 2, v: [['T4_ARTEFACT_TOKEN_FAVOR_2', 1, 1]] });
+    expect(byId.T4_ARMOR_PLATE_ROYAL.alt).toEqual({ at: 0, v: [['T4_ARMOR_PLATE_SET2', 1, 1], ['T4_ARMOR_PLATE_SET3', 1, 1]] });
+  });
+  it('605 itens com alt: 560 de artefato/ficha e 45 Royal', () => {
+    expect(withAlt).toHaveLength(605);
+    expect(withAlt.filter((i) => /_ROYAL$/.test(i.i))).toHaveLength(45);
+    expect(withAlt.filter((i) => i.alt.v.length === 1)).toHaveLength(560);
+  });
+  it('invariante: a alternativa só troca o ingrediente em alt.at (mesma quantidade e mesmo flag)', () => {
+    for (const i of withAlt) for (const v of i.alt.v) {
+      expect(v[1]).toBe(i.r[i.alt.at][1]);
+      expect(v[2] ?? 0).toBe(i.r[i.alt.at][2] ?? 0);
+      expect(v[0]).not.toBe(i.r[i.alt.at][0]);
+    }
+  });
+  it('refinados NÃO têm alt (ficha de facção fica de fora)', () => {
+    expect(byId.T4_PLANKS.alt).toBeUndefined();
+    expect(cat.items.filter((i) => i.c === 'crafting/refinedresources' && i.alt)).toEqual([]);
+  });
+  it('r, er, f, cc, tm intocados: T4_2H_ARCANESTAFF_HELL.r continua com o artefato na 3ª posição', () => {
+    expect(byId.T4_2H_ARCANESTAFF_HELL.r).toEqual([['T4_PLANKS', 20], ['T4_METALBAR', 12], ['T4_ARTEFACT_2H_ARCANESTAFF_HELL', 1, 1]]);
+  });
+  it('vals ganhou os ingredientes alternativos: ficha 896; 110 ids novos', () => {
+    expect(cat.vals.T4_ARTEFACT_TOKEN_FAVOR_2).toBe(896);
+    expect(Object.keys(cat.vals).filter((k) => /TOKEN_FAVOR|SET[23]$/.test(k))).toHaveLength(110);
+  });
+  it('o catálogo novo é válido (067)', () => expect(validateCatalog(cat)).toEqual({ ok: true, problems: [] }));
 });

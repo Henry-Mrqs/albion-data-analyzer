@@ -15,6 +15,10 @@ const stats = {
   'com cc': (c) => count(c, (i) => i.cc),
   'com tm': (c) => count(c, (i) => i.tm),
   'ingredientes com 3º elemento': (c) => count(c, (i) => (i.r ?? []).some((x) => x.length > 2)),
+  'com alt (receitas alternativas)': (c) => count(c, (i) => i.alt),
+  'ingredientes alternativos (alt.v)': (c) => c.items.reduce((n, i) => n + (i.alt?.v.length ?? 0), 0),
+  'chaves de vals': (c) => Object.keys(c.vals ?? {}).length,
+  'chaves de extra': (c) => Object.keys(c.extra ?? {}).length,
   'entradas em cityOf': (c) => Object.keys(c.cityOf ?? {}).length,
 };
 for (const [k, f] of Object.entries(stats)) console.log(`${k}: ${f(a)} -> ${f(b)}`);
