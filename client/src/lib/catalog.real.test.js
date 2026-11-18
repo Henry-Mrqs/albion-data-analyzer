@@ -212,3 +212,32 @@ describe('catalog.json real: receitas alternativas (IDEIA-049)', () => {
   });
   it('o catálogo novo é válido (067)', () => expect(validateCatalog(cat)).toEqual({ ok: true, problems: [] }));
 });
+
+describe('catalog.json real: foco por encanto (IDEIA-002)', () => {
+  it('ef do dump: espada T4 .1 a .4 = 2.251, 3.939, 6.893, 12.064 (dossiê F2)', () => expect(byId.T4_MAIN_SWORD.ef).toEqual({ 1: 2251, 2: 3939, 3: 6893, 4: 12064 }));
+  it('prancha T4: f 54; ef .1 = 94 (dossiê F2) e .2 = 164 (dump)', () => {
+    expect(byId.T4_PLANKS.f).toBe(54);
+    expect(byId.T4_PLANKS.ef).toMatchObject({ 1: 94, 2: 164 });
+  });
+  it('poção T4: f 210 por craft de 5 unidades; ef 277, 411, 811 (dump, 3 níveis)', () => {
+    expect(byId.T4_POTION_HEAL).toMatchObject({ f: 210, a: 5 });
+    expect(byId.T4_POTION_HEAL.ef).toEqual({ 1: 277, 2: 411, 3: 811 });
+  });
+  it('armadura Royal não tem foco no dump: f 0 e sem ef', () => {
+    expect(byId.T4_ARMOR_PLATE_ROYAL.f).toBe(0);
+    expect(byId.T4_ARMOR_PLATE_ROYAL.ef).toBeUndefined();
+  });
+  it('contagens: 1.240 itens com ef, 4.869 entradas; 1.285 itens com f > 0', () => {
+    const w = cat.items.filter((i) => i.ef);
+    expect(w).toHaveLength(1240);
+    expect(w.reduce((s, i) => s + Object.keys(i.ef).length, 0)).toBe(4869);
+    expect(cat.items.filter((i) => i.f > 0)).toHaveLength(1285);
+  });
+  it('todo ef é objeto de níveis 1 a 4 com foco positivo', () => {
+    for (const i of cat.items.filter((x) => x.ef)) for (const [n, f] of Object.entries(i.ef)) {
+      expect([1, 2, 3, 4]).toContain(+n);
+      expect(f).toBeGreaterThan(0);
+    }
+  });
+  it('o catálogo novo continua válido (067)', () => expect(validateCatalog(cat)).toEqual({ ok: true, problems: [] }));
+});
