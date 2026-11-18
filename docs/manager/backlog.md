@@ -60,7 +60,7 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 
 | ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
 |---|---|---|---|---|---|---|---|
-| IDEIA-038 | **Corrigir a tabela de cidades de bônus de craft** (4 de 6 linhas erradas em produção), incluir Brecilien e passar a usar o `craftingcategory` do dump em vez de subcategoria de loja. Base: AUDITORIA-001 §4.2, conferida pelo Gerente no dump | 5 | 5 | 4 | 3 | 17 | APROVADA; deploy 5 em curso |
+| IDEIA-038 | **Corrigir a tabela de cidades de bônus de craft** (4 de 6 linhas erradas em produção), incluir Brecilien e passar a usar o `craftingcategory` do dump em vez de subcategoria de loja. Base: AUDITORIA-001 §4.2, conferida pelo Gerente no dump | 5 | 5 | 4 | 3 | 17 | **VERIFICADA** (deploy 5) |
 | IDEIA-041 | **Bônus diário também no RRR do craft final** (hoje só entra no refino) e alerta "vale esperar o bônus do dia" | 4 | 5 | 4 | 3 | 16 | PLANEJADA (plano aprovado, D-017) |
 | IDEIA-039 | **"Não retorna recursos" por ingrediente** lido do dump (`maxreturnamount=0`) no lugar do regex | 4 | 5 | 4 | 2 | 15 | PLANEJADA (plano aprovado, D-017) com ajuste conservador |
 | IDEIA-044 | **Custo de viagem/teleporte** no lucro de transporte | 3 | 3 | 4 | 3 | 13 | NOVA |
@@ -77,7 +77,7 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 | IDEIA-049 | **Receitas alternativas**: artefato **ou** ficha de favor; base Royal SET1/2/3; escolhe a mais barata (560 itens com artefato/ficha + 45 Royal) | 4 | 5 | 3 | 5 | 17 | TRIADA (estrutura ALTA, preço MÉDIA) |
 | IDEIA-048 | **Despesas extras** no lucro e "venda sem imposto de mercado" | 4 | 4 | 4 | 4 | 16 | TRIADA (MÉDIA; sem valores padrão inventados) |
 | IDEIA-054 | **"Vale pagar Premium?"**: ponto de equilíbrio com o preço do ouro (constantes editáveis e datadas) | 3 | 4 | 4 | 4 | 15 | TRIADA (MÉDIA) |
-| IDEIA-057 | **Corrigir transmutação listada como receita de craft**: 20 recursos brutos (`T5_WOOD` ← `T4_WOOD`...) aparecem como craftáveis no catálogo. Confirmado pelo Gerente em `catalog.json` | 3 | 5 | 5 | 2 | 15 | PLANEJADA (plano aprovado, D-017) |
+| IDEIA-057 | **Corrigir transmutação listada como receita de craft**: 20 recursos brutos (`T5_WOOD` ← `T4_WOOD`...) aparecem como craftáveis no catálogo. Confirmado pelo Gerente em `catalog.json` | 3 | 5 | 5 | 2 | 15 | EM_EXECUÇÃO (Executor #32) |
 | IDEIA-050 | **Calculadora de transmutação** de recursos brutos | 3 | 4 | 3 | 4 | 14 | NOVA (bloqueada: fator do servidor precisa de 1 medição do usuário) |
 | IDEIA-051 | **Dimensionar o lote**: limites de foco, demanda, materiais e prata | 4 | 3 | 2 | 5 | 14 | TRIADA (MÉDIA, depende de 002) |
 | IDEIA-053 | **Confiança da rota por histórico** ("quantos dos últimos N dias deu lucro") | 4 | 3 | 2 | 5 | 14 | TRIADA (MÉDIA, depende de 010) |
@@ -98,3 +98,9 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 | IDEIA-062 | **Checagem de oferta do material**: o plano de compra cabe no volume diário? | 4 | 3 | 3 | 4 | 14 | TRIADA (MÉDIA; depende de 010; limiar é decisão de produto) |
 | IDEIA-064 | **Perfil do crafter** (especializações e tiers que sei fazer, uma entrada para tudo) | 3 | 3 | 3 | 4 | 13 | TRIADA (MÉDIA; sem automação por regra de desbloqueio) |
 | IDEIA-063 | **Variância do retorno em lote pequeno** | 2 | 2 | 3 | 3 | 10 | **REJEITADA por ora** (CONFIANÇA BAIXA: a hipótese H1 do sorteio não está comprovada; ver D-016) |
+
+## Ideia acrescentada no Loop 4 (achado do Deployer no deploy 5)
+
+| ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
+|---|---|---|---|---|---|---|---|
+| IDEIA-067 | **Cache do catálogo**: `/data/*` com `max-age=3600` + `stale-while-revalidate=86400` deixa o navegador com o catálogo ANTIGO por até 1 h (24 h) depois de um deploy, enquanto o código novo já espera o formato novo (ex.: sem `cc` mostra "sem cidade de bônus" errado). Versionar a URL e/ou revalidar sempre, e checar o formato ao carregar | 5 | 5 | 4 | 2 | 16 | PLANEJADA em curso (**correção prioritária**, D-027) |
