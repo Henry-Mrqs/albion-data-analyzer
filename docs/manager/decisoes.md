@@ -101,5 +101,18 @@ O Executor da 019 parou por regra do briefing (correto): 2 testes da fundação 
 **Fila do deploy 2:** 023 e 030 aprovadas; falta o laudo da 019.
 **Aproveitamento da espera:** o Planejador escreve os planos da 060 e da 066 (as duas de maior impacto sobre "esqueci uma variável" ainda sem plano), absorvendo as observações das aprovações até aqui.
 
+## D-021 — Planos 060 e 066 aprovados; respostas ao Planejador
+**060 (validação de entradas):**
+1. `MAX_QTY = 1e9` para crafts/quantidades: decisão de produto do Gerente (sem fonte de jogo; o dossiê não dá teto). Fica como constante nomeada, fácil de mudar.
+2. **Corrige e avisa**, não bloqueia: o cálculo usa o valor corrigido que a tela mostra e o resultado leva um aviso visível "calculado com valor corrigido". Divergência consciente do dossiê (que diz bloquear): bloquear deixaria a tela em branco; um aviso permanente é mais honesto e menos hostil.
+3. Taxa acima de 1.000 usa 1.000, com botão para aceitar um novo teto (o teto vem de um post de desenvolvedor, MÉDIA, então precisa ser ajustável).
+4. Taxa vazia passa de 0 para o padrão 400, **com aviso visível** ("taxa vazia: usando o padrão 400"), coerente com a 019.
+**066 (saída ilusória):**
+5. Refino e Flipper ficam fora desta entrega (o Flipper já vende em ordem de compra real). Anoto como possível extensão (066b) se o Tester ou o usuário vir o problema neles.
+6. Limite de 24 h igual ao do Flipper, **reutilizando a mesma constante**, sem duplicar o literal.
+7. O preço-alvo compara com o melhor comprador de todas as cidades, sem seletor: aceito e documentado como limitação.
+8. Pode remover `lowestListing` e seus testes, já que fica sem uso. Os testes removidos devem ser listados no commit e o Tester confere que nenhuma asserção de comportamento sumiu sem substituta.
+**Ordem de execução depois do deploy 2:** WIP 3 = **038** (catálogo, 057 e 039 em seguida) + **060** + **066** (060 e 066 tocam `Crafting.jsx`/`TargetPrice.jsx` em regiões distintas). A **041** espera a 060 estar mesclada, porque ambas editam `craftPlan.js`; o Executor da 041 parte da `master` já atualizada.
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.
