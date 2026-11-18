@@ -180,7 +180,7 @@ export default function Crafting() {
                               />
                             </div>
                           )}
-                          {!l.returnable && <small>não retorna</small>}
+                          {!l.returnable && <small title={l.unverified ? 'O dump não marca este ingrediente; assumimos que não retorna até medir em jogo.' : undefined}>não retorna{l.unverified ? ' · não verificado' : ''}</small>}
                         </td>
                         <td className="num">{l.qty.toFixed(l.qty % 1 ? 1 : 0)}</td>
                         <td>

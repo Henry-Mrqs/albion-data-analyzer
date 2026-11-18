@@ -135,3 +135,30 @@ describe('IDEIA-057: transmutação não é receita de craft', () => {
     expect(refineChainIds('T4_PLANKS', true)).toEqual(['T4_PLANKS', 'T4_WOOD', 'T3_PLANKS', 'T3_WOOD', 'T2_PLANKS', 'T2_WOOD']);
   });
 });
+
+describe('IDEIA-039: não retorna por ingrediente (dump OU fragmento)', () => {
+  const ret = (id, ench = 0) => recipeOf(id, ench).res.map((x) => [x.uniq, x.returnable]);
+  it('Royal: base e token não retornam', () => expect(ret('T4_ARMOR_PLATE_ROYAL')).toEqual([['T4_ARMOR_PLATE_SET1', false], ['QUESTITEM_TOKEN_ROYAL_T4', false]]));
+  it('escudo de artefato: tábua e barra retornam, artefato não', () => expect(ret('T4_OFF_SHIELD_HELL')).toEqual([['T4_PLANKS', true], ['T4_METALBAR', true], ['T4_ARTEFACT_OFF_SHIELD_HELL', false]]));
+  it('satchel: tela e couro retornam, livro não', () => expect(ret('T4_BAG_INSIGHT')).toEqual([['T4_CLOTH', true], ['T4_LEATHER', true], ['T4_SKILLBOOK_STANDARD', false]]));
+  it('capa de facção: os três não retornam', () => expect(ret('T4_CAPEITEM_FW_BRIDGEWATCH').every(([, r]) => r === false)).toBe(true));
+  it('fragmento continua NÃO retornando e fica marcado não verificado (união conservadora)', () => {
+    const res = recipeOf('T4_ARTEFACT_2H_COMBATSTAFF_MORGANA').res;
+    expect(res.map((x) => [x.uniq, x.returnable, x.unverified])).toEqual([['T4_RUNE', false, true]]);
+  });
+  it('só o token barra: unverified é falso quando o dump já marca ou nada barra', () => {
+    expect(recipeOf('T4_ARMOR_PLATE_ROYAL').res.every((x) => x.unverified === false)).toBe(true);
+    expect(recipeOf('T4_OFF_SHIELD_HELL').res.every((x) => x.unverified === false)).toBe(true);
+  });
+  it('regressão: returnable nunca passa de false para true em relação ao regex antigo', () => {
+    const antigo = (id) => !/ARTEFACT|ARTIFACT|RUNE|SOUL|RELIC|SHARD/.test(id);
+    for (const id of ['T4_ARMOR_PLATE_ROYAL', 'T4_OFF_SHIELD_HELL', 'T4_BAG_INSIGHT', 'T4_CAPEITEM_FW_BRIDGEWATCH', 'T4_ARTEFACT_2H_COMBATSTAFF_MORGANA', 'T4_2H_ARCANESTAFF_HELL'])
+      for (const x of recipeOf(id).res) if (!antigo(x.uniq)) expect(x.returnable).toBe(false);
+  });
+  it('encanto .1 herda o flag (receita sem er, regra de recursos)', () => expect(ret('T4_2H_ARCANESTAFF_HELL', 1).at(-1)).toEqual(['T4_ARTEFACT_2H_ARCANESTAFF_HELL', false]));
+  it('catálogo antigo (pares de 2 elementos) continua legível: tudo retorna', () => {
+    resetCatalog();
+    setCatalog({ built: 'x', src: 'x', cityOf: {}, items: [{ i: 'T4_X', p: 'X', e: 'X', c: 'weapons/sword', t: 4, w: 1, v: 1, x: 0, a: 1, f: 0, r: [['T4_Y', 1]] }], extra: {}, vals: {}, encNames: {} });
+    expect(recipeOf('T4_X').res.map((x) => x.returnable)).toEqual([true]);
+  });
+});
