@@ -147,5 +147,12 @@ O Deployer achou que `vercel.json` serve `/data/*` com `max-age=3600, stale-whil
 **Contador: 5 / 50** (023, 030, 019, 066, 038).
 **Registro de processo:** uma atualização minha dos documentos falhou no meio (um padrão de busca não achava o status da 057) e o commit saiu parcial; refeito em seguida. Passo a verificar o resultado dos scripts de documentação antes de commitar.
 
+## D-028 — Plano da 067 aprovado; respostas ao Planejador; segunda interrupção por limite de uso
+1. Id da URL por **hash do conteúdo** do catálogo: aprovado (só invalida quando o catálogo muda, sem variável de ambiente nem fallback de timestamp).
+2. **Sem campo `schema`** no catálogo: a validação estrutural usa o formato atual; 057 e 039 NÃO recebem adendo. Evita regenerar o catálogo e acoplar ideias.
+3. Aceito o 304 por visita (custo mínimo: ~150 KB comprimido só quando o catálogo muda).
+4. **A 067 sobe ANTES da 057 e da 039**, para que a próxima mudança do catálogo já chegue a todos sem janela de dado antigo.
+**Interrupção:** o limite de uso de 5 h da API cortou de novo o Executor da 057 e o Tester da 060; trabalho salvo, retomados com SendMessage. Antes de cortar, o Executor da 057 anotava "`vals` differs": a diferença em `vals` do catálogo regenerado não está prevista no plano, e ele foi instruído a investigar e PARAR se não estiver prevista (o diferencial deve mostrar só os 20 recursos mudando).
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.

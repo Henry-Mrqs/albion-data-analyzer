@@ -103,4 +103,4 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 
 | ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
 |---|---|---|---|---|---|---|---|
-| IDEIA-067 | **Cache do catálogo**: `/data/*` com `max-age=3600` + `stale-while-revalidate=86400` deixa o navegador com o catálogo ANTIGO por até 1 h (24 h) depois de um deploy, enquanto o código novo já espera o formato novo (ex.: sem `cc` mostra "sem cidade de bônus" errado). Versionar a URL e/ou revalidar sempre, e checar o formato ao carregar | 5 | 5 | 4 | 2 | 16 | PLANEJADA em curso (**correção prioritária**, D-027) |
+| IDEIA-067 | **Cache do catálogo**: `/data/*` com `max-age=3600` + `stale-while-revalidate=86400` deixa o navegador com o catálogo ANTIGO por até 1 h (24 h) depois de um deploy, enquanto o código novo já espera o formato novo (ex.: sem `cc` mostra "sem cidade de bônus" errado). Versionar a URL e/ou revalidar sempre, e checar o formato ao carregar | 5 | 5 | 4 | 2 | 16 | EM_EXECUÇÃO (Executor #33; correção prioritária, D-028) |
