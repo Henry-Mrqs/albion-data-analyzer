@@ -119,3 +119,37 @@ Rodado `vite` (5212) e `vite preview` (5213), ambos parados ao final. Craft (3 i
 
 ## Evidências
 `C:\Users\henry\AppData\Local\Temp\qa010\` (oracle.mjs, diff.qa.mjs, dense.qa.mjs, real*.json, mut-*.log/json, diff-master.txt).
+
+---
+
+# Re-teste do retrabalho nº 1
+
+Branch `feat/IDEIA-010` em 05fedb4 (939be83 merge da 041, 0111969 texto "API de histórico", 05fedb4 `loadedStats`/`mergeHistory`). Re-teste em 2026-11-18. Nada alterado na branch.
+
+## R1. Mesclagem com a 041 e regressão
+- `npm run check`: lint limpo, **498/498** testes (19 arquivos), build ok; `npm test` de novo: 498/498. Os testes da `master` (041: `dailyBonus`, `craftPlan`) rodam dentro da branch e passam.
+- `Crafting.jsx`: `git diff f4915f5 HEAD` (f4915f5 = merge da 041 na master) mostra **só acréscimos da 010** (imports, `useHistory`/`loadedStats`, coluna e cartão Giro, `illusoryHint`). Bônus diário (`effectiveDaily`, `waitSavings`, `DailyWait`, notas da 041) intactos. Há **uma** única `const [now] = useState(Date.now)` (linha 24), a mesma da master, usada por `effectiveDaily` (041) e por `loadedStats` (010): o aviso "Bônus de ontem?" lê o mesmo `now` capturado na abertura, comportamento idêntico ao da master.
+- `econ`, `craftPlan`, `flip`, `dailyBonus`, `catalog`: byte a byte iguais à master atual. Diferencial mesmo assim, master atual × branch: **2.500 `computeCraft` + `waitSavings`** (catálogo real, itens T4 a T8, encantos 0 a 4, preços/idades/configs aleatórios, 2.356 com custo > 0) e **2.000 `flipRows`**: JSON idêntico, 0 diferenças.
+
+## R2. Falso "sem histórico" (D-034): célula do Flipper
+- Oráculo escrito antes de reler `loadedStats` (regra: cidade nunca pedida = "não carregado"/"—"; pedida e `[]` = "sem histórico"; pedida com dados = estatística da janela): **20.000 casos** (data nula/ausente, mid ausente, cidade ausente, `[]`, séries com 1 a 9 pontos dentro e fora da janela): estados `unloaded` 13.779, `nodata` 1.303, `sparse` 1.824, `idle` 391, `none` 32, `low` 910, `ok` 1.761. **0 divergências** em estado, volume e nº de dias.
+- `mergeHistory`: **5.000 pares** (a/b indefinidos, vazios, com `[]`, conflitos): resultado igual ao oráculo (b vence em conflito mid+cidade, nada se perde), entradas a e b **não mutadas**, sem compartilhar o objeto interno de a, determinístico em duas chamadas. 0 violações.
+- Fluxo com `fetchHistory` real + `mergeHistory` + `loadedStats` (requestFn falso): carregar A (Mercado Negro+Caerleon) = 1 requisição; X1/Lymhurst "não carregado"; carregar B (Lymhurst) = 1 requisição, X1/Lymhurst vira estatística, X2/Lymhurst (pedida, sem linha) = "sem histórico", **A segue carregada**; voltar a A = **0 requisições**.
+- **Tela do Flipper reproduzida** (aba nova, porta 5212, `window.fetch` substituído para preços e histórico; API real não tocada): varredura = 12 requisições de preços (mock), 602 oportunidades; "Carregar giro" = 1 requisição de histórico (30 ids, só a cidade das linhas do topo); linhas do topo mostram "40,0/dia, 7 de 7 dias com dados"; linhas fora do top 30 mostram "—". Desmarcar o Mercado Negro (linhas passam a vender em Caerleon, cidade nunca pedida): **45 de 45 linhas mostram "—"**, nenhuma "sem histórico" (era o bug do adendo anterior, item 13). Carregar giro de Caerleon = 1 requisição ("3,0/dia"); reativar o Mercado Negro: as linhas do Mercado Negro **continuam com "40,0/dia"** (30 linhas), 5 fora do top com "—"; novo "Carregar giro" = **0 requisições** (cache de 1 h). O bug adjacente (sobrescrever cidades já carregadas) não ocorre.
+
+## R3. Texto dos erros
+Medido com `fetch` falso chamando `request()`: histórico: "A API de histórico respondeu HTTP 500.", "Não foi possível falar com a API de histórico (albion-online-data.com). Verifique sua conexão.", "Resposta inválida da API de histórico.", "A API de histórico pediu uma pausa. Tente de novo em 60s."; padrão (preços): as mesmas frases com "API de preços". O 429 em si ("Limite de requisições da API atingido. Liberado em 60s.") é genérico e vale para os dois. Sem erro de digitação (grep dos 4 pontos de `market.js` limpo; `fetchPrices` continua chamando `request(url, signal)` sem 3º argumento).
+
+## R4. Mutações novas do retrabalho (cópia descartável, suíte inteira)
+| Mutante | Resultado (1º teste que falha) |
+|---|---|
+| `loadedStats`: ausente tratado como `[]` | morto: "Flipper: carregar A, trocar para B… B nunca consultada é unloaded (não nodata)…" (4 falhas) |
+| `loadedStats`: `[]` tratado como não carregado | morto: "loadedStats: histórico NÃO pedido é 'não carregado'… pedida e vazia…" |
+| `mergeHistory` sobrescreve o mid inteiro (comportamento antigo) | morto: "Flipper: carregar A, trocar para B…" (2 falhas) |
+| `mergeHistory` perde A (só usa b) | morto: o mesmo teste (2 falhas) |
+| `mergeHistory` **muta as entradas** | **SOBREVIVE** (nenhum teste confere não mutação) |
+| `mergeHistory`: em conflito a vence (b deveria vencer) | **SOBREVIVE** (nenhum teste confere precedência) |
+| texto "preços" fixo em HTTP / pausa / rede / JSON (4 mutantes) e `fetchHistory` sem 3º argumento | mortos (testes "request(): texto dos erros …", "fetchHistory repassa 'histórico'…") |
+| padrão de `request` vira "histórico" | morto (3 falhas) |
+| `unloaded`: cobertura "0 de 7" / texto "sem histórico" | mortos ("unloaded: texto '—', dica para carregar, sem cobertura…") |
+Sobreviventes: 2, ambos em `mergeHistory`; meu oráculo (5.000 pares) cobre os dois e a implementação atual está correta. Risco prático baixo (conflito só ocorre ao recarregar a mesma cidade/mid, e a mutação só importa se alguém reutilizar `a`), mas vale um teste de não mutação e de precedência.

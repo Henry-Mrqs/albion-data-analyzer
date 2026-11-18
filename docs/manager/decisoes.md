@@ -232,5 +232,12 @@ Ao rever o relato do retrabalho da 010 (o Executor viu um erro de console causad
 5. **069, `projects` do Vitest em vez de pragma:** aprovado (ambiente escolhido pela extensão `.test.jsx`, sem depender de comentário em cada arquivo). Versões: `jsdom ^29.1.1`, `@testing-library/react ^16.3.3`, `@testing-library/dom ^10.4.2`; jsdom 30 e 31 exigem Node ≥ 22.22 e a máquina tem 22.19; `user-event` fora (menos de 2 semanas).
 **Ordem:** 070 (correção, plano a seguir) → 069 → 058 → 048. As funcionalidades 002 (depois do deploy da 049) e 031 (depois da 002, por causa da fixture) continuam na fila.
 
+## D-041 — IDEIA-049 aprovada com observações; conflito com a 041; retrabalho nº 1
+**Laudo: APROVADO.** Oráculo próprio com 6.275 receitas do dump sem divergência, `vals` sem alterar nenhum valor antigo, `recipeOf` da variante 0 idêntico à `master` em 10.830 pares, 6.000 cenários da escolha da mais barata sem divergência (uma opção sem preço nunca vence nem gera aviso; empate: vence a primeira), diferencial do Craft em 4.000 combinações, tela de 375 px sem rolagem horizontal.
+**Pendências antes do deploy:** (1) a `master` avançou com a 041 e a branch **conflita em `Crafting.jsx`** (como a 010); (2) `recipeOf` com variante 1,5 lança TypeError, e a escolha de receita fica salva no navegador: variante inválida (não inteira, negativa, fora de faixa, NaN, texto, nulo) deve cair em 0 sem lançar; (3) `validateCatalog` aceita `alt.at` fora de faixa; (4) o aviso da taxa deve dizer "NÃO verificado" e não citar referência interna ("D-012") na tela.
+**Rótulo:** os 30 excluídos são 25 refinados e 5 capas `DEMON_BP`, não "30 refinados"; a IDEIA-068 cobre os refinados e as capas ficam registradas lá.
+**Conflitos encadeados:** 010 e 049 mexem em `Crafting.jsx` e esperam o deploy; o segundo a entrar na `master` faz o merge sobre o primeiro e o Tester reconfere.
+**Relação com a IDEIA-070:** a escolha de receita salva é mais um estado que o app lê sem validar; a 070 deve cobri-la.
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.
