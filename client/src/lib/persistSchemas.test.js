@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { PERSISTED, getPersistedSpec } from './persistSchemas';
 import { CRAFT_CITIES, REFINING, craftCategories } from './catalog';
 import { CITIES, SELL_CITIES } from './market';
+import { DEFAULT_MAX_AGE_H } from './exits';
 import { SERVERS } from './settings';
 import { CURRENT_DEFAULTS } from '../test/savedStates';
 
@@ -111,7 +112,7 @@ describe('contrato: toda chave usePersisted do código tem entrada em PERSISTED 
 
   it.each([...used.entries()])('%s (%s): padrão em savedStates.js idêntico ao literal do componente', (key, file) => {
     const lit = literalOf(read(file), key);
-    const value = new Function('CITIES', `return (${lit});`)(CITIES);
+    const value = new Function('CITIES', 'DEFAULT_MAX_AGE_H', `return (${lit});`)(CITIES, DEFAULT_MAX_AGE_H);
     expect(value).toEqual(CURRENT_DEFAULTS[key]);
   });
 });
