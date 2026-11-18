@@ -199,5 +199,12 @@ O plano da 057 não previu variantes com 2 transmutações: lição para os plan
 3. **Polimento:** a aba RRR mostra "não retorna" sem o qualificador "não verificado" nos fragmentos (o Craft mostra). Incluir na próxima ideia que tocar `RrrCalculator.jsx`.
 **Ordem:** deploy 9 = 039; depois 041 (em QA), 010 (em execução), 049 e 002.
 
+## D-036 — IDEIA-041 aprovada com observações; retrabalho nº 1 (curto)
+**Laudo: APROVADO.** Recálculo independente, diferencial com diário 0 em 3.600 combinações (bit a bit), 7.200 variantes com 10/20 conforme a fórmula, o diário do craft não vaza para o RRR dos materiais refinados, e o reset 10:00/23:00 UTC bate em 13 bordas. O Tester pegou o merge de teste com a `master` atual (que tem a 039): 359 testes, sem conflito.
+**Exijo antes do deploy (3 itens):** (1) a tela NÃO avisa que a lista de categorias do bônus diário (D8) tem confiança MÉDIA e não foi confirmada em fonte oficial: o app não pode apresentar como certo o que a fonte dá como médio, e o bônus diário é exatamente o tipo de variável que o usuário esquece; vira uma nota visível; (2) `craftDailyAt` no futuro nunca expira (bug): tratar como inválido e usar 0; (3) o único mutante que sobrevive é a borda do reset (`>=`/`>`): teste de borda.
+**Fica como dívida (DT-010), não bloqueia:** `now` capturado uma vez ao abrir a tela (o aviso "Bônus de ontem?" só aparece após recarregar se o reset passar com a aba aberta); limiar de 0,5 prata de `worthWaiting` (decisão de produto sem fonte, a documentar como constante nomeada).
+**Observação de processo:** o Tester deixou uma pasta temporária (`%TEMP%\qa041`) fora do repositório, sem worktree registrada no git; inofensiva, não removida.
+**Retrabalho:** 1 de no máximo 2 para esta ideia. Depois, re-teste curto do Tester sobre o diff.
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.
