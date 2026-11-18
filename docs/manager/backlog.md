@@ -61,7 +61,7 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 | ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
 |---|---|---|---|---|---|---|---|
 | IDEIA-038 | **Corrigir a tabela de cidades de bônus de craft** (4 de 6 linhas erradas em produção), incluir Brecilien e passar a usar o `craftingcategory` do dump em vez de subcategoria de loja. Base: AUDITORIA-001 §4.2, conferida pelo Gerente no dump | 5 | 5 | 4 | 3 | 17 | **VERIFICADA** (deploy 5) |
-| IDEIA-041 | **Bônus diário também no RRR do craft final** (hoje só entra no refino) e alerta "vale esperar o bônus do dia" | 4 | 5 | 4 | 3 | 16 | APROVADA (re-teste); deploy 10 em curso |
+| IDEIA-041 | **Bônus diário também no RRR do craft final** (hoje só entra no refino) e alerta "vale esperar o bônus do dia" | 4 | 5 | 4 | 3 | 16 | **VERIFICADA** (deploy 10) |
 | IDEIA-039 | **"Não retorna recursos" por ingrediente** lido do dump (`maxreturnamount=0`) no lugar do regex | 4 | 5 | 4 | 2 | 15 | **VERIFICADA** (deploy 9) |
 | IDEIA-044 | **Custo de viagem/teleporte** no lucro de transporte | 3 | 3 | 4 | 3 | 13 | NOVA |
 | IDEIA-046 | **Culinária e poções** com custo de nutrição | 4 | 3 | 2 | 4 | 13 | NOVA (fórmula de foco por nutrição NÃO VERIFICADA) |
