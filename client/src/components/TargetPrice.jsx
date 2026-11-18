@@ -2,6 +2,8 @@ import { fmt, netSale, SETUP_FEE } from '../lib/econ';
 import { cityLabel } from '../lib/market';
 import { lowestListing, marketGap, targetPrice } from '../lib/targetPrice';
 import { useSettings, usePersisted } from '../lib/settings';
+import { validateInputs } from '../lib/inputRules';
+import InputIssues from './InputIssues';
 import { Age, Banner, Field, NumberInput, Segmented } from './ui';
 
 const GOALS = [
@@ -20,12 +22,15 @@ export default function TargetPrice({ cost, prices, mid, missing }) {
   const [cfg, setCfg] = usePersisted('target:cfg', { goal: 'profit', profit: 1000, margin: 20, mode: 'order', relists: 0 });
   const set = (patch) => setCfg((c) => ({ ...c, ...patch }));
 
-  const relists = cfg.mode === 'order' ? Math.max(0, Math.floor(+cfg.relists || 0)) : 0;
+  // IDEIA-060: valores corrigidos (a tela mostra o aviso); relistagens só contam no modo ordem
+  const { values: vals, issues } = validateInputs({ relists: cfg.relists, mode: cfg.mode }, { premium });
+  const mode = vals.mode ?? 'order';
+  const relists = mode === 'order' ? vals.relists : 0;
   const goalArg = cfg.goal === 'profit' ? { profit: +cfg.profit || 0 } : cfg.goal === 'margin' ? { margin: (+cfg.margin || 0) / 100 } : {};
   const ok = !missing && cost > 0;
-  const target = ok ? targetPrice({ cost, premium, mode: cfg.mode, relists, ...goalArg }) : null;
+  const target = ok ? targetPrice({ cost, premium, mode, relists, ...goalArg }) : null;
 
-  const net = target ? netSale(target, cfg.mode, premium) - (cfg.mode === 'order' ? relists * SETUP_FEE * target : 0) : 0;
+  const net = target ? netSale(target, mode, premium) - (mode === 'order' ? relists * SETUP_FEE * target : 0) : 0;
   const market = ok ? lowestListing(prices, mid) : null;
   const gap = target && market ? marketGap(target, market.price) : null;
 
@@ -48,11 +53,13 @@ export default function TargetPrice({ cost, prices, mid, missing }) {
       )}
       <div className="field">
         <label>Modo de venda</label>
-        <Segmented value={cfg.mode} onChange={(v) => set({ mode: v })} options={MODES} />
+        <Segmented value={mode} onChange={(v) => set({ mode: v })} options={MODES} />
+        <InputIssues issues={issues} field="mode" />
       </div>
-      {cfg.mode === 'order' && (
+      {mode === 'order' && (
         <Field label="Relistagens (estimativa)" hint="Cada atualização da ordem cobra 2,5% de novo sobre o preço. Estimativa: 0 se você lista uma vez só.">
           <NumberInput small value={cfg.relists} onChange={(v) => set({ relists: v })} />
+          <InputIssues issues={issues} field="relists" />
         </Field>
       )}
 

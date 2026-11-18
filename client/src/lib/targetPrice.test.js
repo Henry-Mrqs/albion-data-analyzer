@@ -50,6 +50,19 @@ describe('targetPrice', () => {
   });
 });
 
+describe('IDEIA-060: entradas inválidas', () => {
+  it('relistagens negativa ou decimal: a lib recusa', () => {
+    for (const relists of [-3, 2.7]) expect(targetPrice({ cost: C, premium: true, mode: 'order', profit: 1000, relists })).toBeNull();
+  });
+  it('modo inválido: null (antes tratava como instantâneo)', () => {
+    for (const mode of ['foo', undefined, null]) expect(targetPrice({ cost: C, premium: true, mode, profit: 1000 })).toBeNull();
+  });
+  it('relistagens acima do derivado: null; no limite continua válido', () => {
+    expect(targetPrice({ cost: C, premium: true, mode: 'order', profit: 1000, relists: 38 })).toBeNull();
+    expect(targetPrice({ cost: C, premium: true, mode: 'order', profit: 1000, relists: 37 })).not.toBeNull();
+  });
+});
+
 describe('lowestListing', () => {
   it('menor preço de venda entre cidades reais, ignorando zero e Black Market', () => {
     const prices = mkPrices({ T4_MAIN_SWORD: { Martlock: { s: 4600, sd: 111 }, Caerleon: { s: 4500, sd: 222 }, Lymhurst: { s: 0 }, 'Black Market': { s: 100 } } });

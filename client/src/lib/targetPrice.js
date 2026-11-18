@@ -12,6 +12,9 @@ import { CITIES, quote } from './market';
 export function targetPrice({ cost, profit, margin, premium, mode, relists = 0 }) {
   if (profit != null && margin != null) throw new TypeError('Informe lucro OU margem, não os dois.');
   if (!Number.isFinite(cost) || cost <= 0) return null;
+  // IDEIA-060: modo e relistagens inválidos são recusados aqui (a tela corrige e avisa com validateInputs)
+  if (mode !== 'order' && mode !== 'instant') return null;
+  if (!Number.isInteger(relists) || relists < 0) return null;
   const L = profit != null ? profit : margin != null ? cost * margin : 0;
   let k = netSale(1, mode, premium);
   if (mode === 'order') k -= relists * SETUP_FEE;
