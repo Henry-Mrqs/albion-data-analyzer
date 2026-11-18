@@ -1,4 +1,6 @@
 import { useSyncExternalStore } from 'react';
+import { loadPersisted, serializePersisted } from './persist';
+import { getPersistedSpec } from './persistSchemas';
 
 export const SERVERS = {
   west: 'Américas',
@@ -8,10 +10,12 @@ export const SERVERS = {
 
 const DEFAULTS = { server: 'west', premium: true, feeCeiling: 1000 };
 const KEY = 'albion:settings';
+const SPEC = getPersistedSpec('settings');
 const listeners = new Set();
+// IDEIA-070: o salvo é mesclado com os padrões e validado (o `_v` nunca aparece no estado)
 let state = (() => {
   try {
-    return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || '{}') };
+    return loadPersisted(localStorage.getItem(KEY), { defaults: DEFAULTS, ...SPEC }).value;
   } catch {
     return { ...DEFAULTS };
   }
@@ -22,7 +26,7 @@ export const getSettings = () => state;
 export function setSettings(patch) {
   state = { ...state, ...patch };
   try {
-    localStorage.setItem(KEY, JSON.stringify(state));
+    localStorage.setItem(KEY, serializePersisted(state, SPEC.version));
   } catch {
     /* modo privado */
   }
@@ -44,8 +48,8 @@ import { useCallback, useState } from 'react';
 export function usePersisted(key, initial) {
   const [value, set] = useState(() => {
     try {
-      const raw = localStorage.getItem(`albion:${key}`);
-      return raw === null ? initial : JSON.parse(raw);
+      // IDEIA-070: mescla com os padrões, valida tipos e migra formatos antigos (puro, em persist.js)
+      return loadPersisted(localStorage.getItem(`albion:${key}`), { defaults: initial, ...getPersistedSpec(key) }).value;
     } catch {
       return initial;
     }
@@ -55,7 +59,7 @@ export function usePersisted(key, initial) {
       set((prev) => {
         const next = typeof v === 'function' ? v(prev) : v;
         try {
-          localStorage.setItem(`albion:${key}`, JSON.stringify(next));
+          localStorage.setItem(`albion:${key}`, serializePersisted(next, getPersistedSpec(key).version));
         } catch {
           /* ignore */
         }
