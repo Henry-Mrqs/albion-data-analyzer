@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { validateInputs, cleanCraftCfg, cleanRefineCfg, MAX_QTY } from './inputRules';
 import { stationFee } from './econ';
+import { DEFAULT_SHARE_PCT } from './liquidity';
 
 const v = (input, ctx) => validateInputs(input, ctx);
 
@@ -183,5 +184,45 @@ describe('adaptadores', () => {
   });
   it('cleanRefineCfg: RRR 55 aceito no refino (máx. 57,81)', () => {
     expect(cleanRefineCfg({ qty: 100, daily: 0, customRRR: '55', feePer100: 400 }).issues).toEqual([]);
+  });
+});
+
+describe('IDEIA-010: share (parte do mercado que você espera capturar, %)', () => {
+  it.each([[''], [null], [undefined], ['   ']])('vazio %j usa o padrão (10) sem aviso', (x) => {
+    const r = v({ share: x });
+    expect(r.values.share).toBe(DEFAULT_SHARE_PCT);
+    expect(DEFAULT_SHARE_PCT).toBe(10);
+    expect(r.issues).toEqual([]);
+  });
+  it.each([[25, 25], ['25', 25], ['0,5'.replace(',', '.'), 0.5], [0.5, 0.5], [100, 100], [1, 1]])('%j é aceito como %j, sem aviso', (x, want) => {
+    const r = v({ share: x });
+    expect(r.values.share).toBe(want);
+    expect(r.issues).toEqual([]);
+  });
+  it.each([[0], [-5], ['abc'], [NaN], ['-1']])('%j é inválido: usa 10 com erro', (x) => {
+    const r = v({ share: x });
+    expect(r.values.share).toBe(10);
+    expect(r.issues).toHaveLength(1);
+    expect(r.issues[0]).toMatchObject({ field: 'share', level: 'error', code: 'share-invalid', used: 10 });
+  });
+  it.each([[150], [100.01], [Infinity], ['1e9']])('%j acima de 100 vai para 100 com aviso', (x) => {
+    const r = v({ share: x });
+    expect(r.values.share).toBe(100);
+    expect(r.issues[0]).toMatchObject({ field: 'share', level: 'warn', code: 'share-max', used: 100 });
+  });
+  it('mensagens citam o valor digitado', () => {
+    expect(v({ share: 'abc' }).issues[0].msg).toContain('"abc"');
+    expect(v({ share: 150 }).issues[0].msg).toContain('150');
+  });
+  it('idempotente: validar o valor já corrigido não avisa de novo', () => {
+    for (const x of ['', 0, 'abc', 150, 25]) {
+      const once = v({ share: x }).values.share;
+      const twice = v({ share: once });
+      expect(twice.values.share).toBe(once);
+      expect(twice.issues).toEqual([]);
+    }
+  });
+  it('só valida o que está presente: sem a chave share, nada muda', () => {
+    expect('share' in v({ crafts: 1 }).values).toBe(false);
   });
 });
