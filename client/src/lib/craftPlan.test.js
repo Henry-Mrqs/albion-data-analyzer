@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { craftBonusCity, getItem, recipeOf } from './catalog';
-import { canRefineUniq, computeCraft, craftChainIds, craftRates, keyOf, modeOf, waitSavings } from './craftPlan';
+import { canRefineUniq, computeCraft, craftChainIds, craftRates, keyOf, modeOf, waitSavings, worthWaiting } from './craftPlan';
 import { loadFixtureCatalog, mkPrices, planksSpec } from '../test/helpers';
 
 beforeEach(loadFixtureCatalog);
@@ -415,5 +415,20 @@ describe('waitSavings (IDEIA-041, dossiê §4)', () => {
   });
   it('o valor atual inválido (060) conta como 0 no cenário base', () => {
     expect(ws({ focus: true, craftDaily: 15 }).rows[1].perCraft).toBeCloseTo(216.2, 1);
+  });
+});
+
+describe('worthWaiting', () => {
+  const row = { gain: true, lot: 1000 };
+  it('custo de esperar 0 (padrão): qualquer ganho marca', () => expect(worthWaiting(row, 0)).toBe(true));
+  it('só marca se a economia do lote supera o custo de esperar', () => {
+    expect(worthWaiting(row, 999)).toBe(true);
+    expect(worthWaiting(row, 1000)).toBe(false);
+    expect(worthWaiting(row, 5000)).toBe(false);
+  });
+  it('sem ganho nunca marca; custo inválido vale 0', () => {
+    expect(worthWaiting({ gain: false, lot: 0 }, 0)).toBe(false);
+    expect(worthWaiting(row, NaN)).toBe(true);
+    expect(worthWaiting(row, -50)).toBe(true);
   });
 });

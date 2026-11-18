@@ -162,3 +162,6 @@ export function waitSavings({ rec, targetMid, prices, cfg, premium, bonusCity, f
   });
   return { base: now.totalCost, rows };
 }
+
+/** "Vale esperar": há ganho e a economia do lote supera o custo de esperar (campo do usuário; inválido ou negativo = 0). */
+export const worthWaiting = (row, waitCost) => row.gain && row.lot > Math.max(0, +waitCost || 0);
