@@ -192,5 +192,12 @@ O plano da 057 não previu variantes com 2 transmutações: lição para os plan
 4. **049:** comparar receitas pelo **custo total, incluindo a taxa de bancada não verificada**, mas com a taxa em linha separada e, **se a receita vencedora mudar quando a taxa é excluída**, aviso "a escolha depende da taxa de bancada (valor do artefato na taxa NÃO verificado, D-012)". Assim o usuário vê que a decisão é frágil.
 **Ordem:** 010 agora (em paralelo com 039 em QA e 041 em execução; mexe em `exits.js`, `Flipper.jsx`, `inputRules.js`, `market.js` (2 exports) e `Crafting.jsx`, sem tocar no catálogo; fecha DT-003 e DT-004). 049 depois do deploy da 039 (exige o formato `[id, n, nr]` e a união conservadora). 002 depois da 049 (disputam `build-catalog.mjs`, `catalog.json` e a fixture).
 
+## D-035 — IDEIA-039 aprovada; dívidas
+**Aprovada** (deploy 9). Confirmado de forma independente o ganho (153 itens mais caros, o caso Royal do dossiê) e a segurança da regra conservadora (nenhum ingrediente passou a retornar; os 765 fragmentos intactos). Dívidas, nenhuma bloqueia:
+1. **DT-009:** 2 mutantes reais sobrevivem: não há teste de `recipeOf` com um id `*_SHARD*` (a regra conservadora depende desse token) nem de renderização do selo "não verificado" em `Crafting.jsx`. Fecham no primeiro plano que tocar `catalog.js`/`recipeOf` (a 049 mexe aí).
+2. 2 mutantes equivalentes nos dados (o dump não tem `maxreturnamount=1`): nada a fazer, mas se um dia aparecer esse valor o comportamento está definido como "retorna parcialmente"? Hoje conta como nr; anotar para revisão se o dump mudar.
+3. **Polimento:** a aba RRR mostra "não retorna" sem o qualificador "não verificado" nos fragmentos (o Craft mostra). Incluir na próxima ideia que tocar `RrrCalculator.jsx`.
+**Ordem:** deploy 9 = 039; depois 041 (em QA), 010 (em execução), 049 e 002.
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.
