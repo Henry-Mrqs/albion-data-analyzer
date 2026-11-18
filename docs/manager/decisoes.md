@@ -92,5 +92,14 @@ O Executor da 019 parou por regra do briefing (correto): 2 testes da fundação 
 3. Aviso de processo: o navegador embutido é compartilhado entre Testers que rodam em paralelo (um chegou a ser redirecionado para a porta de outro). Passo a pedir portas distintas e que cada Tester confira a porta a cada leitura.
 **Deploy 2 (lote):** sobe quando 023 e 019 também estiverem aprovadas (agrupar reduz custo de verificação em produção).
 
+## D-020 — IDEIA-023 aprovada; observações do Tester
+**Aprovada.** Observações (nenhuma bloqueia):
+1. N = 1e308 mostra "∞" e "NaN" na tela; N <= 0 ou vazio vira 1 em silêncio enquanto o campo mostra o que foi digitado. → entra no escopo da **IDEIA-060** (limitar quantidade e avisar quando um valor é corrigido).
+2. A categoria do RRR é um seletor separado do item escolhido na receita: escolher um escudo com categoria "Espada" usa a cidade da espada. Decisão de produto: aceitável por ora (a aba é uma calculadora de referência), mas a **IDEIA-038** deve mostrar na aba qual categoria do jogo o item escolhido tem, para o usuário não errar.
+3. A aba herda o erro da tabela de cidades de craft até a 038 (esperado e já previsto na ordem de deploy).
+4. 1 mutação sobrevive (`floor` por `round` com N decimal): vira teste na 060, junto com a regra de N.
+**Fila do deploy 2:** 023 e 030 aprovadas; falta o laudo da 019.
+**Aproveitamento da espera:** o Planejador escreve os planos da 060 e da 066 (as duas de maior impacto sobre "esqueci uma variável" ainda sem plano), absorvendo as observações das aprovações até aqui.
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.
