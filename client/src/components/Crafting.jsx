@@ -5,6 +5,7 @@ import { fmt, pct } from '../lib/econ';
 import { computeCraft, craftChainIds, keyOf } from '../lib/craftPlan';
 import { useSettings, usePersisted } from '../lib/settings';
 import ItemSelector from './ItemSelector';
+import FeeField from './FeeField';
 import PriceMatrix from './PriceMatrix';
 import { Age, Banner, Field, Money, NumberInput, PriceStatus, Segmented, Switch } from './ui';
 
@@ -61,9 +62,7 @@ export default function Crafting() {
             <NumberInput step="0.1" value={cfg.customRRR} onChange={(v) => set({ customRRR: v })} placeholder={(autoRRR * 100).toFixed(1)} />
           </Field>
         </div>
-        <Field label="Taxa da bancada (prata por 100 de nutrição)">
-          <NumberInput value={cfg.feePer100} onChange={(v) => set({ feePer100: v })} />
-        </Field>
+        <FeeField label="Taxa da bancada (prata por 100 de nutrição)" value={cfg.feePer100} onChange={(v) => set({ feePer100: v })} touched={!!cfg.feeSet} onTouch={() => set({ feeSet: true })} />
 
         <hr className="sep" style={{ margin: 0 }} />
         <h3>Materiais</h3>
@@ -97,9 +96,7 @@ export default function Crafting() {
                 </select>
               </Field>
             ))}
-            <Field label="Taxa da bancada de refino (por 100 nutrição)">
-              <NumberInput value={cfg.refineFee} onChange={(v) => set({ refineFee: v })} />
-            </Field>
+            <FeeField label="Taxa da bancada de refino (por 100 nutrição)" value={cfg.refineFee} onChange={(v) => set({ refineFee: v })} touched={!!cfg.refineFeeSet} onTouch={() => set({ refineFeeSet: true })} />
           </>
         )}
       </div>
