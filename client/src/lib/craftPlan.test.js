@@ -32,7 +32,7 @@ const bowArgs = (over = {}) => ({
   prices: bowPrices(),
   cfg: craftCfg(),
   premium: true,
-  bonusCity: craftBonusCity('weapons/bow'),
+  bonusCity: craftBonusCity(getItem('T4_2H_BOW')),
   ...over,
 });
 
@@ -190,7 +190,7 @@ describe('computeCraft', () => {
       prices,
       cfg: craftCfg({ refine: { METALBAR: 'buy', LEATHER: 'buy' } }),
       premium: true,
-      bonusCity: craftBonusCity('weapons/sword'),
+      bonusCity: craftBonusCity(getItem('T6_MAIN_SWORD')),
     });
     expect(c.lines.map((l) => l.qty)).toEqual([expect.closeTo(12.0301, 4), expect.closeTo(6.015, 4), 1]);
     expect(c.lines[2].returnable).toBe(false);
@@ -223,9 +223,10 @@ describe('computeCraft', () => {
       rec,
       targetMid: 'T6_POTION_COOLDOWN',
       prices,
-      cfg: craftCfg({ craftCity: 'Caerleon', crafts: 3, feePer100: 150 }),
+      // craftCity Brecilien: desde a IDEIA-038 a cidade de bônus da poção é Brecilien (cc potion), não Caerleon
+      cfg: craftCfg({ craftCity: 'Brecilien', crafts: 3, feePer100: 150 }),
       premium: true,
-      bonusCity: craftBonusCity(getItem('T6_POTION_COOLDOWN').c),
+      bonusCity: craftBonusCity(getItem('T6_POTION_COOLDOWN')),
     });
     expect(c.rates.craftRRR).toBeCloseTo(33 / 133, 6);
     expect(c.lines.map((l) => l.qty)).toEqual([
@@ -240,6 +241,20 @@ describe('computeCraft', () => {
     expect(c.best.net).toBeCloseTo(5610, 3);
     expect(c.best.profit).toBeCloseTo(2079.9098, 3);
     expect(c.best.margin).toBeCloseTo(58.9195, 3);
+  });
+
+  it('038: poção T6 em Caerleon não tem mais bônus de especialização', () => {
+    // Poção = Brecilien (craftingmodifiers.xml). Em Caerleon vale só a base: PB 18 -> RRR = 18/118 = 0,152542 (não 33/133)
+    const c = computeCraft({
+      rec: recipeOf('T6_POTION_COOLDOWN'),
+      targetMid: 'T6_POTION_COOLDOWN',
+      prices: mkPrices({ T6_FOXGLOVE: 10, T5_TEASEL: 20, T3_COMFREY: 30, T6_MILK: 40, T6_POTION_COOLDOWN: { Caerleon: { s: 400 } } }),
+      cfg: craftCfg({ craftCity: 'Caerleon', crafts: 3, feePer100: 150 }),
+      premium: true,
+      bonusCity: craftBonusCity(getItem('T6_POTION_COOLDOWN')),
+    });
+    expect(c.rates.specialty).toBe(false);
+    expect(c.rates.craftRRR).toBeCloseTo(18 / 118, 6);
   });
 
   it('C4: item sem preço', () => {

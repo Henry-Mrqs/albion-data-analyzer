@@ -166,20 +166,31 @@ export const categoryLabel = (c) => {
   return c;
 };
 
-// Cidade com bônus de craft (+15% de produção) por tipo de item
-const CRAFT_CITY = {
-  Martlock: ['axe', 'quarterstaff', 'froststaff', 'plate_shoes', 'shieldtype'],
-  Thetford: ['mace', 'naturestaff', 'firestaff', 'leather_armor', 'cloth_shoes'],
-  'Fort Sterling': ['hammer', 'spear', 'holystaff', 'plate_helmet', 'cloth_armor'],
-  Lymhurst: ['sword', 'bow', 'arcanestaff', 'leather_helmet', 'cloth_helmet', 'booktype'],
-  Bridgewatch: ['crossbow', 'dagger', 'cursestaff', 'plate_armor', 'leather_shoes', 'torchtype'],
-  Caerleon: ['knuckles', 'bags', 'satchels', 'potions', 'food', 'accessoires_capes_capes'],
+// Cidades onde se pode craftar (lista de nomes; o bônus vem de data.cityOf, lido do craftingmodifiers.xml)
+export const CRAFT_CITIES = ['Martlock', 'Thetford', 'Fort Sterling', 'Lymhurst', 'Bridgewatch', 'Caerleon', 'Brecilien'];
+
+/** Cidade com +15% de produção para uma craftingcategory do jogo (item.cc); null se não houver. */
+export const cityOfCategory = (cc) => (cc && data?.cityOf?.[cc]) || null;
+
+/** Cidade de bônus de craft do item, pela craftingcategory dele (item sem cc, como *_ROYAL, não tem). */
+export const craftBonusCity = (item) => cityOfCategory(item?.cc);
+
+// Rótulos (apenas nomes) das craftingcategory do jogo
+const CRAFT_CATEGORY_LABELS = {
+  sword: 'Espada', bow: 'Arco', arcanestaff: 'Cajado Arcano', axe: 'Machado', quarterstaff: 'Cajado Bilaminado',
+  froststaff: 'Cajado de Gelo', mace: 'Maça', naturestaff: 'Cajado da Natureza', firestaff: 'Cajado de Fogo',
+  hammer: 'Martelo', spear: 'Lança', holystaff: 'Cajado Sagrado', crossbow: 'Besta', dagger: 'Adaga',
+  cursestaff: 'Cajado Amaldiçoado', knuckles: 'Luvas de Guerra', shapeshifterstaff: 'Cajado Metamorfo',
+  plate_armor: 'Armadura de Placa', leather_armor: 'Armadura de Couro', cloth_armor: 'Armadura de Tecido',
+  plate_helmet: 'Elmo de Placa', leather_helmet: 'Capuz de Couro', cloth_helmet: 'Capuz de Tecido',
+  plate_shoes: 'Botas de Placa', leather_shoes: 'Botas de Couro', cloth_shoes: 'Botas de Tecido',
+  offhand: 'Mão secundária (escudo, livro, tocha)', cape: 'Capa', bag: 'Bolsa', potion: 'Poção', food: 'Comida',
+  gatherergear: 'Equipamento de coleta', tools: 'Ferramentas',
 };
-export function craftBonusCity(category) {
-  const sub = category.split('/')[1];
-  for (const [city, subs] of Object.entries(CRAFT_CITY)) if (subs.includes(sub)) return city;
-  return null;
-}
+export const NO_CRAFT_CATEGORY_LABEL = 'Sem categoria de craft (Royal, capa de cidade, artefato)';
+export const craftCategoryLabel = (cc) => (cc ? CRAFT_CATEGORY_LABELS[cc] ?? cc : NO_CRAFT_CATEGORY_LABEL);
+/** craftingcategory conhecidas (para seletores), na ordem do rótulo. */
+export const craftCategories = () => Object.keys(CRAFT_CATEGORY_LABELS);
 
 // ---------- busca ----------
 const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();

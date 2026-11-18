@@ -14,6 +14,10 @@ const IDS = [
   'T4_2H_BOW', 'T6_MAIN_SWORD', 'T6_MAIN_SWORD_CRYSTAL', 'T6_ARTEFACT_MAIN_SWORD_CRYSTAL',
   'T6_ARMOR_PLATE_SET1', 'T6_METALBAR', 'T6_LEATHER',
   'T6_POTION_COOLDOWN', // poção com 4 ingredientes e amount 5
+  // IDEIA-038: casos 1 a 16 do dossiê (cidade de bônus por craftingcategory)
+  'T4_MAIN_SWORD', 'T4_ARMOR_CLOTH_SET1', 'T4_HEAD_CLOTH_SET1', 'T4_SHOES_LEATHER_SET1', 'T4_SHOES_CLOTH_SET1',
+  'T4_OFF_BOOK', 'T4_OFF_TORCH', 'T4_OFF_SHIELD', 'T4_BAG', 'T4_BAG_INSIGHT', 'T4_CAPE', 'T4_POTION_HEAL',
+  'T4_MEAL_SALAD', 'T4_2H_KNUCKLES_SET1', 'T4_CAPEITEM_FW_LYMHURST', 'T4_ARMOR_PLATE_ROYAL',
 ];
 const ids = new Set(IDS);
 const baseOf = (k) => k.replace(/@\d$/, '').replace(/_LEVEL\d$/, '');
@@ -32,6 +36,8 @@ const pick = (obj, keep) =>
 
 const out = {
   built: cat.built,
+  src: cat.src,
+  cityOf: cat.cityOf,
   items,
   extra: pick(cat.extra, (k) => ids.has(k)),
   vals: pick(cat.vals, (k) => ids.has(baseOf(k)) || ingredients.has(baseOf(k))),
