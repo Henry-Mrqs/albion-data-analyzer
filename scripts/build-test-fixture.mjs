@@ -21,6 +21,8 @@ const IDS = [
   // IDEIA-039: não retorna por ingrediente (maxreturnamount) e fragmentos
   'T4_OFF_SHIELD_HELL', 'T4_ARTEFACT_OFF_SHIELD_HELL', 'T4_ARMOR_PLATE_SET1', 'T4_CAPEITEM_FW_BRIDGEWATCH',
   'T4_ARTEFACT_2H_COMBATSTAFF_MORGANA', 'T4_2H_ARCANESTAFF_HELL', 'T4_METALBAR',
+  // IDEIA-049: receitas alternativas (artefato ou ficha de favor; base Royal SET1/2/3)
+  'T4_ARTEFACT_TOKEN_FAVOR_2', 'T4_ARMOR_PLATE_SET2', 'T4_ARMOR_PLATE_SET3', 'T4_ARTEFACT_2H_ARCANESTAFF_HELL', 'T4_ARMOR_PLATE_SET1',
 ];
 const ids = new Set(IDS);
 const baseOf = (k) => k.replace(/@\d$/, '').replace(/_LEVEL\d$/, '');
@@ -32,6 +34,7 @@ const ingredients = new Set();
 for (const it of items) {
   for (const [id] of it.r ?? []) ingredients.add(baseOf(id));
   for (const lvl of Object.values(it.er ?? {})) for (const [id] of lvl) ingredients.add(baseOf(id));
+  for (const [id] of it.alt?.v ?? []) ingredients.add(baseOf(id));
 }
 
 const pick = (obj, keep) =>

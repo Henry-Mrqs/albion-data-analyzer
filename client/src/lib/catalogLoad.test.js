@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { catalogUrl, validateCatalog, fetchCatalog } from './catalogLoad';
+import { loadCatalog, resetCatalog } from './catalog';
 
 const ok = (d) => ({ ok: true, status: 200, json: async () => d });
 const GOOD = JSON.parse(readFileSync(new URL('../../public/data/catalog.json', import.meta.url)));
@@ -78,5 +79,23 @@ describe('fetchCatalog', () => {
   it('JSON quebrado: erro, não objeto vazio', async () => {
     const f = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => { throw new SyntaxError('x'); } });
     await expect(fetchCatalog({ fetchFn: f, base: '/' })).rejects.toThrow();
+  });
+});
+
+describe('DT-006: versionamento do catálogo em produção', () => {
+  it('vercel.json serve /data/ com revalidação sempre (max-age=0, must-revalidate)', () => {
+    const h = JSON.parse(readFileSync(new URL('../../vercel.json', import.meta.url))).headers.find((x) => x.source.startsWith('/data/'));
+    expect(h.headers.find((k) => k.key === 'Cache-Control').value).toBe('public, max-age=0, must-revalidate');
+  });
+  it('loadCatalog pede a URL com ?v= quando há id de build', async () => {
+    vi.stubEnv('VITE_CATALOG_V', 'abc123');
+    const f = vi.fn().mockResolvedValue(ok(GOOD));
+    vi.stubGlobal('fetch', f);
+    resetCatalog();
+    await loadCatalog();
+    expect(f.mock.calls[0][0]).toMatch(/data\/catalog\.json\?v=abc123$/);
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    resetCatalog();
   });
 });
