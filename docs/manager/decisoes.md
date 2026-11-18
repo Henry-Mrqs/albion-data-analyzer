@@ -154,5 +154,9 @@ O Deployer achou que `vercel.json` serve `/data/*` com `max-age=3600, stale-whil
 4. **A 067 sobe ANTES da 057 e da 039**, para que a próxima mudança do catálogo já chegue a todos sem janela de dado antigo.
 **Interrupção:** o limite de uso de 5 h da API cortou de novo o Executor da 057 e o Tester da 060; trabalho salvo, retomados com SendMessage. Antes de cortar, o Executor da 057 anotava "`vals` differs": a diferença em `vals` do catálogo regenerado não está prevista no plano, e ele foi instruído a investigar e PARAR se não estiver prevista (o diferencial deve mostrar só os 20 recursos mudando).
 
+## D-029 — IDEIA-057: diferença em `vals` aceita
+O Executor da 057 parou (corretamente) porque `vals` do catálogo regenerado ganhou 2 chaves, `T8_ROCK_LEVEL1` (51,2) e `T8_ROCK_LEVEL2` (102,4), e o plano previa `vals` idêntico. Causa: o build antigo lia só o primeiro requisito de cada variante; algumas variantes têm 2 requisitos de transmutação, e o segundo entra em `needed`/`vals`. **Verifiquei:** nenhuma receita (`r`/`er`) usa esses ids como ingrediente e os valores novos são iguais ao que `ingredientValue` já devolvia pelo fallback (`vals[T8_ROCK]`=25,6 × 2^n). Nenhum cálculo muda. **Aceito**, com teste de regressão de `ingredientValue` para os dois ids e conferência do Tester por diferencial. Alternativa descartada: excluir os ids de `tm` de `needed` (deixaria `tm` apontando para ids sem valor, ruim para a futura 050).
+O plano da 057 não previu variantes com 2 transmutações: lição para os planos que dependem de `vals`.
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.
