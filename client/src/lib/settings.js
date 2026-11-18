@@ -6,7 +6,7 @@ export const SERVERS = {
   east: 'Ásia',
 };
 
-const DEFAULTS = { server: 'west', premium: true };
+const DEFAULTS = { server: 'west', premium: true, feeCeiling: 1000 };
 const KEY = 'albion:settings';
 const listeners = new Set();
 let state = (() => {

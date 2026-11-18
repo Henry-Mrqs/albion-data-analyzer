@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Info, RotateCw, Search, XCircle } from 'lucide-react';
 import { searchItems, categoryLabel } from '../lib/catalog';
 import { ageClass, ageLabel } from '../lib/market';
+import { fmt } from '../lib/econ';
 
 export function Field({ label, hint, children }) {
   return (
@@ -93,9 +94,9 @@ export function Age({ ts }) {
 }
 
 export function Money({ value, signed }) {
-  const v = Math.round(value);
+  const v = Number.isFinite(value) ? Math.round(value) : NaN;
   const cls = signed ? (v > 0 ? 'good' : v < 0 ? 'bad' : '') : '';
-  return <span className={`num ${cls}`}>{(signed && v > 0 ? '+' : '') + v.toLocaleString('pt-BR')}</span>;
+  return <span className={`num ${cls}`}>{(signed && v > 0 ? '+' : '') + fmt(value)}</span>;
 }
 
 /** Busca de itens com autocomplete (nome PT/EN, ID, "t6", "t6.2"). */
