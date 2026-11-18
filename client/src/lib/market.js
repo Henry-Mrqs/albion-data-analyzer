@@ -41,7 +41,7 @@ function normalize(rows) {
   return out;
 }
 
-function chunk(ids, base) {
+export function chunk(ids, base) {
   const chunks = [];
   let cur = [];
   let len = base.length;
@@ -58,15 +58,15 @@ function chunk(ids, base) {
   return chunks;
 }
 
-async function request(url, signal) {
+export async function request(url, signal, what = 'preços') {
   const wait = blockedUntil - Date.now();
-  if (wait > 0) throw new MarketError(`A API de preços pediu uma pausa. Tente de novo em ${Math.ceil(wait / 1000)}s.`, 'throttle', blockedUntil);
+  if (wait > 0) throw new MarketError(`A API de ${what} pediu uma pausa. Tente de novo em ${Math.ceil(wait / 1000)}s.`, 'throttle', blockedUntil);
   let res;
   try {
     res = await fetch(url, { signal });
   } catch (e) {
     if (e.name === 'AbortError') throw e;
-    throw new MarketError('Não foi possível falar com a API de preços (albion-online-data.com). Verifique sua conexão.');
+    throw new MarketError(`Não foi possível falar com a API de ${what} (albion-online-data.com). Verifique sua conexão.`);
   }
   if (res.status === 429 || res.status === 503) {
     const text = await res.text().catch(() => '');
@@ -75,11 +75,11 @@ async function request(url, signal) {
     const secs = Math.max(1, Math.ceil((blockedUntil - Date.now()) / 1000));
     throw new MarketError(`Limite de requisições da API atingido. Liberado em ${secs > 90 ? `${Math.ceil(secs / 60)} min` : `${secs}s`}.`, 'throttle', blockedUntil);
   }
-  if (!res.ok) throw new MarketError(`A API de preços respondeu HTTP ${res.status}.`);
+  if (!res.ok) throw new MarketError(`A API de ${what} respondeu HTTP ${res.status}.`);
   try {
     return await res.json();
   } catch {
-    throw new MarketError('Resposta inválida da API de preços.');
+    throw new MarketError(`Resposta inválida da API de ${what}.`);
   }
 }
 
