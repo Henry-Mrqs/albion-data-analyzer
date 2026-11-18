@@ -26,7 +26,7 @@ export function itemCraftInfo(item) {
 /** RRR, PB e decomposição do PB (derivada de rrr(), por diferença). */
 export function rrrFor({ kind, city, category, resource, focus, daily = 0 }) {
   const specialty = isSpecialty({ kind, city, category, resource });
-  const d = +daily || 0;
+  const d = validateInputs({ daily }).values.daily; // mesma validação das outras telas (0, 10 ou 20)
   const r = rrr({ kind, specialty, focus: !!focus, daily: d });
   const pb0 = pbOf(rrr({ kind, specialty: false, focus: false }));
   const pb1 = pbOf(rrr({ kind, specialty, focus: false }));

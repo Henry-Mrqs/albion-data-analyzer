@@ -1,4 +1,6 @@
-import { setSettings } from '../lib/settings';
+import { setSettings, useSettings } from '../lib/settings';
+import { FEE_CEILING, HARD_FEE_CEILING, sanitizeFeeCeiling } from '../lib/inputRules';
+import { fmt } from '../lib/econ';
 
 const CLASS = { info: 'muted', warn: 'warn', error: 'bad' };
 
@@ -8,19 +10,38 @@ export default function InputIssues({ issues, field }) {
   if (!list.length) return null;
   return (
     <div role="status" data-testid="input-issues">
-      {list.map((i) => (
-        <div key={`${i.field}-${i.code}`} className={`hint ${CLASS[i.level]}`}>
-          {i.msg}
-          {i.code === 'fee-ceiling' && Number.isFinite(+i.raw) && (
-            <>
-              {' '}
-              <button type="button" className="btn sm" onClick={() => setSettings({ feeCeiling: +i.raw })}>
-                Aceitar {(+i.raw).toLocaleString('pt-BR')} como novo teto
-              </button>
-            </>
-          )}
-        </div>
-      ))}
+      {list.map((i) => {
+        const raw = +i.raw;
+        const canAccept = i.code === 'fee-ceiling' && Number.isFinite(raw) && raw > 0 && raw <= HARD_FEE_CEILING;
+        return (
+          <div key={`${i.field}-${i.code}`} className={`hint ${CLASS[i.level]}`}>
+            {i.msg}
+            {canAccept && (
+              <>
+                {' '}
+                <button type="button" className="btn sm" onClick={() => setSettings({ feeCeiling: raw })}>
+                  Aceitar {fmt(raw)} como novo teto
+                </button>
+              </>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Indicação permanente do teto de taxa: aceito (≠ 1.000) ou salvo inválido; com botão para restaurar o padrão. */
+export function CeilingNotice() {
+  const { feeCeiling } = useSettings();
+  const { value, issue } = sanitizeFeeCeiling(feeCeiling);
+  if (!issue && value === FEE_CEILING) return null;
+  return (
+    <div className="hint warn" data-testid="ceiling-notice">
+      {issue ? issue.msg : `Teto de taxa aceito: ${fmt(value)}.`}{' '}
+      <button type="button" className="btn sm" onClick={() => setSettings({ feeCeiling: FEE_CEILING })}>
+        Restaurar {fmt(FEE_CEILING)}
+      </button>
     </div>
   );
 }

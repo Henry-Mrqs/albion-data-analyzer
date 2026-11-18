@@ -46,7 +46,8 @@ function sub0(lines) {
 
 export function computeCraft({ rec, targetMid, prices, cfg: rawCfg, premium, bonusCity, feeCeiling }) {
   // IDEIA-060: entradas fora da faixa são corrigidas aqui (a lib se defende sozinha) e devolvidas como `issues`
-  const { cfg, issues } = cleanCraftCfg(rawCfg, { premium, feeCeiling });
+  const refineTypes = rec ? [...new Set(rec.res.filter((r) => canRefineUniq(r.uniq)).map((r) => refinedTypeOf(r.uniq)))] : [];
+  const { cfg, issues } = cleanCraftCfg(rawCfg, { premium, feeCeiling, refineTypes });
   const rates = craftRates(cfg, bonusCity);
   const { crafts, craftRRR, refineRRRFor } = rates;
 

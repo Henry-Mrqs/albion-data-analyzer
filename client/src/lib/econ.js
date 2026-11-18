@@ -32,7 +32,11 @@ export const roundFee = (x) => Math.round(x);
 export const netSale = (price, mode, premium) =>
   mode === 'order' ? price * (1 - salesTax(premium) - SETUP_FEE) : price * (1 - salesTax(premium));
 
-export const fmt = (n) => Math.round(n).toLocaleString('pt-BR');
+export const fmt = (n) => {
+  if (!Number.isFinite(n)) return 'valor enorme'; // nunca ∞/NaN na tela
+  const r = Math.round(n);
+  return Math.abs(r) >= 1e15 ? r.toExponential().replace('e+', 'e').replace('.', ',') : r.toLocaleString('pt-BR');
+};
 export const pct = (n) => `${n >= 0 ? '+' : ''}${n.toFixed(1)}%`;
 
 // "T4_PLANKS_LEVEL1" -> { base: "T4_PLANKS", ench: 1 }

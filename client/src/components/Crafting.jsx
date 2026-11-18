@@ -105,7 +105,7 @@ export default function Crafting() {
                 <InputIssues issues={issues} field={`refineDaily.${type}`} />
               </Field>
             ))}
-            <FeeField issues={issues.filter((i) => i.field === 'refineFee')} label="Taxa da bancada de refino (por 100 nutrição)" value={cfg.refineFee} onChange={(v) => set({ refineFee: v })} touched={!feeIsUnconfirmedDefault(cfg.refineFee, cfg.refineFeeSet)} onTouch={() => set({ refineFeeSet: true })} />
+            <FeeField ceilingNotice={false} issues={issues.filter((i) => i.field === 'refineFee')} label="Taxa da bancada de refino (por 100 nutrição)" value={cfg.refineFee} onChange={(v) => set({ refineFee: v })} touched={!feeIsUnconfirmedDefault(cfg.refineFee, cfg.refineFeeSet)} onTouch={() => set({ refineFeeSet: true })} />
           </>
         )}
       </div>

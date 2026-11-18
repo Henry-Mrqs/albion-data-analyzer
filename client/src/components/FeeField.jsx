@@ -1,8 +1,8 @@
 import { Field, NumberInput } from './ui';
-import InputIssues from './InputIssues';
+import InputIssues, { CeilingNotice } from './InputIssues';
 
 /** Campo da taxa da bancada (prata por 100 de nutrição), informado pelo usuário. Avisa enquanto for o padrão do app. */
-export default function FeeField({ label, value, onChange, touched, onTouch, issues }) {
+export default function FeeField({ label, value, onChange, touched, onTouch, issues, ceilingNotice = true }) {
   return (
     <Field
       label={label}
@@ -16,6 +16,7 @@ export default function FeeField({ label, value, onChange, touched, onTouch, iss
         }}
       />
       <InputIssues issues={issues} />
+      {ceilingNotice && <CeilingNotice />}
     </Field>
   );
 }

@@ -23,6 +23,7 @@ export default function RrrCalculator() {
   const cats = craftCategories();
   // valor salvo de versão antiga (ex.: 'weapons/sword') não é craftingcategory: cai em espada
   const category = cfg.category === '' || cats.includes(cfg.category) ? cfg.category : 'sword';
+  const dailyV = validateInputs({ daily: cfg.daily }); // daily salvo inválido: mesma validação das outras telas
   const res = rrrFor({ ...cfg, category });
   const { parts } = res;
   const per100 = res.rrr * 100;
@@ -32,13 +33,13 @@ export default function RrrCalculator() {
   const rec = getItem(sel.id) ? recipeOf(sel.id, sel.ench) : null;
   const rows = rec ? recipeReturn(rec, cfg.crafts, res.rrr) : [];
 
-  const current = REFERENCE.find((r) => r.kind === cfg.kind && r.specialty === res.specialty && r.focus === !!cfg.focus && r.daily === +cfg.daily);
+  const current = REFERENCE.find((r) => r.kind === cfg.kind && r.specialty === res.specialty && r.focus === !!cfg.focus && r.daily === dailyV.values.daily);
 
   const breakdown = [
     `${n1(parts.base)} base`,
     res.specialty && `${n1(parts.specialty)} especialização`,
     cfg.focus && `${n1(parts.focus)} foco`,
-    +cfg.daily > 0 && `${n1(parts.daily)} bônus diário`,
+    dailyV.values.daily > 0 && `${n1(parts.daily)} bônus diário`,
   ].filter(Boolean);
 
   return (
@@ -80,7 +81,8 @@ export default function RrrCalculator() {
         )}
         <Switch label="Usar foco" hint="Soma o bônus de produção do foco" checked={!!cfg.focus} onChange={(v) => set({ focus: v })} />
         <Field label="Bônus diário" hint="Escolha manual: o jogo sorteia 2 categorias por dia.">
-          <Segmented value={+cfg.daily} onChange={(v) => set({ daily: v })} options={[0, 10, 20].map((v) => ({ value: v, label: DAILY_LABEL[v] }))} />
+          <Segmented value={dailyV.values.daily} onChange={(v) => set({ daily: v })} options={[0, 10, 20].map((v) => ({ value: v, label: DAILY_LABEL[v] }))} />
+          <InputIssues issues={dailyV.issues} />
         </Field>
       </div>
 

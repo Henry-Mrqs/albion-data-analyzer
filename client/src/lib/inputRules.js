@@ -4,6 +4,7 @@ import { rrr, netSale, SETUP_FEE, DEFAULT_FEE } from './econ';
 
 export const MAX_QTY = 1e9; // teto técnico (não é regra do jogo): evita ∞/NaN
 export const FEE_CEILING = 1000; // teto da taxa de bancada por 100 de nutrição (post de desenvolvedor, confiança média)
+export const HARD_FEE_CEILING = 1e6; // teto duro do teto configurável: acima disso o valor salvo é tratado como corrompido
 const DAILY_OK = [0, 10, 20];
 
 const isEmpty = (x) => x == null || (typeof x === 'string' && x.trim() === '');
@@ -12,6 +13,27 @@ const br = (n) =>
   !Number.isFinite(n) ? String(n) : Math.abs(n) >= 1e15 ? n.toExponential().replace('e+', 'e') : n.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 const shown = (raw) => (typeof raw === 'string' ? `"${raw.trim()}"` : br(raw));
 const round2 = (x) => Math.round(x * 100) / 100;
+
+/**
+ * Valida o teto de taxa configurável (vem de localStorage): número finito, > 0 e <= HARD_FEE_CEILING;
+ * qualquer outra coisa (null, 0, negativo, NaN, texto) volta a 1.000 e avisa. `undefined` = ausente (padrão, sem aviso).
+ */
+export function sanitizeFeeCeiling(raw) {
+  if (raw === undefined) return { value: FEE_CEILING, issue: null };
+  if (typeof raw === 'number' && Number.isFinite(raw) && raw > 0 && raw <= HARD_FEE_CEILING) return { value: raw, issue: null };
+  const was = typeof raw === 'number' ? br(raw) : raw == null ? 'vazio' : `"${String(raw).slice(0, 20)}"`;
+  return {
+    value: FEE_CEILING,
+    issue: {
+      field: 'feeCeiling',
+      level: 'warn',
+      code: 'ceiling-invalid',
+      msg: `Teto de taxa salvo (${was}) é inválido (use um valor de 1 a ${br(HARD_FEE_CEILING)}): usando ${br(FEE_CEILING)}.`,
+      raw,
+      used: FEE_CEILING,
+    },
+  };
+}
 
 /** RRR máximo (fração) com os bônus conhecidos: especialização + foco + diário 20. Derivado de rrr(), nunca escrito. */
 export const maxRRR = (kind) => rrr({ kind: kind === 'refine' ? 'refine' : 'craft', specialty: true, focus: true, daily: 20 });
@@ -30,12 +52,14 @@ export function maxRelists(premium = true) {
  * issues: [{ field, level: 'info'|'warn'|'error', code, msg, raw, used }]
  */
 export function validateInputs(input = {}, ctx = {}) {
-  const { kind = 'craft', premium = true, feeCeiling = FEE_CEILING, maxQty = MAX_QTY } = ctx;
+  const { kind = 'craft', premium = true, maxQty = MAX_QTY } = ctx;
   const values = {};
   const issues = [];
   const add = (field, level, code, msg, raw, used) => issues.push({ field, level, code, msg, raw, used });
 
   if ('feePer100' in input) {
+    const { value: feeCeiling, issue: ceilIssue } = sanitizeFeeCeiling(ctx.feeCeiling);
+    if (ceilIssue) issues.push(ceilIssue);
     const raw = input.feePer100;
     let used;
     if (isEmpty(raw)) {
@@ -134,7 +158,8 @@ export function validateInputs(input = {}, ctx = {}) {
     if (raw === 'order' || raw === 'instant') values.mode = raw;
     else {
       values.mode = null;
-      if (!isEmpty(raw)) add('mode', 'error', 'mode-invalid', `Modo de venda ${shown(String(raw))} inválido.`, raw, null);
+      // vazio/null/undefined = ausente (sem aviso); só texto não vazio fora dos modos válidos avisa. A tela usa 'order'.
+      if (!isEmpty(raw)) add('mode', 'error', 'mode-invalid', `Modo de venda ${shown(String(raw))} inválido: usando ordem de venda.`, raw, 'order');
     }
   }
 
@@ -159,13 +184,17 @@ export function cleanCraftCfg(cfg, ctx = {}) {
   all.push(...main.issues);
   const rf = validateInputs({ feePer100: cfg.refineFee }, c);
   out.refineFee = rf.values.feePer100;
-  all.push(...rf.issues.map((i) => ({ ...i, field: 'refineFee' })));
+  // ctx.refineTypes (opcional): recursos refináveis que a receita usa. Só eles aparecem na tela, então só eles avisam
+  // (a cfg continua limpa por inteiro). Sem a lista, todos avisam.
+  const shownType = (type) => !ctx.refineTypes || ctx.refineTypes.includes(type);
+  const refineVisible = !ctx.refineTypes || ctx.refineTypes.length > 0;
+  if (refineVisible) all.push(...rf.issues.filter((i) => i.field !== 'feeCeiling').map((i) => ({ ...i, field: 'refineFee' })));
   if (cfg.refineDaily) {
     out.refineDaily = { ...cfg.refineDaily };
     for (const type of Object.keys(cfg.refineDaily)) {
       const d = validateInputs({ daily: cfg.refineDaily[type] }, c);
       out.refineDaily[type] = d.values.daily;
-      all.push(...d.issues.map((i) => ({ ...i, field: `refineDaily.${type}` })));
+      if (shownType(type)) all.push(...d.issues.map((i) => ({ ...i, field: `refineDaily.${type}` })));
     }
   }
   if ('craftDaily' in cfg) {
