@@ -5,8 +5,8 @@
 | Indicador | Valor |
 |---|---|
 | Loops concluídos | 0 |
-| Ideias no backlog | 54 (1 infra + 53 funcionais) |
-| Dossiês entregues | 20 + 1 auditoria + 1 matriz de 14 ferramentas |
+| Ideias no backlog | 63 (1 infra + 62 funcionais; 1 rejeitada) |
+| Dossiês entregues | 29 + 1 auditoria + 1 matriz de 14 ferramentas |
 | Planos aprovados | 4 (001, 023, 030, 031) |
 | Em execução (WIP, limite 3) | 1 (IDEIA-001) |
 | Em produção | 0 |

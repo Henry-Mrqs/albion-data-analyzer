@@ -54,7 +54,7 @@ Status possíveis: `NOVA → TRIADA → PLANEJADA → EM_EXECUÇÃO → EM_QA �
 | IDEIA-027 | **Histórico de cálculos** local | 2 | 2 | 4 | 2 | 10 | NOVA |
 | IDEIA-033 | **PWA / instalável / offline do catálogo** | 2 | 1 | 3 | 2 | 8 | NOVA |
 
-Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2 = 53. Meta: 50 `VERIFICADA`. O Pesquisador precisa acrescentar pelo menos ~30 ideias para sobrar margem.
+Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2 + 9 do lote 3 = 62 (1 rejeitada). Meta: 50 `VERIFICADA`. O Pesquisador precisa acrescentar pelo menos ~30 ideias para sobrar margem.
 
 ## Ideias acrescentadas no Loop 1 (origem: AUDITORIA-001 e Pesquisador)
 
@@ -84,3 +84,17 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 | IDEIA-055 | **Hideout como local de craft** (nível de poder, bônus geral/especialista, zona) | 3 | 4 | 3 | 4 | 14 | NOVA (pede 1 confirmação em jogo do RRR de uma bancada) |
 | IDEIA-052 | **Flip de encantamento** no Flipper | 4 | 3 | 2 | 5 | 14 | NOVA (**BLOQUEADA**: taxa de encantar sem fonte; lucro seria enganoso, D-014) |
 | IDEIA-056 | **Diário de operações** e lucro realizado (custo FIFO) | 3 | 2 | 1 | 4 | 10 | NOVA (esforço alto, baixa fidelidade; fica para o fim) |
+
+## Ideias acrescentadas no lote 3 do Pesquisador
+
+| ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
+|---|---|---|---|---|---|---|---|
+| IDEIA-060 | **Validação das entradas pelas faixas do jogo**: taxa de bancada 0–1.000, bônus diário só 0/10/20, RRR máximo (57,81% refino, 52,83% craft). Evita lucro absurdo por digitação (inclui o achado do Tester, D-015) | 4 | 5 | 5 | 3 | 17 | TRIADA (MÉDIA; teto de 1.000 configurável) |
+| IDEIA-066 | **Aviso de saída ilusória**: preço de venda sem comprador (Caerleon, cidade sem ordem de compra); exemplo real `T4_MAIN_SWORD`: só o Mercado Negro tem comprador e dá prejuízo | 5 | 4 | 3 | 5 | 17 | TRIADA (MÉDIA, análise determinística sobre dados reais) |
+| IDEIA-058 | **Comparar cidades de craft**: qual cidade dá o menor custo para o item (taxa por cidade obrigatória) | 4 | 4 | 3 | 5 | 16 | TRIADA (conta ALTA, preços MÉDIA) |
+| IDEIA-065 | **Preço de saída realista** ancorado no histórico quando a oferta é isolada | 4 | 3 | 3 | 5 | 15 | TRIADA (MÉDIA; depende de 010; `k` e `N` são decisão de produto) |
+| IDEIA-059 | **Ciclo de vida da ordem**: cada atualização cobra 2,5% de novo e cancelar não devolve (3 correções = 336,75 por unidade no exemplo) | 4 | 3 | 3 | 4 | 14 | TRIADA (escopo reduzido: só O1–O3; base do fee na atualização configurável, BAIXA) |
+| IDEIA-061 | **Ordem de compra × compra instantânea** de material: economia, idade do dado e spread (sem prometer tempo de preenchimento) | 3 | 4 | 4 | 3 | 14 | TRIADA (MÉDIA) |
+| IDEIA-062 | **Checagem de oferta do material**: o plano de compra cabe no volume diário? | 4 | 3 | 3 | 4 | 14 | TRIADA (MÉDIA; depende de 010; limiar é decisão de produto) |
+| IDEIA-064 | **Perfil do crafter** (especializações e tiers que sei fazer, uma entrada para tudo) | 3 | 3 | 3 | 4 | 13 | TRIADA (MÉDIA; sem automação por regra de desbloqueio) |
+| IDEIA-063 | **Variância do retorno em lote pequeno** | 2 | 2 | 3 | 3 | 10 | **REJEITADA por ora** (CONFIANÇA BAIXA: a hipótese H1 do sorteio não está comprovada; ver D-016) |
