@@ -1,5 +1,41 @@
 {
- "built": "2026-11-17",
+ "built": "2026-11-02",
+ "src": "0483dd97f1581dfaf02eed42f25f5ea2a3cb75e5",
+ "cityOf": {
+  "mace": "Thetford",
+  "naturestaff": "Thetford",
+  "firestaff": "Thetford",
+  "leather_armor": "Thetford",
+  "cloth_helmet": "Thetford",
+  "sword": "Lymhurst",
+  "bow": "Lymhurst",
+  "arcanestaff": "Lymhurst",
+  "leather_helmet": "Lymhurst",
+  "leather_shoes": "Lymhurst",
+  "crossbow": "Bridgewatch",
+  "dagger": "Bridgewatch",
+  "cursestaff": "Bridgewatch",
+  "plate_armor": "Bridgewatch",
+  "cloth_shoes": "Bridgewatch",
+  "axe": "Martlock",
+  "quarterstaff": "Martlock",
+  "froststaff": "Martlock",
+  "plate_shoes": "Martlock",
+  "offhand": "Martlock",
+  "hammer": "Fort Sterling",
+  "spear": "Fort Sterling",
+  "holystaff": "Fort Sterling",
+  "plate_helmet": "Fort Sterling",
+  "cloth_armor": "Fort Sterling",
+  "gatherergear": "Caerleon",
+  "tools": "Caerleon",
+  "food": "Caerleon",
+  "knuckles": "Caerleon",
+  "shapeshifterstaff": "Caerleon",
+  "cape": "Brecilien",
+  "bag": "Brecilien",
+  "potion": "Brecilien"
+ },
  "items": [
   {
    "i": "T2_PLANKS",
@@ -9,6 +45,7 @@
    "t": 2,
    "w": 0.23,
    "v": 4,
+   "cc": "wood",
    "x": 0,
    "a": 1,
    "f": 18,
@@ -37,6 +74,7 @@
    "t": 3,
    "w": 0.34,
    "v": 8,
+   "cc": "wood",
    "x": 0,
    "a": 1,
    "f": 31,
@@ -69,6 +107,7 @@
    "t": 4,
    "w": 6.8,
    "v": 0,
+   "cc": "bow",
    "x": 4,
    "a": 1,
    "f": 1715,
@@ -80,6 +119,347 @@
    ]
   },
   {
+   "i": "T4_2H_KNUCKLES_SET1",
+   "p": "Luvas de Lutador do Adepto",
+   "e": "Adept's Brawler Gloves",
+   "c": "weapons/knuckles",
+   "t": 4,
+   "w": 6.8,
+   "v": 0,
+   "cc": "knuckles",
+   "x": 4,
+   "a": 1,
+   "f": 1715,
+   "r": [
+    [
+     "T4_METALBAR",
+     12
+    ],
+    [
+     "T4_LEATHER",
+     20
+    ]
+   ]
+  },
+  {
+   "i": "T4_ARMOR_CLOTH_SET1",
+   "p": "Robe de Erudito do Adepto",
+   "e": "Adept's Scholar Robe",
+   "c": "armors/cloth_armor",
+   "t": 4,
+   "w": 3.4,
+   "v": 0,
+   "cc": "cloth_armor",
+   "x": 4,
+   "a": 1,
+   "f": 858,
+   "r": [
+    [
+     "T4_CLOTH",
+     16
+    ]
+   ]
+  },
+  {
+   "i": "T4_ARMOR_PLATE_ROYAL",
+   "p": "Armadura Real do Adepto",
+   "e": "Adept's Royal Armor",
+   "c": "armors/plate_armor",
+   "t": 4,
+   "w": 3.4,
+   "v": 0,
+   "x": 4,
+   "a": 1,
+   "f": 0,
+   "r": [
+    [
+     "T4_ARMOR_PLATE_SET1",
+     1
+    ],
+    [
+     "QUESTITEM_TOKEN_ROYAL_T4",
+     4
+    ]
+   ]
+  },
+  {
+   "i": "T4_BAG",
+   "p": "Bolsa do Adepto",
+   "e": "Adept's Bag",
+   "c": "bags/bags",
+   "t": 4,
+   "w": 3.4,
+   "v": 0,
+   "cc": "bag",
+   "x": 4,
+   "a": 1,
+   "f": 858,
+   "r": [
+    [
+     "T4_CLOTH",
+     8
+    ],
+    [
+     "T4_LEATHER",
+     8
+    ]
+   ]
+  },
+  {
+   "i": "T4_BAG_INSIGHT",
+   "p": "Sacola da Visão do Adepto",
+   "e": "Adept's Satchel of Insight",
+   "c": "bags/satchels",
+   "t": 4,
+   "w": 3.4,
+   "v": 0,
+   "cc": "bag",
+   "x": 4,
+   "a": 1,
+   "f": 858,
+   "r": [
+    [
+     "T4_CLOTH",
+     8
+    ],
+    [
+     "T4_LEATHER",
+     8
+    ],
+    [
+     "T4_SKILLBOOK_STANDARD",
+     1
+    ]
+   ]
+  },
+  {
+   "i": "T4_CAPE",
+   "p": "Capa do Adepto",
+   "e": "Adept's Cape",
+   "c": "capes/accessoires_capes_capes",
+   "t": 4,
+   "w": 1.7,
+   "v": 0,
+   "cc": "cape",
+   "x": 4,
+   "a": 1,
+   "f": 429,
+   "r": [
+    [
+     "T4_CLOTH",
+     4
+    ],
+    [
+     "T4_LEATHER",
+     4
+    ]
+   ]
+  },
+  {
+   "i": "T4_CAPEITEM_FW_LYMHURST",
+   "p": "Capa de Lymhurst do Adepto",
+   "e": "Adept's Lymhurst Cape",
+   "c": "capes/accessoires_capes_lymhurst",
+   "t": 4,
+   "w": 1.7,
+   "v": 0,
+   "x": 4,
+   "a": 1,
+   "f": 0,
+   "r": [
+    [
+     "T4_CAPE",
+     1
+    ],
+    [
+     "T4_CAPEITEM_FW_LYMHURST_BP",
+     1
+    ],
+    [
+     "T1_FACTION_FOREST_TOKEN_1",
+     1
+    ]
+   ]
+  },
+  {
+   "i": "T4_HEAD_CLOTH_SET1",
+   "p": "Capote de Erudito do Adepto",
+   "e": "Adept's Scholar Cowl",
+   "c": "head/cloth_helmet",
+   "t": 4,
+   "w": 1.7,
+   "v": 0,
+   "cc": "cloth_helmet",
+   "x": 4,
+   "a": 1,
+   "f": 429,
+   "r": [
+    [
+     "T4_CLOTH",
+     8
+    ]
+   ]
+  },
+  {
+   "i": "T4_MAIN_SWORD",
+   "p": "Espada Larga do Adepto",
+   "e": "Adept's Broadsword",
+   "c": "weapons/sword",
+   "t": 4,
+   "w": 5.1,
+   "v": 0,
+   "cc": "sword",
+   "x": 4,
+   "a": 1,
+   "f": 1286,
+   "r": [
+    [
+     "T4_METALBAR",
+     16
+    ],
+    [
+     "T4_LEATHER",
+     8
+    ]
+   ]
+  },
+  {
+   "i": "T4_MEAL_SALAD",
+   "p": "Salada de Nabo",
+   "e": "Turnip Salad",
+   "c": "consumables/food",
+   "t": 4,
+   "w": 3.15,
+   "v": 0,
+   "cc": "food",
+   "x": 3,
+   "a": 10,
+   "f": 168,
+   "r": [
+    [
+     "T4_TURNIP",
+     24
+    ],
+    [
+     "T3_WHEAT",
+     24
+    ]
+   ],
+   "er": {
+    "1": [
+     [
+      "T4_TURNIP",
+      24
+     ],
+     [
+      "T3_WHEAT",
+      24
+     ],
+     [
+      "T1_FISHSAUCE_LEVEL1",
+      30
+     ]
+    ],
+    "2": [
+     [
+      "T4_TURNIP",
+      24
+     ],
+     [
+      "T3_WHEAT",
+      24
+     ],
+     [
+      "T1_FISHSAUCE_LEVEL2",
+      30
+     ]
+    ],
+    "3": [
+     [
+      "T4_TURNIP",
+      24
+     ],
+     [
+      "T3_WHEAT",
+      24
+     ],
+     [
+      "T1_FISHSAUCE_LEVEL3",
+      30
+     ]
+    ]
+   }
+  },
+  {
+   "i": "T4_OFF_BOOK",
+   "p": "Tomo de Feitiços do Adepto",
+   "e": "Adept's Tome of Spells",
+   "c": "offhands/booktype",
+   "t": 4,
+   "w": 1.7,
+   "v": 0,
+   "cc": "offhand",
+   "x": 4,
+   "a": 1,
+   "f": 429,
+   "r": [
+    [
+     "T4_CLOTH",
+     4
+    ],
+    [
+     "T4_LEATHER",
+     4
+    ]
+   ]
+  },
+  {
+   "i": "T4_OFF_SHIELD",
+   "p": "Escudo do Adepto",
+   "e": "Adept's Shield",
+   "c": "offhands/shieldtype",
+   "t": 4,
+   "w": 1.7,
+   "v": 0,
+   "cc": "offhand",
+   "x": 4,
+   "a": 1,
+   "f": 429,
+   "r": [
+    [
+     "T4_PLANKS",
+     4
+    ],
+    [
+     "T4_METALBAR",
+     4
+    ]
+   ]
+  },
+  {
+   "i": "T4_OFF_TORCH",
+   "p": "Tocha do Adepto",
+   "e": "Adept's Torch",
+   "c": "offhands/torchtype",
+   "t": 4,
+   "w": 1.7,
+   "v": 0,
+   "cc": "offhand",
+   "x": 4,
+   "a": 1,
+   "f": 429,
+   "r": [
+    [
+     "T4_PLANKS",
+     4
+    ],
+    [
+     "T4_CLOTH",
+     4
+    ]
+   ]
+  },
+  {
    "i": "T4_PLANKS",
    "p": "Tábuas de Pinho",
    "e": "Pine Planks",
@@ -87,6 +467,7 @@
    "t": 4,
    "w": 0.51,
    "v": 16,
+   "cc": "wood",
    "x": 4,
    "a": 1,
    "f": 54,
@@ -144,6 +525,111 @@
    }
   },
   {
+   "i": "T4_POTION_HEAL",
+   "p": "Poção de Cura",
+   "e": "Healing Potion",
+   "c": "consumables/potions",
+   "t": 4,
+   "w": 0.3,
+   "v": 0,
+   "cc": "potion",
+   "x": 3,
+   "a": 5,
+   "f": 210,
+   "r": [
+    [
+     "T4_BURDOCK",
+     24
+    ],
+    [
+     "T3_EGG",
+     6
+    ]
+   ],
+   "er": {
+    "1": [
+     [
+      "T4_BURDOCK",
+      24
+     ],
+     [
+      "T3_EGG",
+      6
+     ],
+     [
+      "T1_ALCHEMY_EXTRACT_LEVEL1",
+      15
+     ]
+    ],
+    "2": [
+     [
+      "T4_BURDOCK",
+      24
+     ],
+     [
+      "T3_EGG",
+      6
+     ],
+     [
+      "T1_ALCHEMY_EXTRACT_LEVEL2",
+      15
+     ]
+    ],
+    "3": [
+     [
+      "T4_BURDOCK",
+      24
+     ],
+     [
+      "T3_EGG",
+      6
+     ],
+     [
+      "T1_ALCHEMY_EXTRACT_LEVEL3",
+      15
+     ]
+    ]
+   }
+  },
+  {
+   "i": "T4_SHOES_CLOTH_SET1",
+   "p": "Sandálias de Erudito do Adepto",
+   "e": "Adept's Scholar Sandals",
+   "c": "shoes/cloth_shoes",
+   "t": 4,
+   "w": 1.7,
+   "v": 0,
+   "cc": "cloth_shoes",
+   "x": 4,
+   "a": 1,
+   "f": 429,
+   "r": [
+    [
+     "T4_CLOTH",
+     8
+    ]
+   ]
+  },
+  {
+   "i": "T4_SHOES_LEATHER_SET1",
+   "p": "Sapatos de Mercenário do Adepto",
+   "e": "Adept's Mercenary Shoes",
+   "c": "shoes/leather_shoes",
+   "t": 4,
+   "w": 1.7,
+   "v": 0,
+   "cc": "leather_shoes",
+   "x": 4,
+   "a": 1,
+   "f": 429,
+   "r": [
+    [
+     "T4_LEATHER",
+     8
+    ]
+   ]
+  },
+  {
    "i": "T4_WOOD",
    "p": "Troncos de Pinho",
    "e": "Pine Logs",
@@ -187,6 +673,7 @@
    "t": 6,
    "w": 7.6,
    "v": 0,
+   "cc": "plate_armor",
    "x": 4,
    "a": 1,
    "f": 2626,
@@ -223,6 +710,7 @@
    "t": 6,
    "w": 1.14,
    "v": 64,
+   "cc": "hide",
    "x": 4,
    "a": 1,
    "f": 164,
@@ -287,6 +775,7 @@
    "t": 6,
    "w": 11.4,
    "v": 0,
+   "cc": "sword",
    "x": 4,
    "a": 1,
    "f": 3939,
@@ -309,6 +798,7 @@
    "t": 6,
    "w": 11.4,
    "v": 0,
+   "cc": "sword",
    "x": 4,
    "a": 1,
    "f": 3939,
@@ -335,6 +825,7 @@
    "t": 6,
    "w": 1.14,
    "v": 64,
+   "cc": "ore",
    "x": 4,
    "a": 1,
    "f": 164,
@@ -399,6 +890,7 @@
    "t": 6,
    "w": 0.53,
    "v": 0,
+   "cc": "potion",
    "x": 3,
    "a": 5,
    "f": 378,
@@ -492,19 +984,51 @@
  ],
  "extra": {},
  "vals": {
+  "QUESTITEM_TOKEN_ROYAL_T4": 16,
   "T1_ALCHEMY_EXTRACT_LEVEL1": 0,
   "T1_ALCHEMY_EXTRACT_LEVEL2": 0,
   "T1_ALCHEMY_EXTRACT_LEVEL3": 0,
+  "T1_FACTION_FOREST_TOKEN_1": 0,
+  "T1_FISHSAUCE_LEVEL1": 0,
+  "T1_FISHSAUCE_LEVEL2": 0,
+  "T1_FISHSAUCE_LEVEL3": 0,
   "T2_PLANKS": 4,
   "T2_WOOD": 4,
   "T3_COMFREY": 40,
+  "T3_EGG": 40,
   "T3_PLANKS": 8,
+  "T3_WHEAT": 40,
   "T3_WOOD": 2,
+  "T4_ARMOR_CLOTH_SET1": 0,
+  "T4_ARMOR_PLATE_SET1": 0,
+  "T4_BURDOCK": 40,
+  "T4_CAPE": 0,
+  "T4_CAPEITEM_FW_LYMHURST_BP": 32,
+  "T4_CLOTH": 16,
+  "T4_CLOTH_LEVEL1": 32,
+  "T4_CLOTH_LEVEL2": 64,
+  "T4_CLOTH_LEVEL3": 128,
+  "T4_CLOTH_LEVEL4": 256,
+  "T4_HEAD_CLOTH_SET1": 0,
+  "T4_LEATHER": 16,
+  "T4_LEATHER_LEVEL1": 32,
+  "T4_LEATHER_LEVEL2": 64,
+  "T4_LEATHER_LEVEL3": 128,
+  "T4_LEATHER_LEVEL4": 256,
+  "T4_METALBAR": 16,
+  "T4_METALBAR_LEVEL1": 32,
+  "T4_METALBAR_LEVEL2": 64,
+  "T4_METALBAR_LEVEL3": 128,
+  "T4_METALBAR_LEVEL4": 256,
   "T4_PLANKS": 16,
   "T4_PLANKS_LEVEL1": 32,
   "T4_PLANKS_LEVEL2": 64,
   "T4_PLANKS_LEVEL3": 128,
   "T4_PLANKS_LEVEL4": 256,
+  "T4_SHOES_CLOTH_SET1": 0,
+  "T4_SHOES_LEATHER_SET1": 0,
+  "T4_SKILLBOOK_STANDARD": 0,
+  "T4_TURNIP": 40,
   "T4_WOOD": 4,
   "T4_WOOD_LEVEL1": 12,
   "T4_WOOD_LEVEL2": 28,
