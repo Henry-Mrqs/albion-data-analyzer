@@ -41,7 +41,7 @@ function normalize(rows) {
   return out;
 }
 
-function chunk(ids, base) {
+export function chunk(ids, base) {
   const chunks = [];
   let cur = [];
   let len = base.length;
@@ -58,7 +58,7 @@ function chunk(ids, base) {
   return chunks;
 }
 
-async function request(url, signal) {
+export async function request(url, signal) {
   const wait = blockedUntil - Date.now();
   if (wait > 0) throw new MarketError(`A API de preços pediu uma pausa. Tente de novo em ${Math.ceil(wait / 1000)}s.`, 'throttle', blockedUntil);
   let res;
