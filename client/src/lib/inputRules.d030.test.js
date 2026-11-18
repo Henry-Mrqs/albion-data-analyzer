@@ -88,6 +88,7 @@ describe('fmt seguro', () => {
   it('número gigante vai em notação científica', () => {
     expect(fmt(1.5e20)).toBe('1,5e20');
     expect(fmt(1e300)).toBe('1e300');
+    expect(fmt(1.778941501257237e15)).toBe('1,78e15');
     expect(fmt(999999999999999)).toBe('999.999.999.999.999');
   });
 });
