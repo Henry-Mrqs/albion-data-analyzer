@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
-  buyQuote, materialPlan, netSale, refineChainIds, refineUnit, rrr, splitUniq, stationFee,
+  buyQuote, materialPlan, netSale, refineChainIds, refineUnit, resolveRRR, rrr, splitUniq, stationFee,
 } from './econ';
 import { loadFixtureCatalog, mkPrices, planksSpec } from '../test/helpers';
 
@@ -28,6 +28,17 @@ describe('rrr', () => {
     expect(rrr({ kind: 'refine', specialty: true, focus: false, daily: 20 })).toBeCloseTo(0.4382, 4);
     expect(rrr({ kind: 'refine', specialty: true, focus: true, daily: 20 })).toBeCloseTo(0.5781, 4);
     expect(rrr({ kind: 'craft', specialty: false, focus: true })).toBeCloseTo(0.435, 4);
+  });
+});
+
+describe('resolveRRR', () => {
+  it('RRR manual válido vence o automático; inválido/vazio cai no automático', () => {
+    expect(resolveRRR(0.3, '')).toBeCloseTo(0.3, 6);
+    expect(resolveRRR(0.3, '25')).toBeCloseTo(0.25, 6);
+    expect(resolveRRR(0.3, 25)).toBeCloseTo(0.25, 6);
+    expect(resolveRRR(0.3, 'abc')).toBeCloseTo(0.3, 6);
+    expect(resolveRRR(0.3, undefined)).toBeCloseTo(0.3, 6);
+    expect(resolveRRR(0.3, '0')).toBe(0); // zero é "manual" (comportamento atual)
   });
 });
 

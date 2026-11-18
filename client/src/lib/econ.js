@@ -11,6 +11,12 @@ export function rrr({ kind, specialty, focus, daily = 0 }) {
   return pb / (100 + pb);
 }
 
+/** RRR manual (em %) se for um número válido; senão o automático. Vazio/inválido cai no automático. */
+export const resolveRRR = (auto, raw) => {
+  const custom = raw !== '' && !isNaN(+raw);
+  return custom ? +raw / 100 : auto;
+};
+
 /** Taxa de uso da bancada: valor do item * 0.1125 nutrição, cobrada por 100 de nutrição. */
 export const stationFee = (itemValue, feePer100) => Math.round(itemValue * 0.1125 * (feePer100 / 100));
 
