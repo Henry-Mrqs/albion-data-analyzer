@@ -20,8 +20,8 @@ Status possíveis: `NOVA → TRIADA → PLANEJADA → EM_EXECUÇÃO → EM_QA �
 |---|---|---|---|---|---|---|---|
 | IDEIA-005 | **Auditor de variáveis**: painel em cada cálculo listando TODAS as variáveis consideradas (RRR, foco, bônus de cidade, taxa de bancada, imposto, setup fee, premium…) e as ignoradas/pressupostas, com avisos ("sem foco", "sem diário"), para resolver o problema de esquecer variável | 5 | 5 | 3 | 5 | 18 | NOVA |
 | IDEIA-006 | **Ponto de equilíbrio comprar × produzir**: preço máximo que compensa pagar pela barra/couro pronto em cada tier | 5 | 5 | 4 | 4 | 18 | NOVA |
-| IDEIA-002 | **Foco**: pontos de foco gastos por craft/refino, prata/lucro por ponto de foco, "vale usar foco?" | 5 | 5 | 3 | 4 | 17 | TRIADA (dossiê MÉDIA-ALTA; valor de foco do jogo como override opcional) |
-| IDEIA-010 | **Liquidez**: volume vendido por dia (API history) em Craft/Flipper/Mercado, aviso de item sem giro | 5 | 4 | 3 | 5 | 17 | TRIADA (dossiê MÉDIA, observado na API real) |
+| IDEIA-002 | **Foco**: pontos de foco gastos por craft/refino, prata/lucro por ponto de foco, "vale usar foco?" | 5 | 5 | 3 | 4 | 17 | PLANEJADA (plano aprovado, D-034; depois da 049) |
+| IDEIA-010 | **Liquidez**: volume vendido por dia (API history) em Craft/Flipper/Mercado, aviso de item sem giro | 5 | 4 | 3 | 5 | 17 | EM_EXECUÇÃO (Executor #45) |
 | IDEIA-012 | **Confiança do preço**: detecção de outlier, dado velho e preço isolado; selo de confiança por célula | 4 | 5 | 4 | 4 | 17 | NOVA |
 | IDEIA-003 | **Diários de trabalho (journals)**: diário vazio/cheio, prata por craft, entra no lucro | 5 | 4 | 3 | 4 | 16 | TRIADA (escopo reduzido: capacidade, IDs e preço do diário; **fama fora** por confiança BAIXA) |
 | IDEIA-009 | **Encantar**: runa/alma/relíquia — comprar .0 e encantar × craftar já encantado | 5 | 4 | 2 | 5 | 16 | TRIADA (escopo reduzido: quantidades por passo e IDs; **taxa de encantar fora**, sem fonte) |
@@ -74,7 +74,7 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 
 | ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
 |---|---|---|---|---|---|---|---|
-| IDEIA-049 | **Receitas alternativas**: artefato **ou** ficha de favor; base Royal SET1/2/3; escolhe a mais barata (560 itens com artefato/ficha + 45 Royal) | 4 | 5 | 3 | 5 | 17 | TRIADA (estrutura ALTA, preço MÉDIA) |
+| IDEIA-049 | **Receitas alternativas**: artefato **ou** ficha de favor; base Royal SET1/2/3; escolhe a mais barata (560 itens com artefato/ficha + 45 Royal) | 4 | 5 | 3 | 5 | 17 | PLANEJADA (plano aprovado, D-034; depois da 039) |
 | IDEIA-048 | **Despesas extras** no lucro e "venda sem imposto de mercado" | 4 | 4 | 4 | 4 | 16 | TRIADA (MÉDIA; sem valores padrão inventados) |
 | IDEIA-054 | **"Vale pagar Premium?"**: ponto de equilíbrio com o preço do ouro (constantes editáveis e datadas) | 3 | 4 | 4 | 4 | 15 | TRIADA (MÉDIA) |
 | IDEIA-057 | **Corrigir transmutação listada como receita de craft**: 20 recursos brutos (`T5_WOOD` ← `T4_WOOD`...) aparecem como craftáveis no catálogo. Confirmado pelo Gerente em `catalog.json` | 3 | 5 | 5 | 2 | 15 | **VERIFICADA** (deploy 7) |
@@ -104,3 +104,9 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 | ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
 |---|---|---|---|---|---|---|---|
 | IDEIA-067 | **Cache do catálogo**: `/data/*` com `max-age=3600` + `stale-while-revalidate=86400` deixa o navegador com o catálogo ANTIGO por até 1 h (24 h) depois de um deploy, enquanto o código novo já espera o formato novo (ex.: sem `cc` mostra "sem cidade de bônus" errado). Versionar a URL e/ou revalidar sempre, e checar o formato ao carregar | 5 | 5 | 4 | 2 | 16 | **VERIFICADA** (deploy 6) |
+
+## Ideia acrescentada no Loop 5 (achado do Planejador ao planejar a 049)
+
+| ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
+|---|---|---|---|---|---|---|---|
+| IDEIA-068 | **Receitas alternativas do refino** com ficha de facção (30 refinados; ex.: `T4_PLANKS` = 1 madeira + 1 ficha + 1 tábua T3): hoje o Refino ignora essa receita. Precisa de dossiê (o Pesquisador está em espera) | 3 | 4 | 3 | 4 | 14 | NOVA (sem dossiê; D-034) |
