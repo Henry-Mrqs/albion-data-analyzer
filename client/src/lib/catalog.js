@@ -103,6 +103,8 @@ export function weightOf(id) {
 }
 
 // ---------- receitas ----------
+// Token mantido por prudência (decisão do Gerente, D-017): errar para "retorna" subestimaria o custo.
+const FRAGMENT_RE = /RUNE|SOUL|RELIC|SHARD/;
 const RULE_RE = /^T\d_(PLANKS|METALBAR|LEATHER|CLOTH|STONEBLOCK|WOOD|ORE|HIDE|FIBER|ROCK)$/;
 
 /** Receita do item (id base) em um encantamento. Retorna {amount, focus, res:[{uniq, mid, count, name, value, returnable}]} */
@@ -110,11 +112,11 @@ export function recipeOf(baseId, ench = 0) {
   const it = byId.get(baseId);
   if (!it?.r) return null;
   let res = it.r;
-  if (ench > 0) res = it.er?.[ench] ?? res.map(([id, c]) => [RULE_RE.test(id) ? `${id}_LEVEL${ench}` : id, c]);
+  if (ench > 0) res = it.er?.[ench] ?? res.map(([id, c, nr]) => { const n = RULE_RE.test(id) ? `${id}_LEVEL${ench}` : id; return nr ? [n, c, nr] : [n, c]; });
   return {
     amount: it.a || 1,
     focus: it.f || 0,
-    res: res.map(([uniq, count]) => {
+    res: res.map(([uniq, count, nr]) => {
       const mid = marketId(uniq);
       return {
         uniq,
@@ -122,8 +124,10 @@ export function recipeOf(baseId, ench = 0) {
         count,
         name: nameOf(mid),
         value: ingredientValue(uniq),
-        // recursos básicos, refinados, ervas, etc. retornam; artefatos não
-        returnable: !/ARTEFACT|ARTIFACT|RUNE|SOUL|RELIC|SHARD/.test(uniq),
+        // não retorna se o dump marca (nr = maxreturnamount 0) OU se for fragmento (RUNE/SOUL/RELIC/SHARD).
+        returnable: !nr && !FRAGMENT_RE.test(uniq),
+        // barrado só pelo token: o dump não confirma; assumimos que não retorna até medir em jogo.
+        unverified: !nr && FRAGMENT_RE.test(uniq),
       };
     }),
   };

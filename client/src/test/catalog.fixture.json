@@ -100,6 +100,34 @@
    "x": 0
   },
   {
+   "i": "T4_2H_ARCANESTAFF_HELL",
+   "p": "Cajado Oculto do Adepto",
+   "e": "Adept's Occult Staff",
+   "c": "weapons/arcanestaff",
+   "t": 4,
+   "w": 6.8,
+   "v": 0,
+   "cc": "arcanestaff",
+   "x": 4,
+   "a": 1,
+   "f": 1715,
+   "r": [
+    [
+     "T4_PLANKS",
+     20
+    ],
+    [
+     "T4_METALBAR",
+     12
+    ],
+    [
+     "T4_ARTEFACT_2H_ARCANESTAFF_HELL",
+     1,
+     1
+    ]
+   ]
+  },
+  {
    "i": "T4_2H_BOW",
    "p": "Arco do Adepto",
    "e": "Adept's Bow",
@@ -174,11 +202,68 @@
    "r": [
     [
      "T4_ARMOR_PLATE_SET1",
+     1,
      1
     ],
     [
      "QUESTITEM_TOKEN_ROYAL_T4",
-     4
+     4,
+     1
+    ]
+   ]
+  },
+  {
+   "i": "T4_ARMOR_PLATE_SET1",
+   "p": "Armadura de Soldado do Adepto",
+   "e": "Adept's Soldier Armor",
+   "c": "armors/plate_armor",
+   "t": 4,
+   "w": 3.4,
+   "v": 0,
+   "cc": "plate_armor",
+   "x": 4,
+   "a": 1,
+   "f": 858,
+   "r": [
+    [
+     "T4_METALBAR",
+     16
+    ]
+   ]
+  },
+  {
+   "i": "T4_ARTEFACT_2H_COMBATSTAFF_MORGANA",
+   "p": "Estaca de Morgana Reforçada do Adepto",
+   "e": "Adept's Reinforced Morgana Pole",
+   "c": "artefacts/weapons",
+   "t": 4,
+   "w": 2,
+   "v": 128,
+   "x": 0,
+   "a": 1,
+   "f": 0,
+   "r": [
+    [
+     "T4_RUNE",
+     50
+    ]
+   ]
+  },
+  {
+   "i": "T4_ARTEFACT_OFF_SHIELD_HELL",
+   "p": "Núcleo de Escudo Infernal do Adepto",
+   "e": "Adept's Infernal Shield Core",
+   "c": "artefacts/offhands",
+   "t": 4,
+   "w": 2,
+   "v": 96,
+   "x": 0,
+   "a": 1,
+   "f": 0,
+   "r": [
+    [
+     "T4_SOUL",
+     50
     ]
    ]
   },
@@ -228,6 +313,7 @@
     ],
     [
      "T4_SKILLBOOK_STANDARD",
+     1,
      1
     ]
    ]
@@ -256,6 +342,35 @@
    ]
   },
   {
+   "i": "T4_CAPEITEM_FW_BRIDGEWATCH",
+   "p": "Capa de Bridgewatch do Adepto",
+   "e": "Adept's Bridgewatch Cape",
+   "c": "capes/accessoires_capes_bridgewatch",
+   "t": 4,
+   "w": 1.7,
+   "v": 0,
+   "x": 4,
+   "a": 1,
+   "f": 0,
+   "r": [
+    [
+     "T4_CAPE",
+     1,
+     1
+    ],
+    [
+     "T4_CAPEITEM_FW_BRIDGEWATCH_BP",
+     1,
+     1
+    ],
+    [
+     "T1_FACTION_STEPPE_TOKEN_1",
+     1,
+     1
+    ]
+   ]
+  },
+  {
    "i": "T4_CAPEITEM_FW_LYMHURST",
    "p": "Capa de Lymhurst do Adepto",
    "e": "Adept's Lymhurst Cape",
@@ -269,14 +384,17 @@
    "r": [
     [
      "T4_CAPE",
+     1,
      1
     ],
     [
      "T4_CAPEITEM_FW_LYMHURST_BP",
+     1,
      1
     ],
     [
      "T1_FACTION_FOREST_TOKEN_1",
+     1,
      1
     ]
    ]
@@ -391,6 +509,71 @@
    }
   },
   {
+   "i": "T4_METALBAR",
+   "p": "Barra de Aço",
+   "e": "Steel Bar",
+   "c": "crafting/refinedresources",
+   "t": 4,
+   "w": 0.51,
+   "v": 16,
+   "cc": "ore",
+   "x": 4,
+   "a": 1,
+   "f": 54,
+   "r": [
+    [
+     "T4_ORE",
+     2
+    ],
+    [
+     "T3_METALBAR",
+     1
+    ]
+   ],
+   "er": {
+    "1": [
+     [
+      "T4_ORE_LEVEL1",
+      2
+     ],
+     [
+      "T3_METALBAR",
+      1
+     ]
+    ],
+    "2": [
+     [
+      "T4_ORE_LEVEL2",
+      2
+     ],
+     [
+      "T3_METALBAR",
+      1
+     ]
+    ],
+    "3": [
+     [
+      "T4_ORE_LEVEL3",
+      2
+     ],
+     [
+      "T3_METALBAR",
+      1
+     ]
+    ],
+    "4": [
+     [
+      "T4_ORE_LEVEL4",
+      2
+     ],
+     [
+      "T3_METALBAR",
+      1
+     ]
+    ]
+   }
+  },
+  {
    "i": "T4_OFF_BOOK",
    "p": "Tomo de Feitiços do Adepto",
    "e": "Adept's Tome of Spells",
@@ -433,6 +616,34 @@
     [
      "T4_METALBAR",
      4
+    ]
+   ]
+  },
+  {
+   "i": "T4_OFF_SHIELD_HELL",
+   "p": "Escudo Vampírico do Adepto",
+   "e": "Adept's Caitiff Shield",
+   "c": "offhands/shieldtype",
+   "t": 4,
+   "w": 1.7,
+   "v": 0,
+   "cc": "offhand",
+   "x": 4,
+   "a": 1,
+   "f": 429,
+   "r": [
+    [
+     "T4_PLANKS",
+     4
+    ],
+    [
+     "T4_METALBAR",
+     4
+    ],
+    [
+     "T4_ARTEFACT_OFF_SHIELD_HELL",
+     1,
+     1
     ]
    ]
   },
@@ -871,6 +1082,7 @@
     ],
     [
      "T6_ARTEFACT_MAIN_SWORD_CRYSTAL",
+     1,
      1
     ]
    ]
@@ -1047,6 +1259,7 @@
   "T1_ALCHEMY_EXTRACT_LEVEL2": 0,
   "T1_ALCHEMY_EXTRACT_LEVEL3": 0,
   "T1_FACTION_FOREST_TOKEN_1": 0,
+  "T1_FACTION_STEPPE_TOKEN_1": 0,
   "T1_FISHSAUCE_LEVEL1": 0,
   "T1_FISHSAUCE_LEVEL2": 0,
   "T1_FISHSAUCE_LEVEL3": 0,
@@ -1054,13 +1267,18 @@
   "T2_WOOD": 4,
   "T3_COMFREY": 40,
   "T3_EGG": 40,
+  "T3_METALBAR": 8,
   "T3_PLANKS": 8,
   "T3_WHEAT": 40,
   "T3_WOOD": 2,
   "T4_ARMOR_CLOTH_SET1": 0,
   "T4_ARMOR_PLATE_SET1": 0,
+  "T4_ARTEFACT_2H_ARCANESTAFF_HELL": 384,
+  "T4_ARTEFACT_2H_COMBATSTAFF_MORGANA": 128,
+  "T4_ARTEFACT_OFF_SHIELD_HELL": 96,
   "T4_BURDOCK": 40,
   "T4_CAPE": 0,
+  "T4_CAPEITEM_FW_BRIDGEWATCH_BP": 32,
   "T4_CAPEITEM_FW_LYMHURST_BP": 32,
   "T4_CLOTH": 16,
   "T4_CLOTH_LEVEL1": 32,
@@ -1078,14 +1296,21 @@
   "T4_METALBAR_LEVEL2": 64,
   "T4_METALBAR_LEVEL3": 128,
   "T4_METALBAR_LEVEL4": 256,
+  "T4_ORE": 4,
+  "T4_ORE_LEVEL1": 12,
+  "T4_ORE_LEVEL2": 28,
+  "T4_ORE_LEVEL3": 60,
+  "T4_ORE_LEVEL4": 124,
   "T4_PLANKS": 16,
   "T4_PLANKS_LEVEL1": 32,
   "T4_PLANKS_LEVEL2": 64,
   "T4_PLANKS_LEVEL3": 128,
   "T4_PLANKS_LEVEL4": 256,
+  "T4_RUNE": 1,
   "T4_SHOES_CLOTH_SET1": 0,
   "T4_SHOES_LEATHER_SET1": 0,
   "T4_SKILLBOOK_STANDARD": 0,
+  "T4_SOUL": 2,
   "T4_TURNIP": 40,
   "T4_WOOD": 4,
   "T4_WOOD_LEVEL1": 12,
@@ -1135,6 +1360,10 @@
   "T6_SHARD_CRYSTAL": 200
  },
  "encNames": {
+  "T4_METALBAR@1": "Barra de Aço Incomum",
+  "T4_METALBAR@2": "Barra de Aço Rara",
+  "T4_METALBAR@3": "Barra de Aço Excepcional",
+  "T4_METALBAR@4": "Barra de Aço Prístino",
   "T4_PLANKS@1": "Tábuas de Pinho Incomuns",
   "T4_PLANKS@2": "Tábuas de Pinho Raras",
   "T4_PLANKS@3": "Tábuas de Pinho Excepcionais",

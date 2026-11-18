@@ -82,13 +82,18 @@ function parseTransmute(cr) {
 function parseRecipe(cr) {
   const r = arr(cr).find((x) => !isTransmute(x));
   if (!r) return null;
-  const res = arr(r.craftresource).map((c) => [c['@uniquename'], num(c['@count'], 1)]);
+  // 3º elemento = 1 quando o dump marca maxreturnamount="0" (o ingrediente nunca retorna)
+  const res = arr(r.craftresource).map((c) => {
+    const p = [c['@uniquename'], num(c['@count'], 1)];
+    if (c['@maxreturnamount'] === '0') p.push(1);
+    return p;
+  });
   if (!res.length) return null;
   return { a: num(r['@amountcrafted'], 1), f: num(r['@craftingfocus']), s: num(r['@silver']), r: res };
 }
 
 // regra: item encantado usa recursos básicos encantados
-const ruleRes = (res, n) => res.map(([id, c]) => [RESOURCE_RE.test(id) ? `${id}_LEVEL${n}` : id, c]);
+const ruleRes = (res, n) => res.map(([id, c, nr]) => (RESOURCE_RE.test(id) ? [`${id}_LEVEL${n}`, c] : nr ? [id, c, nr] : [id, c]));
 const sameRes = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 const items = [];

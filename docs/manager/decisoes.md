@@ -185,5 +185,26 @@ O plano da 057 não previu variantes com 2 transmutações: lição para os plan
 **Ordem de deploy:** 7 = 057 (em curso), 8 = **060**. A 041 (plano aprovado) começa depois do deploy 8, parte da `master` com a validação; 039 e 031 depois do deploy 7.
 **Aproveitamento da espera:** o Planejador escreve os planos da 010 (liquidez, base de 062, 053 e 065), 002 (foco) e 049 (receitas alternativas). Cuidado com a API de histórico: limite do AODP (~180 req/min) e cache.
 
+## D-034 — Planos 010, 002 e 049 aprovados; respostas ao Planejador
+1. **049 deixa de fora os 30 refinados com ficha de facção** (ex.: `T4_PLANKS` = 1 madeira + 1 ficha + 1 tábua T3): **abrir como ideia nova, IDEIA-068** (receitas alternativas do refino). Afeta o Refino, precisa de dossiê próprio (o Pesquisador está em espera): fica no backlog como NOVA. Não bloqueia a 049.
+2. **002 (foco):** aceito. "Vale usar foco?" só existe com uma referência digitada pelo usuário, e a eficiência é digitada (a conversão por níveis tem fonte única). A tela deve rotular o que é entrada do usuário e o que é fórmula da fonte.
+3. **010 (liquidez):** janela de 7 dias completos (hoje fora) e limiares de 5 e 15 vendas por dia: **aprovados como constantes nomeadas de decisão de produto**, sem fonte de jogo. **Condição que acrescento:** a API de histórico só traz os dias com dado, e um dia ausente pode ser falta de dado e não falta de venda. Contar dia ausente como 0 pode gerar um falso "sem giro", exatamente o tipo de erro que o app deve evitar. Então a tela mostra SEMPRE quantos dos 7 dias têm dado ("4 de 7 dias com dados") e, quando houver poucos dias com dado, classifica como "dados insuficientes", não como "sem giro". O plano deve refletir isso; o Executor recebe esta condição no briefing.
+4. **049:** comparar receitas pelo **custo total, incluindo a taxa de bancada não verificada**, mas com a taxa em linha separada e, **se a receita vencedora mudar quando a taxa é excluída**, aviso "a escolha depende da taxa de bancada (valor do artefato na taxa NÃO verificado, D-012)". Assim o usuário vê que a decisão é frágil.
+**Ordem:** 010 agora (em paralelo com 039 em QA e 041 em execução; mexe em `exits.js`, `Flipper.jsx`, `inputRules.js`, `market.js` (2 exports) e `Crafting.jsx`, sem tocar no catálogo; fecha DT-003 e DT-004). 049 depois do deploy da 039 (exige o formato `[id, n, nr]` e a união conservadora). 002 depois da 049 (disputam `build-catalog.mjs`, `catalog.json` e a fixture).
+
+## D-035 — IDEIA-039 aprovada; dívidas
+**Aprovada** (deploy 9). Confirmado de forma independente o ganho (153 itens mais caros, o caso Royal do dossiê) e a segurança da regra conservadora (nenhum ingrediente passou a retornar; os 765 fragmentos intactos). Dívidas, nenhuma bloqueia:
+1. **DT-009:** 2 mutantes reais sobrevivem: não há teste de `recipeOf` com um id `*_SHARD*` (a regra conservadora depende desse token) nem de renderização do selo "não verificado" em `Crafting.jsx`. Fecham no primeiro plano que tocar `catalog.js`/`recipeOf` (a 049 mexe aí).
+2. 2 mutantes equivalentes nos dados (o dump não tem `maxreturnamount=1`): nada a fazer, mas se um dia aparecer esse valor o comportamento está definido como "retorna parcialmente"? Hoje conta como nr; anotar para revisão se o dump mudar.
+3. **Polimento:** a aba RRR mostra "não retorna" sem o qualificador "não verificado" nos fragmentos (o Craft mostra). Incluir na próxima ideia que tocar `RrrCalculator.jsx`.
+**Ordem:** deploy 9 = 039; depois 041 (em QA), 010 (em execução), 049 e 002.
+
+## D-036 — IDEIA-041 aprovada com observações; retrabalho nº 1 (curto)
+**Laudo: APROVADO.** Recálculo independente, diferencial com diário 0 em 3.600 combinações (bit a bit), 7.200 variantes com 10/20 conforme a fórmula, o diário do craft não vaza para o RRR dos materiais refinados, e o reset 10:00/23:00 UTC bate em 13 bordas. O Tester pegou o merge de teste com a `master` atual (que tem a 039): 359 testes, sem conflito.
+**Exijo antes do deploy (3 itens):** (1) a tela NÃO avisa que a lista de categorias do bônus diário (D8) tem confiança MÉDIA e não foi confirmada em fonte oficial: o app não pode apresentar como certo o que a fonte dá como médio, e o bônus diário é exatamente o tipo de variável que o usuário esquece; vira uma nota visível; (2) `craftDailyAt` no futuro nunca expira (bug): tratar como inválido e usar 0; (3) o único mutante que sobrevive é a borda do reset (`>=`/`>`): teste de borda.
+**Fica como dívida (DT-010), não bloqueia:** `now` capturado uma vez ao abrir a tela (o aviso "Bônus de ontem?" só aparece após recarregar se o reset passar com a aba aberta); limiar de 0,5 prata de `worthWaiting` (decisão de produto sem fonte, a documentar como constante nomeada).
+**Observação de processo:** o Tester deixou uma pasta temporária (`%TEMP%\qa041`) fora do repositório, sem worktree registrada no git; inofensiva, não removida.
+**Retrabalho:** 1 de no máximo 2 para esta ideia. Depois, re-teste curto do Tester sobre o diff.
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.
