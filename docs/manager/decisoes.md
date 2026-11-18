@@ -206,5 +206,10 @@ O plano da 057 não previu variantes com 2 transmutações: lição para os plan
 **Observação de processo:** o Tester deixou uma pasta temporária (`%TEMP%\qa041`) fora do repositório, sem worktree registrada no git; inofensiva, não removida.
 **Retrabalho:** 1 de no máximo 2 para esta ideia. Depois, re-teste curto do Tester sobre o diff.
 
+## D-037 — IDEIA-041 aprovada no re-teste; infra de testes de componente (IDEIA-069)
+**Aprovada** (deploy 10). O re-teste confirmou: só `dailyBonus.test.js` mudou entre os testes existentes (5 `toEqual` ganharam `future: false`), a data no futuro vale 0 em 6.001 casos contra o oráculo (que o Tester admite ter escrito conhecendo o código: a independência desse item é menor, mas o diferencial de 3.600 combinações com diário 0 e o resto do laudo cobrem o risco), a borda do reset está protegida e a nota de confiança está clara e sem alarmismo.
+**Padrão que decide uma infra nova:** 4 ideias seguidas (060, 039, 041, 049) deixaram mutantes sobreviventes que só a UI revela (`CeilingNotice`, selo "não verificado", avisos e nota no JSX, seletor), porque o projeto não tem teste de componente. Cada vez a mitigação foi "extrair para função pura" (boa, mas a ligação JSX continua sem proteção) ou aceitar a lacuna. **IDEIA-069** (jsdom + Testing Library) entra como infra, não conta para os 50 (D-001), a planejar depois de 010 e 049. Até lá, a regra continua: lógica de decisão em função pura testada + validação visual do Tester.
+**Dívida ainda aberta:** DT-008 (botão "Aceitar", `CeilingNotice`, `Money`) e os 3 mutantes de UI da 041 passam a ser os primeiros testes da IDEIA-069.
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.

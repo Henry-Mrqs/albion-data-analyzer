@@ -46,3 +46,21 @@ Cidade sem bônus: diário soma mesmo assim (18+diário; consistente com o dossi
 
 ## UI (vite 5210, aba nova, URL conferida)
 +20 sem foco: RRR 34,6% e linhas "sem ganho". Com `craftDailyAt` de 2 dias atrás: RRR 24,8%, aviso "Bônus de ontem?", cartão mostra 4.200/craft (+10) e 7.851 (+20). Valor 15: aviso único "Bônus diário 15 inválido", RRR 47,9% (foco). Foco+20: RRR 52,8% no cabeçalho e no campo. Console sem erros/avisos. Servidor parado. Não conferi a aba Refino/RRR visualmente (código não mudou nelas).
+
+---
+
+## Re-teste do retrabalho nº 1 (tip 4c1f5b0; validado anteriormente: 1189152)
+
+**Veredito final: APROVADO** (o veredito do topo não muda).
+
+1. **Escopo** (`1189152..72b284a`, sem o merge): Crafting.jsx, DailyWait.jsx, craftPlan.js, craftPlan.test.js, dailyBonus.js, dailyBonus.test.js. Fórmulas de RRR, PB, imposto, taxa e retorno intactas; craftPlan.js só ganhou a constante `GAIN_THRESHOLD`. O merge 4c1f5b0 traz a 039 e não tem conflito (a linha "não retorna · não verificado" em Crafting.jsx vem da 039).
+2. **Testes existentes alterados**: só `dailyBonus.test.js` (5 asserções `toEqual` de `effectiveDaily` ganharam `future: false`) e a linha de import em dois arquivos (mais nomes importados). Nada foi removido ou enfraquecido; o resto são acréscimos (bordas do reset nos 3 servidores, data futura, nota D8, `GAIN_THRESHOLD`).
+3. **Data futura** (meu oráculo, escrito antes de rodar, mas conhecendo o código): 6.001 casos (3 servidores, bordas agora+5min e ±1 ms, borda do reset ±1 ms, passado recente, ausente/NaN/'abc'/null, string numérica, valores 0/10/15/20/NaN, servidor desconhecido): 0 divergências. Data futura nunca vira "de ontem" nem fica válida: `{value 0, stale false, future true}`; nunca ficam `stale` e `future` juntos. Tudo em UTC.
+4. **Borda do reset**: mutação `>=` → `>` derruba os 3 testes "borda exata do reset (os 3 servidores) > west/europe/east: setAt no instante do reset vale; 1 ms antes é velho; 1 ms depois vale". O sobrevivente anterior está morto. A mutação `<=` → `<` do lastReset derruba "no instante exato do reset, vale o próprio reset".
+5. **Nota D8**: aparece com bônus informado (qualquer valor não vazio e diferente de 0, inclusive 15) ou com o cartão visível, e some sem bônus e sem cartão (testes de `showDailyNote`). Texto: "O bônus diário vale só para a categoria que o jogo mostra na janela de produção. A lista de categorias ainda não foi confirmada em fonte oficial: confira no jogo antes de contar com ele." Redação clara, sem alarmismo, não afirma certeza. Observação: como o cartão aparece sempre que há preços, na prática a nota aparece sempre que o cartão existe, mesmo com bônus 0 (por desenho, dentro do pedido).
+6. **GAIN_THRESHOLD** = 0,5, mesmo valor. Diferencial contra a versão 1189152 (`waitSavings` e `worthWaiting` com 6 custos de espera, preços em escalas 1e-5 a 100): 2.500 cenários, idênticos bit a bit.
+7. **Diferencial com diário 0 contra a master atual (039)**: 3.600 combinações (mais 7.200 variantes com 10/20): 0 diferenças. `npm run check` 2 vezes: lint limpo, 371/371, build ok.
+8. **Mutações novas**: mortas 15 de 18 (tolerância 5 min para 0 e para 60 min, `>` para `>=` no futuro, flag `future` falsa, aviso futuro desligado, futuro tratado como stale, `showDailyNote` sempre true/false/sem cartão/sem informado, `GAIN` 0 e 5, `worthWaiting` sempre true). **Sobreviventes**: as 3 mutações só de UI (remover o aviso de data futura, a nota do campo e a nota do cartão do JSX) passam na suíte. Não há teste de componente, e os atributos `data-testid` não são usados por nenhum teste. Risco baixo; conferidas na UI.
+9. **UI** (porta 5210, aba nova, URL conferida): `craftDailyAt` 3 dias no futuro + valor 20 mostra RRR 24,8% e o aviso "Data do bônus no futuro", sem "Bônus de ontem". Valor 15 mostra RRR 24,8% e UM aviso. Valor 20 válido mostra RRR 34,6%, e a nota aparece no campo e no cartão. Refino e RRR carregam normais, console sem erros ou avisos. Servidor parado.
+
+**Novos problemas**: nenhum bloqueante. Observação: sem teste de componente para os avisos e a nota (mutações de UI sobrevivem).
