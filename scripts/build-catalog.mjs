@@ -69,8 +69,18 @@ const PRODUCT_CATS = new Set([
 ]);
 const RESOURCE_RE = /^T\d_(PLANKS|METALBAR|LEATHER|CLOTH|STONEBLOCK|WOOD|ORE|HIDE|FIBER|ROCK)$/;
 
+// Transmutação (T4_ORE -> T5_ORE) vem no dump como "receita"; só o texto do botão a distingue.
+const isTransmute = (r) => /TRANSMUTE/.test(r['@craftbuttonlocaoverride'] ?? '');
+
+// [[uniqueNameDaEntrada, prata], ...] de todos os requisitos de transmutação, na ordem do dump
+function parseTransmute(cr) {
+  return arr(cr)
+    .filter(isTransmute)
+    .map((r) => [arr(r.craftresource)[0]['@uniquename'], num(r['@silver'])]);
+}
+
 function parseRecipe(cr) {
-  const r = arr(cr)[0];
+  const r = arr(cr).find((x) => !isTransmute(x));
   if (!r) return null;
   const res = arr(r.craftresource).map((c) => [c['@uniquename'], num(c['@count'], 1)]);
   if (!res.length) return null;
@@ -132,10 +142,21 @@ for (const [id, { it }] of all) {
   if (isResource) {
     // recursos encantados são itens próprios (T4_PLANKS_LEVEL1) com receita própria
     const er = {};
+    const tm = {};
+    const tm0 = parseTransmute(it.craftingrequirements);
+    if (tm0.length) {
+      tm[0] = tm0;
+      tm0.forEach(([rid]) => needed.add(rid));
+    }
     for (let n = 1; n <= 4; n++) {
       const v = all.get(`${id}_LEVEL${n}`);
       if (!v) continue;
       entry.x = n;
+      const tmn = parseTransmute(v.it.craftingrequirements);
+      if (tmn.length) {
+        tm[n] = tmn;
+        tmn.forEach(([rid]) => needed.add(rid));
+      }
       const rec = parseRecipe(v.it.craftingrequirements);
       if (rec) {
         er[n] = rec.r;
@@ -143,6 +164,7 @@ for (const [id, { it }] of all) {
       }
     }
     if (Object.keys(er).length) entry.er = er;
+    if (Object.keys(tm).length) entry.tm = tm;
   }
   items.push(entry);
 }
