@@ -3,7 +3,8 @@ import { Route } from 'lucide-react';
 import { CRAFT_CITIES, REFINING, getItem, recipeOf, marketId, nameOf, refinedTypeOf, craftBonusCity, categoryLabel } from '../lib/catalog';
 import { CITIES, SELL_CITIES, cityLabel, usePrices } from '../lib/market';
 import { fmt, pct, feeIsUnconfirmedDefault } from '../lib/econ';
-import { computeCraft, craftChainIds, keyOf } from '../lib/craftPlan';
+import { computeCraft, craftChainIds, keyOf, waitSavings } from '../lib/craftPlan';
+import { effectiveDaily, showDailyNote, DAILY_NOTE } from '../lib/dailyBonus';
 import { annotateOptions, illusoryHint, pickExit } from '../lib/exits';
 import { useHistory } from '../lib/history';
 import { windowStats } from '../lib/liquidity';
@@ -12,13 +13,15 @@ import { GiroCard, GiroCell } from './Giro';
 import { useSettings, usePersisted } from '../lib/settings';
 import ItemSelector from './ItemSelector';
 import FeeField from './FeeField';
+import DailyWait from './DailyWait';
 import InputIssues, { CorrectedBadge } from './InputIssues';
 import PriceMatrix from './PriceMatrix';
 import TargetPrice from './TargetPrice';
 import { Age, Banner, Field, Money, NumberInput, PriceStatus, Segmented, Switch } from './ui';
 
 export default function Crafting() {
-  const { premium, feeCeiling } = useSettings();
+  const { premium, feeCeiling, server } = useSettings();
+  const [now] = useState(Date.now);
   const [sel, setSel] = usePersisted('craft:item', { id: 'T6_MAIN_SWORD', ench: 0 });
   const [cfg, setCfg] = usePersisted('craft:cfg', {
     craftCity: 'Lymhurst', specialty: null, focus: false, feePer100: 400, customRRR: '',
@@ -34,7 +37,12 @@ export default function Crafting() {
   const ids = craftChainIds(rec, targetMid);
   const { prices, loading, error, updatedAt, refresh } = usePrices(ids);
 
-  const c = computeCraft({ rec, targetMid, prices, cfg, premium, bonusCity, feeCeiling });
+  // bônus diário do item: o informado antes do último reset do servidor vale 0 (com aviso); a validação 0/10/20 é a da 060 (computeCraft)
+  const daily = effectiveDaily({ value: cfg.craftDaily ?? 0, setAt: cfg.craftDailyAt, now, server });
+  const cfgEff = { ...cfg, craftDaily: daily.value };
+  const c = computeCraft({ rec, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling });
+  const savings = waitSavings({ rec, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling });
+  const note = showDailyNote({ craftDaily: cfg.craftDaily, hasCard: !!savings });
   const { specialty, autoRRR, craftRRR } = c.rates;
   const { issues, lines, fee, totalCost, units, unitCost, missing, options, best, ready, plan, used, refinable, allBest } = c;
 
@@ -43,7 +51,6 @@ export default function Crafting() {
 
   // Giro (IDEIA-010): histórico só do item final, só depois de os preços chegarem, uma requisição por item (cache de 1 h).
   const { history, loading: histLoading, error: histError } = useHistory([targetMid], { cities: SELL_CITIES, enabled: !!rec && !!prices });
-  const [now] = useState(Date.now);
   const statsOf = (city) => (history?.[targetMid] ? windowStats(history[targetMid][city], { now }) : null);
   const share = validateInputs({ share: cfg.share });
   const giroRows = [...new Set(opts.map((o) => o.city))].map((city) => ({ city, stats: statsOf(city) })).filter((r) => r.stats);
@@ -72,6 +79,17 @@ export default function Crafting() {
         </Field>
         <Switch label="Bônus de especialização ativo" hint="Ajuste se o bônus da cidade for diferente" checked={specialty} onChange={(v) => set({ specialty: v })} />
         <Switch label="Usar foco" hint="+59% de bônus de produção" checked={cfg.focus} onChange={(v) => set({ focus: v })} />
+        <Field label="Bônus diário do item" hint={`RRR atual: ${(craftRRR * 100).toFixed(1)}%. Informe o bônus do dia da categoria deste item.`}>
+          <select className="input" value={[10, 20].includes(+cfg.craftDaily) ? +cfg.craftDaily : 0} onChange={(e) => set({ craftDaily: +e.target.value, craftDailyAt: Date.now() })}>
+            <option value={0}>Nenhum</option>
+            <option value={10}>+10%</option>
+            <option value={20}>+20%</option>
+          </select>
+          {daily.stale && <div className="hint warn">Bônus de ontem? Passou o reset diário do servidor: usando 0. Escolha o bônus de hoje de novo para confirmar.</div>}
+          {daily.future && <div className="hint warn">Data do bônus no futuro (relógio alterado ou data errada): usando 0. Escolha o bônus de hoje de novo para confirmar.</div>}
+          <InputIssues issues={issues} field="craftDaily" />
+          {note && <div className="hint" data-testid="daily-note">{DAILY_NOTE}</div>}
+        </Field>
         <div className="cols-2">
           <Field label="Nº de crafts">
             <NumberInput min={1} value={cfg.crafts} onChange={(v) => set({ crafts: v })} />
@@ -397,6 +415,8 @@ export default function Crafting() {
             <p className="hint">Custo total do material para a quantidade acima. As duas últimas colunas mostram quanto você economizaria esperando o dia de bônus de refino daquele recurso (+10% ou +20%). “Melhor” decide em cada tier se compensa comprar o refinado pronto ou refiná-lo (inclusive só de uma parte da cadeia).</p>
           </div>
         )}
+
+        {rec && <DailyWait savings={savings} crafts={c.rates.crafts} waitCost={cfg.waitCost} onWaitCost={(v) => set({ waitCost: v })} />}
 
         {rec && prices && (
           <PriceMatrix title="Preços por cidade · itens desta cadeia" prices={prices} mids={ids} used={used} useOrders={cfg.useOrders} targetMid={targetMid} />
