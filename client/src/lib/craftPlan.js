@@ -29,7 +29,7 @@ export function craftChainIds(rec, targetMid) {
 export function craftRates(cfg, bonusCity) {
   const specialty = cfg.specialty ?? (bonusCity === cfg.craftCity);
   const crafts = Math.max(1, +cfg.crafts || 1);
-  const autoRRR = calcRRR({ kind: 'craft', specialty, focus: cfg.focus });
+  const autoRRR = calcRRR({ kind: 'craft', specialty, focus: cfg.focus, daily: +cfg.craftDaily || 0 });
   const craftRRR = resolveRRR(autoRRR, cfg.customRRR);
   // RRR do refino por tipo de recurso: bônus base + bônus da cidade especializada (se refinar lá) + foco + bônus diário do recurso
   const refineRRRFor = (type, daily = +(cfg.refineDaily?.[type] ?? 0)) =>
@@ -143,3 +143,28 @@ export function computeCraft({ rec, targetMid, prices, cfg: rawCfg, premium, bon
 
   return { rates, lines, matCost, fee, totalCost, units, unitCost, missing, options, best, ready, plan, used, refinable, allBest, issues };
 }
+
+// Economia mínima (prata) para contar como ganho: decisão de produto sem fonte; o mesmo limiar do comparativo de refino da tela.
+export const GAIN_THRESHOLD = 0.5;
+
+/**
+ * IDEIA-041: quanto o lote economizaria se o bônus diário do item fosse +10% ou +20% (valor ABSOLUTO que substitui o atual).
+ * Reaproveita computeCraft em cada cenário (a taxa de bancada não depende do RRR, então não entra na diferença).
+ * null se não há receita, preços ou algum material do cenário atual está sem preço.
+ */
+export function waitSavings({ rec, targetMid, prices, cfg, premium, bonusCity, feeCeiling, levels = [10, 20] }) {
+  if (!rec || !prices) return null;
+  const args = { rec, targetMid, prices, premium, bonusCity, feeCeiling };
+  const now = computeCraft({ ...args, cfg });
+  if (now.missing.length) return null;
+  const crafts = now.rates.crafts;
+  const rows = levels.map((daily) => {
+    const totalCost = computeCraft({ ...args, cfg: { ...cfg, craftDaily: daily } }).totalCost;
+    const lot = Math.max(0, now.totalCost - totalCost);
+    return { daily, totalCost, perCraft: lot / crafts, lot, gain: lot > GAIN_THRESHOLD };
+  });
+  return { base: now.totalCost, rows };
+}
+
+/** "Vale esperar": há ganho e a economia do lote supera o custo de esperar (campo do usuário; inválido ou negativo = 0). */
+export const worthWaiting = (row, waitCost) => row.gain && row.lot > Math.max(0, +waitCost || 0);
