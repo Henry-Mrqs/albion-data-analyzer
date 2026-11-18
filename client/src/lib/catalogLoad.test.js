@@ -64,6 +64,15 @@ describe('validateCatalog: itens e alt (DT-007, IDEIA-049)', () => {
       expect(r.problems.join(' ')).toMatch(/alt/);
     }
   });
+  it('alt.at fora da receita (>= r.length) é inválido, com mensagem clara apontando o item', () => {
+    const n = arc.r.length;
+    for (const at of [n, n + 1, 99]) {
+      const r = validateCatalog(comItens([...base, { ...arc, alt: { at, v: arc.alt.v } }]));
+      expect(r.ok).toBe(false);
+      expect(r.problems.join(' ')).toMatch(/alt\.at fora da receita.*items\[3\]/);
+    }
+    expect(validateCatalog(comItens([...base, { ...arc, alt: { at: n - 1, v: arc.alt.v } }])).ok).toBe(true);
+  });
   it('alt ausente é válido (catálogo antigo e novo); alt bom é válido', () => {
     const { alt, ...semAlt } = arc; // eslint-disable-line no-unused-vars
     expect(validateCatalog(comItens([...base, semAlt])).ok).toBe(true);

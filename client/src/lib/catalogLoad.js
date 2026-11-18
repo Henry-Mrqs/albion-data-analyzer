@@ -29,14 +29,17 @@ const isAlt = (a) =>
 function itemProblems(items) {
   const bad = [];
   const badAlt = [];
+  const badAt = [];
   items.forEach((it, k) => {
     if (!isObj(it) || typeof it.i !== 'string' || it.i === '') bad.push(k);
     else if (it.alt !== undefined && !isAlt(it.alt)) badAlt.push(k);
+    else if (it.alt !== undefined && !(Array.isArray(it.r) && it.alt.at < it.r.length)) badAt.push(k);
   });
   const fmt = (arr) => arr.slice(0, 3).map((k) => `items[${k}]`).join(', ') + (arr.length > 3 ? ` e mais ${arr.length - 3}` : '');
   const out = [];
   if (bad.length) out.push(`item inválido (esperado objeto com id "i" em texto): ${fmt(bad)}`);
   if (badAlt.length) out.push(`alt malformado (esperado {at, v}): ${fmt(badAlt)}`);
+  if (badAt.length) out.push(`alt.at fora da receita (índice maior que a lista r): ${fmt(badAt)}`);
   return out;
 }
 
