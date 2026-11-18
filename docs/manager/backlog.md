@@ -54,18 +54,33 @@ Status possíveis: `NOVA → TRIADA → PLANEJADA → EM_EXECUÇÃO → EM_QA �
 | IDEIA-027 | **Histórico de cálculos** local | 2 | 2 | 4 | 2 | 10 | NOVA |
 | IDEIA-033 | **PWA / instalável / offline do catálogo** | 2 | 1 | 3 | 2 | 8 | NOVA |
 
-Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43. Meta: 50 `VERIFICADA`. O Pesquisador precisa acrescentar pelo menos ~30 ideias para sobrar margem.
+Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2 = 53. Meta: 50 `VERIFICADA`. O Pesquisador precisa acrescentar pelo menos ~30 ideias para sobrar margem.
 
 ## Ideias acrescentadas no Loop 1 (origem: AUDITORIA-001 e Pesquisador)
 
 | ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
 |---|---|---|---|---|---|---|---|
-| IDEIA-038 | **Corrigir a tabela de cidades de bônus de craft** (4 de 6 linhas erradas em produção), incluir Brecilien e passar a usar o `craftingcategory` do dump em vez de subcategoria de loja. Base: AUDITORIA-001 §4.2, conferida pelo Gerente no dump | 5 | 5 | 4 | 3 | 17 | NOVA (dossiê formal pedido; **correção de bug em produção, 1ª da fila**) |
-| IDEIA-041 | **Bônus diário também no RRR do craft final** (hoje só entra no refino) e alerta "vale esperar o bônus do dia" | 4 | 5 | 4 | 3 | 16 | NOVA (dossiê formal pedido) |
-| IDEIA-039 | **"Não retorna recursos" por ingrediente** lido do dump (`maxreturnamount=0`) no lugar do regex | 4 | 5 | 4 | 2 | 15 | NOVA (dossiê formal pedido) |
+| IDEIA-038 | **Corrigir a tabela de cidades de bônus de craft** (4 de 6 linhas erradas em produção), incluir Brecilien e passar a usar o `craftingcategory` do dump em vez de subcategoria de loja. Base: AUDITORIA-001 §4.2, conferida pelo Gerente no dump | 5 | 5 | 4 | 3 | 17 | TRIADA (dossiê ALTA; **ampliada**: itens Royal herdam bônus indevido. **Correção de bug em produção, 1ª da fila**) |
+| IDEIA-041 | **Bônus diário também no RRR do craft final** (hoje só entra no refino) e alerta "vale esperar o bônus do dia" | 4 | 5 | 4 | 3 | 16 | TRIADA (dossiê MÉDIA; pede 1 print do bônus do dia, ver D-014) |
+| IDEIA-039 | **"Não retorna recursos" por ingrediente** lido do dump (`maxreturnamount=0`) no lugar do regex | 4 | 5 | 4 | 2 | 15 | TRIADA (dossiê MÉDIA-ALTA; Royal/capas/_SET* subestimam o custo em ~24,8%) |
 | IDEIA-044 | **Custo de viagem/teleporte** no lucro de transporte | 3 | 3 | 4 | 3 | 13 | NOVA |
 | IDEIA-046 | **Culinária e poções** com custo de nutrição | 4 | 3 | 2 | 4 | 13 | NOVA (fórmula de foco por nutrição NÃO VERIFICADA) |
 | IDEIA-042 | **Itens Royal e capas de cidade** (base e tokens não retornam) | 3 | 4 | 2 | 3 | 12 | NOVA |
 | IDEIA-043 | **Fragmentos** (runa → alma → relíquia) com retorno parcial | 3 | 3 | 2 | 3 | 11 | NOVA |
 | IDEIA-047 | **Fazenda e animais**: lucro por plantação/cria | 3 | 2 | 2 | 4 | 11 | NOVA |
 | IDEIA-045 | **Reciclagem (salvage) e reparo/durabilidade** | 2 | 3 | 2 | 3 | 10 | NOVA |
+
+## Ideias acrescentadas no lote 2 do Pesquisador
+
+| ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
+|---|---|---|---|---|---|---|---|
+| IDEIA-049 | **Receitas alternativas**: artefato **ou** ficha de favor; base Royal SET1/2/3; escolhe a mais barata (560 itens com artefato/ficha + 45 Royal) | 4 | 5 | 3 | 5 | 17 | TRIADA (estrutura ALTA, preço MÉDIA) |
+| IDEIA-048 | **Despesas extras** no lucro e "venda sem imposto de mercado" | 4 | 4 | 4 | 4 | 16 | TRIADA (MÉDIA; sem valores padrão inventados) |
+| IDEIA-054 | **"Vale pagar Premium?"**: ponto de equilíbrio com o preço do ouro (constantes editáveis e datadas) | 3 | 4 | 4 | 4 | 15 | TRIADA (MÉDIA) |
+| IDEIA-057 | **Corrigir transmutação listada como receita de craft**: 20 recursos brutos (`T5_WOOD` ← `T4_WOOD`...) aparecem como craftáveis no catálogo. Confirmado pelo Gerente em `catalog.json` | 3 | 5 | 5 | 2 | 15 | TRIADA (**correção de bug**, base: dossiê 050) |
+| IDEIA-050 | **Calculadora de transmutação** de recursos brutos | 3 | 4 | 3 | 4 | 14 | NOVA (bloqueada: fator do servidor precisa de 1 medição do usuário) |
+| IDEIA-051 | **Dimensionar o lote**: limites de foco, demanda, materiais e prata | 4 | 3 | 2 | 5 | 14 | TRIADA (MÉDIA, depende de 002) |
+| IDEIA-053 | **Confiança da rota por histórico** ("quantos dos últimos N dias deu lucro") | 4 | 3 | 2 | 5 | 14 | TRIADA (MÉDIA, depende de 010) |
+| IDEIA-055 | **Hideout como local de craft** (nível de poder, bônus geral/especialista, zona) | 3 | 4 | 3 | 4 | 14 | NOVA (pede 1 confirmação em jogo do RRR de uma bancada) |
+| IDEIA-052 | **Flip de encantamento** no Flipper | 4 | 3 | 2 | 5 | 14 | NOVA (**BLOQUEADA**: taxa de encantar sem fonte; lucro seria enganoso, D-014) |
+| IDEIA-056 | **Diário de operações** e lucro realizado (custo FIFO) | 3 | 2 | 1 | 4 | 10 | NOVA (esforço alto, baixa fidelidade; fica para o fim) |

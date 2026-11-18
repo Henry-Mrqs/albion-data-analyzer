@@ -55,5 +55,13 @@ Conferi de forma independente os números da 030 (C = 3.524,27; equilíbrio 3.77
 **Ordem de entrega:** a IDEIA-001 (infra) sobe sozinha como o deploy 1, assim que o Tester aprovar, para que todas as outras branches partam de uma `master` com testes. Só então entram 038/019 etc.
 **Paralelismo:** 023 (só `App.jsx` + arquivos novos) é livre com tudo. 030 e 031 tocam `Crafting.jsx`/`Refining.jsx` em uma linha cada: rodam em sequência ou com merge simples, nunca junto de 038/019/041 no mesmo arquivo sem ordem.
 
+## D-014 — Triagem do lote 2
+**Verificado pelo Gerente em `client/public/data/catalog.json`:** (a) 20 recursos brutos têm "receita" (`T5_WOOD` = 1 `T4_WOOD`, `T6_WOOD` = 1 `T5_WOOD`...), que é transmutação, não craft: o Craft os oferece como craftáveis (bug em produção, vira IDEIA-057); (b) itens `*_ROYAL` entram com categoria de loja de armadura de placa/capuz e ingredientes `*_SET1` + `QUESTITEM_TOKEN_ROYAL_*`: herdam o bônus de cidade indevidamente e retornam recursos que não deveriam (038 e 039); (c) 715 itens têm artefato/ficha de favor na receita lida (primeira receita só).
+**Aceitas:** 038 (ampliada), 039, 041, 019, 049, 048, 054, 057 (nova), 051 e 053 (dependem de 002 e 010).
+**Bloqueadas por falta de fonte (gate de dados):** 052 (taxa de encantar), 050 e 055 (precisam de 1 medição do usuário). Não entram em execução até chegar a medição.
+**Fim da fila:** 056 (diário de operações): esforço alto e não melhora a precisão do cálculo.
+**Ordem de execução (continua D-011):** 038 → 057 → 039 (grupo catálogo, sequenciais: mesmos arquivos) em paralelo com 019 → 041 (grupo econ/craftPlan). Depois 023, 030, 031, 049, 048, 054.
+**Medições pedidas ao usuário** (somam-se às de D-012): (i) print do bônus diário do dia na janela de produção (041); (ii) custo mostrado em jogo para 1 transmutação (050); (iii) RRR mostrado numa bancada de hideout com nível e zona conhecidos (055); (iv) custo em prata de encantar um item T4 (009/052).
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.
