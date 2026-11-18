@@ -1,7 +1,6 @@
 // Preço-alvo reverso: dado o custo unitário, por quanto listar para lucrar X, ter margem M ou empatar.
 // Inverte netSale: o fator de líquido k vem de econ.js (nunca recalculado aqui).
 import { netSale, SETUP_FEE } from './econ';
-import { CITIES, quote } from './market';
 
 /**
  * Menor preço de venda inteiro P tal que líquido(P) >= custo + lucro.
@@ -22,13 +21,3 @@ export function targetPrice({ cost, profit, margin, premium, mode, relists = 0 }
 
 /** Quanto o alvo está acima (+) ou abaixo (-) do preço atual, como fração. */
 export const marketGap = (target, current) => (current > 0 ? target / current - 1 : null);
-
-/** Menor preço de venda atual (> 0) entre as cidades reais (sem Mercado Negro). */
-export function lowestListing(prices, mid) {
-  let best = null;
-  for (const city of CITIES) {
-    const { price, date } = quote(prices, mid, city, 'sell');
-    if (price > 0 && (!best || price < best.price)) best = { price, city, date };
-  }
-  return best;
-}

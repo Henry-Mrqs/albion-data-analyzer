@@ -98,6 +98,8 @@ describe('exits (saída com comprador real)', () => {
   it('prices null ou item ausente: listas vazias e null', () => {
     expect(exitsFor(null, 'T4_X', { now })).toEqual([]);
     expect(bestBuyer(null, 'T4_X', { now })).toBeNull();
+    expect(bestBuyer(mkPrices({}), 'T4_X', { now })).toBeNull();
+    expect(exitsFor(mkPrices({}), 'T4_X', { now })).toEqual([]);
   });
 
   it('030: poção T4, alvo 2.924, menor listado 1.275 em Caerleon mas Martlock tem comprador a 3.796', () => {
