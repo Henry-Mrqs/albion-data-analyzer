@@ -45,3 +45,13 @@ export function referenceTable() {
         }
   return rows;
 }
+
+/** Retorno esperado de uma receita em `crafts` crafts. Ingredientes que não retornam ficam com retorno 0. */
+export function recipeReturn(rec, crafts, rrrValue) {
+  const n = Math.floor(+crafts) >= 1 ? Math.floor(+crafts) : 1;
+  return rec.res.map((r) => {
+    const gross = r.count * n;
+    const returned = r.returnable ? gross * rrrValue : 0;
+    return { uniq: r.uniq, name: r.name, gross, returned, net: gross - returned, returnable: r.returnable };
+  });
+}

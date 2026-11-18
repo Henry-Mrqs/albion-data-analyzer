@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { loadFixtureCatalog } from '../test/helpers';
-import { craftBonusCity } from './catalog';
-import { isSpecialty, referenceTable, rrrFor } from './rrrCalc';
+import { craftBonusCity, recipeOf } from './catalog';
+import { isSpecialty, recipeReturn, referenceTable, rrrFor } from './rrrCalc';
 
 beforeEach(loadFixtureCatalog);
 
@@ -66,6 +66,39 @@ describe('referenceTable', () => {
       const row = t.find((x) => Math.abs(x.pb - pb) < 1e-6);
       expect(row, `PB ${pb}`).toBeTruthy();
       expect(row.rrr).toBeCloseTo(r, 4);
+    }
+  });
+});
+
+describe('recipeReturn', () => {
+  it('lote do dossiê: 100 crafts, sem foco (RRR 24,8120%)', () => {
+    const rows = recipeReturn(recipeOf('T6_MAIN_SWORD'), 100, 33 / 133);
+    expect(rows.map((r) => r.gross)).toEqual([1600, 800]);
+    expect(rows[0].returned).toBeCloseTo(396.99, 2);
+    expect(rows[1].returned).toBeCloseTo(198.5, 2);
+    expect(rows[0].net).toBeCloseTo(1203.01, 2);
+    expect(rows[1].net).toBeCloseTo(601.5, 2);
+  });
+  it('com foco (47,9167%)', () => {
+    const r = rrrFor(build({ city: 'ESPECIALISTA', focus: true })).rrr;
+    const rows = recipeReturn(recipeOf('T6_MAIN_SWORD'), 100, r);
+    expect(rows[0].returned).toBeCloseTo(766.67, 2);
+    expect(rows[1].returned).toBeCloseTo(383.33, 2);
+    expect(rows[0].net).toBeCloseTo(833.33, 2);
+    expect(rows[1].net).toBeCloseTo(416.67, 2);
+  });
+  it('artefato não retorna', () => {
+    const rows = recipeReturn(recipeOf('T6_MAIN_SWORD_CRYSTAL'), 100, 0.5);
+    const last = rows[rows.length - 1];
+    expect(last.returnable).toBe(false);
+    expect(last.gross).toBe(100);
+    expect(last.returned).toBe(0);
+    expect(last.net).toBe(100);
+  });
+  it('crafts inválido vira 1', () => {
+    for (const c of [0, '', -3]) {
+      const rows = recipeReturn(recipeOf('T6_MAIN_SWORD'), c, 0.25);
+      expect(rows.map((r) => r.gross)).toEqual([16, 8]);
     }
   });
 });
