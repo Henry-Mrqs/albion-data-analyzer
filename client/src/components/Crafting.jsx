@@ -1,5 +1,5 @@
 import { Route } from 'lucide-react';
-import { REFINING, getItem, recipeOf, marketId, nameOf, refinedTypeOf, craftBonusCity, categoryLabel } from '../lib/catalog';
+import { CRAFT_CITIES, REFINING, getItem, recipeOf, marketId, nameOf, refinedTypeOf, craftBonusCity, categoryLabel } from '../lib/catalog';
 import { CITIES, cityLabel, usePrices } from '../lib/market';
 import { fmt, pct } from '../lib/econ';
 import { computeCraft, craftChainIds, keyOf } from '../lib/craftPlan';
@@ -22,7 +22,7 @@ export default function Crafting() {
   const item = getItem(sel.id);
   const rec = item ? recipeOf(sel.id, sel.ench) : null;
   const targetMid = marketId(sel.id, sel.ench);
-  const bonusCity = item ? craftBonusCity(item.c) : null;
+  const bonusCity = item ? craftBonusCity(item) : null;
   const ids = craftChainIds(rec, targetMid);
   const { prices, loading, error, updatedAt, refresh } = usePrices(ids);
 
@@ -44,7 +44,7 @@ export default function Crafting() {
         <h3>Produção</h3>
         <Field label="Craftar em" hint={bonusCity ? `Cidade com bônus para este item: ${bonusCity}.` : 'Sem cidade de bônus conhecida para este item.'}>
           <select className="input" value={cfg.craftCity} onChange={(e) => set({ craftCity: e.target.value, specialty: null })}>
-            {CITIES.map((c) => (
+            {CRAFT_CITIES.map((c) => (
               <option key={c} value={c}>
                 {c}
                 {c === bonusCity ? ' (bônus)' : ''}

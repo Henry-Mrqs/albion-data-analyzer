@@ -1,30 +1,32 @@
-import { CATEGORIES, REFINING, categoryLabel, craftBonusCity, getItem, marketId, nameOf, recipeOf } from '../lib/catalog';
-import { CITIES } from '../lib/market';
+import { CRAFT_CITIES, REFINING, NO_CRAFT_CATEGORY_LABEL, cityOfCategory, craftCategories, craftCategoryLabel, getItem, marketId, nameOf, recipeOf } from '../lib/catalog';
 import { usePersisted } from '../lib/settings';
-import { recipeReturn, referenceTable, rrrFor } from '../lib/rrrCalc';
+import { itemCraftInfo, recipeReturn, referenceTable, rrrFor } from '../lib/rrrCalc';
 import ItemSelector from './ItemSelector';
 import { Banner, Field, NumberInput, Segmented, Switch } from './ui';
 
 const n2 = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const n1 = (n) => n.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
-const CRAFT_CATEGORIES = Object.keys(CATEGORIES).filter((c) => !c.startsWith('crafting/'));
 const DAILY_LABEL = { 0: 'Nenhum', 10: '+10%', 20: '+20%' };
 const REFERENCE = referenceTable();
 
 export default function RrrCalculator() {
   const [cfg, setCfg] = usePersisted('rrr:cfg', {
-    kind: 'craft', city: 'Lymhurst', category: 'weapons/sword', resource: 'PLANKS',
+    kind: 'craft', city: 'Lymhurst', category: 'sword', resource: 'PLANKS',
     focus: false, daily: 0, item: null, crafts: 100,
   });
   const set = (patch) => setCfg((c) => ({ ...c, ...patch }));
   const sel = cfg.item ?? { id: 'T6_MAIN_SWORD', ench: 0 };
 
   const refine = cfg.kind === 'refine';
-  const res = rrrFor(cfg);
+  const cats = craftCategories();
+  // valor salvo de versão antiga (ex.: 'weapons/sword') não é craftingcategory: cai em espada
+  const category = cfg.category === '' || cats.includes(cfg.category) ? cfg.category : 'sword';
+  const res = rrrFor({ ...cfg, category });
   const { parts } = res;
   const per100 = res.rrr * 100;
 
-  const bonusCity = refine ? REFINING[cfg.resource]?.city : craftBonusCity(cfg.category);
+  const bonusCity = refine ? REFINING[cfg.resource]?.city : cityOfCategory(category);
+  const info = itemCraftInfo(getItem(sel.id));
   const rec = getItem(sel.id) ? recipeOf(sel.id, sel.ench) : null;
   const rows = rec ? recipeReturn(rec, cfg.crafts, res.rrr) : [];
 
@@ -44,7 +46,7 @@ export default function RrrCalculator() {
         <Segmented value={cfg.kind} onChange={(v) => set({ kind: v })} options={[{ value: 'refine', label: 'Refino' }, { value: 'craft', label: 'Craft' }]} />
         <Field label="Cidade" hint={bonusCity ? `Cidade com bônus de especialização: ${bonusCity}.` : 'Sem cidade de bônus conhecida para esta categoria.'}>
           <select className="input" value={cfg.city} onChange={(e) => set({ city: e.target.value })}>
-            {CITIES.map((c) => (
+            {CRAFT_CITIES.map((c) => (
               <option key={c} value={c}>
                 {c}
                 {c === bonusCity ? ' (bônus)' : ''}
@@ -64,12 +66,13 @@ export default function RrrCalculator() {
           </Field>
         ) : (
           <Field label="Categoria do item">
-            <select className="input" value={cfg.category} onChange={(e) => set({ category: e.target.value })}>
-              {CRAFT_CATEGORIES.map((c) => (
+            <select className="input" value={category} onChange={(e) => set({ category: e.target.value })}>
+              {cats.map((c) => (
                 <option key={c} value={c}>
-                  {categoryLabel(c)}
+                  {craftCategoryLabel(c)}
                 </option>
               ))}
+              <option value="">{NO_CRAFT_CATEGORY_LABEL}</option>
             </select>
           </Field>
         )}
@@ -99,7 +102,14 @@ export default function RrrCalculator() {
 
         <div className="card stack">
           <h3>Receita</h3>
-          <ItemSelector value={sel} onChange={(v) => set({ item: v })} onlyCraftable />
+          <ItemSelector value={sel} onChange={(v) => set({ item: v, ...(getItem(v.id) ? { category: getItem(v.id).cc ?? '' } : {}) })} onlyCraftable />
+          {!refine && info && (
+            <div className="hint" data-testid="item-craft-category">
+              Categoria de craft deste item no jogo: <b>{info.label}</b>
+              {info.city ? ` · cidade de bônus: ${info.city}` : ' · sem cidade de bônus'}
+              {(info.cc ?? '') !== category && ' · atenção: a categoria selecionada à esquerda é outra.'}
+            </div>
+          )}
           <Field label="Nº de crafts">
             <NumberInput min={1} value={cfg.crafts} onChange={(v) => set({ crafts: v })} />
           </Field>

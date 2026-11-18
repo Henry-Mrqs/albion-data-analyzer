@@ -1,6 +1,6 @@
 // Calculadora de RRR: apresenta o que rrr() (econ.js) já calcula. Nenhuma constante de PB é copiada aqui.
 import { rrr } from './econ';
-import { REFINING, craftBonusCity } from './catalog';
+import { REFINING, cityOfCategory, craftCategoryLabel } from './catalog';
 
 // Inverso de RRR = PB / (100 + PB): devolve o PB (em pontos) que gerou o RRR.
 const pbOf = (r) => (100 * r) / (1 - r);
@@ -12,8 +12,14 @@ export function isSpecialty({ kind, city, category, resource }) {
     const entry = REFINING[resource] ?? Object.values(REFINING).find((e) => e.raw === resource);
     return !!entry && entry.city === city;
   }
-  const bonus = category ? craftBonusCity(category) : null;
+  const bonus = cityOfCategory(category); // category = craftingcategory do jogo (item.cc)
   return bonus != null && bonus === city;
+}
+
+/** Categoria de craft do jogo do item escolhido (para o usuário conferir): {cc, label, city}. */
+export function itemCraftInfo(item) {
+  if (!item) return null;
+  return { cc: item.cc, label: craftCategoryLabel(item.cc), city: cityOfCategory(item.cc) };
 }
 
 /** RRR, PB e decomposição do PB (derivada de rrr(), por diferença). */
