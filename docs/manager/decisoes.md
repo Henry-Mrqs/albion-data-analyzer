@@ -224,5 +224,13 @@ Ao rever o relato do retrabalho da 010 (o Executor viu um erro de console causad
 **Prioridade:** alta se a medição mostrar tela branca; média se for erro de console ou efeito visual. Entra antes das ideias novas de funcionalidade.
 **Lição de processo (honesta):** a lacuna é minha: eu escrevi os briefings dos Testers e nunca incluí esse cenário, embora tenha visto o sintoma na 019. O processo achou a lacuna agora, depois de 10 funcionalidades em produção, por acaso, ao ler um relato.
 
+## D-040 — Planos 069, 058 e 048 aprovados; respostas ao Planejador
+1. **058, taxa por cidade:** mostrar a tabela com **aviso por linha** ("taxa não confirmada: usando o padrão"), igual ao critério da 019; **não** esconder a tabela até preencher. Sem presets por cidade (D-008): a taxa de cada cidade é do usuário. Com todas as cidades no padrão a comparação ainda vale para materiais, retorno e bônus.
+2. **058, Brecilien sem preços no cenário "própria cidade":** aceito, mas pela mesma regra da 049: uma opção sem preço **nunca** é indicada como a melhor nem empata; a linha diz "sem preços".
+3. **048, Refino na mesma ideia:** sim, o conceito de despesa extra é o mesmo e o plano já desenhou `refinePlan.js`; condição: o diferencial sem despesas tem que dar **idêntico bit a bit** em Craft **e** Refino; se o Executor não conseguir provar isso para o Refino sem mexer em fórmulas existentes, para e reporta (a ideia se divide).
+4. **048, despesa negativa:** não bloqueia a tela; segue o padrão da 060: **corrige para 0 e avisa** (uma "despesa" negativa seria uma receita extra, outro conceito).
+5. **069, `projects` do Vitest em vez de pragma:** aprovado (ambiente escolhido pela extensão `.test.jsx`, sem depender de comentário em cada arquivo). Versões: `jsdom ^29.1.1`, `@testing-library/react ^16.3.3`, `@testing-library/dom ^10.4.2`; jsdom 30 e 31 exigem Node ≥ 22.22 e a máquina tem 22.19; `user-event` fora (menos de 2 semanas).
+**Ordem:** 070 (correção, plano a seguir) → 069 → 058 → 048. As funcionalidades 002 (depois do deploy da 049) e 031 (depois da 002, por causa da fixture) continuam na fila.
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.

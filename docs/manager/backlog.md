@@ -75,7 +75,7 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 | ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
 |---|---|---|---|---|---|---|---|
 | IDEIA-049 | **Receitas alternativas**: artefato **ou** ficha de favor; base Royal SET1/2/3; escolhe a mais barata (560 itens com artefato/ficha + 45 Royal) | 4 | 5 | 3 | 5 | 17 | EM_QA (Tester #52) |
-| IDEIA-048 | **Despesas extras** no lucro e "venda sem imposto de mercado" | 4 | 4 | 4 | 4 | 16 | TRIADA (MÉDIA; sem valores padrão inventados) |
+| IDEIA-048 | **Despesas extras** no lucro e "venda sem imposto de mercado" | 4 | 4 | 4 | 4 | 16 | PLANEJADA (plano aprovado, D-040) |
 | IDEIA-054 | **"Vale pagar Premium?"**: ponto de equilíbrio com o preço do ouro (constantes editáveis e datadas) | 3 | 4 | 4 | 4 | 15 | TRIADA (MÉDIA) |
 | IDEIA-057 | **Corrigir transmutação listada como receita de craft**: 20 recursos brutos (`T5_WOOD` ← `T4_WOOD`...) aparecem como craftáveis no catálogo. Confirmado pelo Gerente em `catalog.json` | 3 | 5 | 5 | 2 | 15 | **VERIFICADA** (deploy 7) |
 | IDEIA-050 | **Calculadora de transmutação** de recursos brutos | 3 | 4 | 3 | 4 | 14 | NOVA (bloqueada: fator do servidor precisa de 1 medição do usuário) |
@@ -91,7 +91,7 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 |---|---|---|---|---|---|---|---|
 | IDEIA-060 | **Validação das entradas pelas faixas do jogo**: taxa de bancada 0–1.000, bônus diário só 0/10/20, RRR máximo (57,81% refino, 52,83% craft). Evita lucro absurdo por digitação (inclui o achado do Tester, D-015) | 4 | 5 | 5 | 3 | 17 | **VERIFICADA** (deploy 8) |
 | IDEIA-066 | **Aviso de saída ilusória**: preço de venda sem comprador (Caerleon, cidade sem ordem de compra); exemplo real `T4_MAIN_SWORD`: só o Mercado Negro tem comprador e dá prejuízo | 5 | 4 | 3 | 5 | 17 | **VERIFICADA** (deploy 4) |
-| IDEIA-058 | **Comparar cidades de craft**: qual cidade dá o menor custo para o item (taxa por cidade obrigatória) | 4 | 4 | 3 | 5 | 16 | TRIADA (conta ALTA, preços MÉDIA) |
+| IDEIA-058 | **Comparar cidades de craft**: qual cidade dá o menor custo para o item (taxa por cidade obrigatória) | 4 | 4 | 3 | 5 | 16 | PLANEJADA (plano aprovado, D-040) |
 | IDEIA-065 | **Preço de saída realista** ancorado no histórico quando a oferta é isolada | 4 | 3 | 3 | 5 | 15 | TRIADA (MÉDIA; depende de 010; `k` e `N` são decisão de produto) |
 | IDEIA-059 | **Ciclo de vida da ordem**: cada atualização cobra 2,5% de novo e cancelar não devolve (3 correções = 336,75 por unidade no exemplo) | 4 | 3 | 3 | 4 | 14 | TRIADA (escopo reduzido: só O1–O3; base do fee na atualização configurável, BAIXA) |
 | IDEIA-061 | **Ordem de compra × compra instantânea** de material: economia, idade do dado e spread (sem prometer tempo de preenchimento) | 3 | 4 | 4 | 3 | 14 | TRIADA (MÉDIA) |
@@ -115,7 +115,7 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 
 | ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
 |---|---|---|---|---|---|---|---|
-| IDEIA-069 | **Testes de componente (jsdom + Testing Library)**: o mesmo buraco apareceu em 4 ideias (060 `CeilingNotice`/botão "Aceitar", 039 selo "não verificado", 041 avisos e nota no JSX, 049 seletor): mutantes que só a UI revela sobrevivem porque não há teste de componente. Infra, não conta para os 50 (D-001) | — | — | — | — | GATE de qualidade | NOVA (D-037; planejar depois de 010 e 049) |
+| IDEIA-069 | **Testes de componente (jsdom + Testing Library)**: o mesmo buraco apareceu em 4 ideias (060 `CeilingNotice`/botão "Aceitar", 039 selo "não verificado", 041 avisos e nota no JSX, 049 seletor): mutantes que só a UI revela sobrevivem porque não há teste de componente. Infra, não conta para os 50 (D-001) | — | — | — | — | GATE de qualidade | PLANEJADA (plano aprovado, D-040; infra) |
 
 ## Correção acrescentada no Loop 7 (achado do Gerente ao rever o relato da 010)
 
