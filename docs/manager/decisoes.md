@@ -133,5 +133,13 @@ O Flipper só tem o literal `maxAge: 24` em `Flipper.jsx`. O Executor da 066 cri
 4. **DT-004:** 8 mutantes sobrevivem na `exits.js` (M2, M9b, M11, M12, M15, M16, M18, M19). O mais relevante é M15 (o teste de comprador velho usa valor menor que o fresco e não distingue). O código está certo (0 divergências em 5.000 cenários), mas os testes precisam ficar mais fortes: fecham na próxima ideia que tocar `exits.js` (062, 053 ou 065).
 5. **DT-003 ampliada:** além do `maxAge: 24` do Flipper, há "24 h" fixo no texto da dica da tabela. Resolver junto.
 
+## D-026 — IDEIA-038 aprovada; observações e ordem de deploy
+**Aprovada.** Este era o maior erro de dados em produção da auditoria (cidade de bônus de craft errada em 4 de 6 cidades). Observações, nenhuma bloqueia:
+1. **DT-005:** na aba RRR, 35 recursos refinados (ex.: `T6_PLANKS`) mostram a categoria crua "wood" com "sem cidade de bônus" e o aviso de categoria divergente. Um refinado usa o RRR de REFINO (cidade do recurso), não a categoria de craft de equipamento. A aba deve tratar refinados como refino. Entra no plano da 057 (mesmos arquivos de catálogo e RRR) ou em uma correção própria, a decidir ao planejar.
+2. O texto do plano ("Sem cidade de bônus") difere do código ("conhecida"): vale o do código (a própria Task 4 manda manter).
+3. `RrrCalculator.jsx` mudou sem estar na lista do plano; decorre da Task 4 e foi aprovado em D-020.
+**Registro de processo:** o Tester gravou por engano chaves de localStorage na produção porque o navegador embutido é compartilhado e foi redirecionado por outro agente; descartou as leituras, limpou as chaves e repetiu em localhost. Passo a exigir, em todo briefing, que o Tester verifique o host ANTES de gravar qualquer coisa no armazenamento.
+**Ordem de deploy:** deploy 4 (066) está em curso; deploy 5 = **038**. A 060 tem conflito provável com a 038 (`RrrCalculator.jsx`, `Crafting.jsx`, `craftPlan.test.js`): se a 060 for aprovada, o Executor dela faz rebase sobre a `master` já com 038 e 066, resolve com testes e o Tester confere o resultado do rebase. A 057 e a 039 começam depois do deploy 5.
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.
