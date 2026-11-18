@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { validateInputs, cleanCraftCfg, cleanRefineCfg, MAX_QTY } from './inputRules';
 import { stationFee } from './econ';
 import { DEFAULT_SHARE_PCT } from './liquidity';
+import { DAILY_FOCUS_PREMIUM, MAX_FOCUS_EFFICIENCY } from './focusConsts';
 
 const v = (input, ctx) => validateInputs(input, ctx);
 
@@ -224,5 +225,118 @@ describe('IDEIA-010: share (parte do mercado que você espera capturar, %)', () 
   });
   it('só valida o que está presente: sem a chave share, nada muda', () => {
     expect('share' in v({ crafts: 1 }).values).toBe(false);
+  });
+});
+
+describe('IDEIA-002: campos de foco (eficiência, foco do jogo, orçamento, referência)', () => {
+  describe('efficiency', () => {
+    it.each([[''], ['  '], [undefined], [null]])('vazio (%j) → 0, sem aviso', (x) => {
+      const r = v({ efficiency: x });
+      expect(r.values.efficiency).toBe(0);
+      expect(r.issues).toEqual([]);
+    });
+    it.each([[-1], ['abc'], ['-300'], ['1e']])('negativo ou texto (%j) → 0 com erro', (x) => {
+      const r = v({ efficiency: x });
+      expect(r.values.efficiency).toBe(0);
+      expect(r.issues[0]).toMatchObject({ field: 'efficiency', level: 'error', used: 0 });
+    });
+    it('acima de 31.000 → 31.000 com aviso (máximo 100/100 da AFM)', () => {
+      const r = v({ efficiency: 40000 });
+      expect(r.values.efficiency).toBe(MAX_FOCUS_EFFICIENCY);
+      expect(r.issues[0]).toMatchObject({ field: 'efficiency', level: 'warn', used: 31000 });
+      expect(r.issues[0].msg).toContain('40.000');
+    });
+    it.each([[31000], [0], [15500.5], ['300'], [' 300 ']])('válido (%j) passa sem aviso', (x) => {
+      const r = v({ efficiency: x });
+      expect(r.values.efficiency).toBe(+String(x).trim());
+      expect(r.issues).toEqual([]);
+    });
+    it('Infinity vira o máximo com aviso', () => expect(v({ efficiency: Infinity }).values.efficiency).toBe(31000));
+  });
+
+  describe('focusPoints (foco por craft mostrado no jogo)', () => {
+    it.each([[''], [undefined], [null]])('vazio (%j) → null, sem aviso', (x) => {
+      const r = v({ focusPoints: x });
+      expect(r.values.focusPoints).toBeNull();
+      expect(r.issues).toEqual([]);
+    });
+    it.each([[0], [-5], ['abc']])('zero, negativo ou texto (%j) → null com erro', (x) => {
+      const r = v({ focusPoints: x });
+      expect(r.values.focusPoints).toBeNull();
+      expect(r.issues[0]).toMatchObject({ field: 'focusPoints', level: 'error', used: null });
+    });
+    it('acima do teto técnico → MAX_QTY com aviso', () => {
+      const r = v({ focusPoints: 1e12 });
+      expect(r.values.focusPoints).toBe(MAX_QTY);
+      expect(r.issues[0]).toMatchObject({ field: 'focusPoints', level: 'warn', used: MAX_QTY });
+    });
+    it('120 e 149,99 valem', () => {
+      expect(v({ focusPoints: '120' }).values.focusPoints).toBe(120);
+      expect(v({ focusPoints: 149.99 }).values.focusPoints).toBe(149.99);
+    });
+  });
+
+  describe('focusBudget (foco disponível hoje)', () => {
+    it.each([[''], [undefined], [null]])('vazio (%j) → padrão %s, sem aviso', (x) => {
+      const r = v({ focusBudget: x });
+      expect(r.values.focusBudget).toBe(DAILY_FOCUS_PREMIUM);
+      expect(r.issues).toEqual([]);
+    });
+    it.each([[-1], ['abc']])('negativo ou texto (%j) → padrão com erro', (x) => {
+      const r = v({ focusBudget: x });
+      expect(r.values.focusBudget).toBe(DAILY_FOCUS_PREMIUM);
+      expect(r.issues[0]).toMatchObject({ field: 'focusBudget', level: 'error', used: DAILY_FOCUS_PREMIUM });
+    });
+    it('0 é aceito (acabou o foco do dia), sem aviso', () => {
+      const r = v({ focusBudget: 0 });
+      expect(r.values.focusBudget).toBe(0);
+      expect(r.issues).toEqual([]);
+    });
+    it('acima do teto técnico → MAX_QTY com aviso', () => {
+      const r = v({ focusBudget: 1e12 });
+      expect(r.values.focusBudget).toBe(MAX_QTY);
+      expect(r.issues[0].level).toBe('warn');
+    });
+  });
+
+  describe('focusRef (quanto vale 1 ponto, prata)', () => {
+    it.each([[''], [undefined], [null]])('vazio (%j) → null, sem aviso', (x) => {
+      const r = v({ focusRef: x });
+      expect(r.values.focusRef).toBeNull();
+      expect(r.issues).toEqual([]);
+    });
+    it.each([[-1], ['abc']])('negativo ou texto (%j) → null com erro', (x) => {
+      const r = v({ focusRef: x });
+      expect(r.values.focusRef).toBeNull();
+      expect(r.issues[0]).toMatchObject({ field: 'focusRef', level: 'error', used: null });
+    });
+    it('0 aceito; 5 e 6,78 valem', () => {
+      expect(v({ focusRef: 0 }).values.focusRef).toBe(0);
+      expect(v({ focusRef: 0 }).issues).toEqual([]);
+      expect(v({ focusRef: '6.78' }).values.focusRef).toBe(6.78);
+    });
+    it('acima do teto técnico → MAX_QTY com aviso', () => {
+      const r = v({ focusRef: 1e12 });
+      expect(r.values.focusRef).toBe(MAX_QTY);
+      expect(r.issues[0].level).toBe('warn');
+    });
+  });
+
+  it('idempotentes: validar o valor já corrigido não avisa de novo', () => {
+    for (const [k, x] of [['efficiency', 99999], ['efficiency', 'x'], ['focusPoints', 'x'], ['focusPoints', 1e12], ['focusBudget', -4], ['focusRef', 1e12], ['focusRef', 'x']]) {
+      const once = v({ [k]: x }).values[k];
+      const twice = v({ [k]: once });
+      expect(twice.values[k]).toBe(once);
+      expect(twice.issues).toEqual([]);
+    }
+  });
+  it('só valida o que está presente: sem as chaves de foco, nada muda (estado salvo antigo)', () => {
+    const r = v({ crafts: 1 });
+    for (const k of ['efficiency', 'focusPoints', 'focusBudget', 'focusRef']) expect(k in r.values).toBe(false);
+  });
+  it('estado salvo antigo: todos os campos ausentes juntos dão os padrões, sem aviso e sem NaN', () => {
+    const r = v({ efficiency: undefined, focusPoints: undefined, focusBudget: undefined, focusRef: undefined });
+    expect(r.values).toEqual({ efficiency: 0, focusPoints: null, focusBudget: DAILY_FOCUS_PREMIUM, focusRef: null });
+    expect(r.issues).toEqual([]);
   });
 });
