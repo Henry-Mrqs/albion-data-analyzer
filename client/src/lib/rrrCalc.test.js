@@ -95,6 +95,19 @@ describe('recipeReturn', () => {
     expect(last.returned).toBe(0);
     expect(last.net).toBe(100);
   });
+  it('IDEIA-060: N=1e308 não gera ∞ nem NaN', () => {
+    const rows = recipeReturn(recipeOf('T6_MAIN_SWORD'), 1e308, 33 / 133);
+    for (const r of rows) for (const x of [r.gross, r.returned, r.net]) expect(Number.isFinite(x)).toBe(true);
+    expect(rows[0].gross).toBe(16 * 1e9);
+  });
+  it.each(['', 0, -5, 'abc'])('IDEIA-060: N=%j usa 1', (n) => expect(recipeReturn(recipeOf('T6_MAIN_SWORD'), n, 33 / 133)[0].gross).toBe(16));
+  it('IDEIA-060: N decimal usa floor: 2,7 → 2 e 2,5 → 2 (mata a mutação floor→round)', () => {
+    for (const n of [2.7, 2.5]) expect(recipeReturn(recipeOf('T6_MAIN_SWORD'), n, 33 / 133)[0].gross).toBe(32);
+  });
+  it('IDEIA-060: N=100 continua dando o caso do dossiê: 1.600 / 396,99 / 1.203,01', () => {
+    const r = recipeReturn(recipeOf('T6_MAIN_SWORD'), 100, 33 / 133)[0];
+    expect([r.gross, +r.returned.toFixed(2), +r.net.toFixed(2)]).toEqual([1600, 396.99, 1203.01]);
+  });
   it('crafts inválido vira 1', () => {
     for (const c of [0, '', -3]) {
       const rows = recipeReturn(recipeOf('T6_MAIN_SWORD'), c, 0.25);

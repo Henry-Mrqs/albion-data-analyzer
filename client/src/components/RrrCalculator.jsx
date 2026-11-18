@@ -2,7 +2,9 @@ import { CATEGORIES, REFINING, categoryLabel, craftBonusCity, getItem, marketId,
 import { CITIES } from '../lib/market';
 import { usePersisted } from '../lib/settings';
 import { recipeReturn, referenceTable, rrrFor } from '../lib/rrrCalc';
+import { validateInputs } from '../lib/inputRules';
 import ItemSelector from './ItemSelector';
+import InputIssues from './InputIssues';
 import { Banner, Field, NumberInput, Segmented, Switch } from './ui';
 
 const n2 = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -102,6 +104,7 @@ export default function RrrCalculator() {
           <ItemSelector value={sel} onChange={(v) => set({ item: v })} onlyCraftable />
           <Field label="Nº de crafts">
             <NumberInput min={1} value={cfg.crafts} onChange={(v) => set({ crafts: v })} />
+            <InputIssues issues={validateInputs({ crafts: cfg.crafts }).issues} />
           </Field>
           {rec ? (
             <div className="table-wrap">
