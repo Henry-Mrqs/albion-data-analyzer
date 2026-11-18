@@ -190,8 +190,22 @@ describe('IDEIA-049: recipeOf com variante e recipeVariants', () => {
     expect(recipeVariants('T4_2H_ARCANESTAFF_HELL').map((v) => [v.variant, v.swapped])).toEqual([[0, 'T4_ARTEFACT_2H_ARCANESTAFF_HELL'], [1, 'T4_ARTEFACT_TOKEN_FAVOR_2']]);
     expect(recipeVariants('T4_ARMOR_PLATE_ROYAL').map((v) => v.swapped)).toEqual(['T4_ARMOR_PLATE_SET1', 'T4_ARMOR_PLATE_SET2', 'T4_ARMOR_PLATE_SET3']);
   });
-  it('variante inexistente: null; rec.variants conta as receitas', () => {
-    expect(recipeOf('T4_MAIN_SWORD', 0, 1)).toBeNull();
+  it.each([[1.5], [-1], [-0.5], [2], [99], [NaN], [Infinity], ['1'], ['x'], [null], [undefined], [{}], [[]], [true]])(
+    'variante inválida %s (valor salvo no navegador): cai na variante 0, sem lançar',
+    (v) => {
+      expect(() => recipeOf('T4_2H_ARCANESTAFF_HELL', 0, v)).not.toThrow();
+      expect(recipeOf('T4_2H_ARCANESTAFF_HELL', 0, v)).toEqual(recipeOf('T4_2H_ARCANESTAFF_HELL', 0, 0));
+      expect(recipeOf('T4_MAIN_SWORD', 0, v)).toEqual(recipeOf('T4_MAIN_SWORD'));
+    },
+  );
+  it('item que perdeu variantes: o índice salvo cai na variante 0', () => {
+    expect(recipeOf('T4_MAIN_SWORD', 0, 1)).toEqual(recipeOf('T4_MAIN_SWORD', 0, 0));
+    expect(recipeOf('T4_ARMOR_PLATE_ROYAL', 0, 3)).toEqual(recipeOf('T4_ARMOR_PLATE_ROYAL', 0, 0));
+  });
+  it('variante válida continua valendo (0, 1 e 2 do Royal)', () => {
+    expect(recipeOf('T4_ARMOR_PLATE_ROYAL', 0, 2).res[0].uniq).toBe('T4_ARMOR_PLATE_SET3');
+  });
+  it('rec.variants conta as receitas', () => {
     expect(recipeOf('T4_ARMOR_PLATE_ROYAL').variants).toBe(3);
     expect(recipeOf('T4_MAIN_SWORD').variants).toBe(1);
   });

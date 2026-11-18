@@ -1,6 +1,6 @@
 // Escolha entre receitas alternativas (artefato ou ficha de favor; base Royal SET1/2/3). Puro: sem React nem fetch.
 
-export const FEE_DEPENDENCE_WARNING = 'a escolha depende da taxa de bancada (valor do artefato na taxa não verificado)';
+export const FEE_DEPENDENCE_WARNING = 'a escolha depende da taxa de bancada (valor do artefato na taxa NÃO verificado)';
 
 /** Rótulo da variante a partir do ingrediente que ela troca. */
 export function variantLabel(uniq) {
@@ -34,6 +34,13 @@ export function feeDecides(results) {
   const withFee = pickCheapest(results);
   const noFee = cheapestBy(results, (r) => r.matCost);
   return { withFee, noFee, depends: withFee !== noFee };
+}
+
+/** Índice da receita a usar: 'auto'/ausente = a mais barata; índice salvo inválido ou fora de faixa = 0 (nunca lança). */
+export function resolveVariant(saved, count, auto) {
+  if (saved === undefined || saved === 'auto') return count > 0 ? auto : 0;
+  const n = typeof saved === 'number' || (typeof saved === 'string' && saved.trim() !== '') ? Number(saved) : NaN;
+  return Number.isInteger(n) && n >= 0 && n < count ? n : 0;
 }
 
 /** Selo do ingrediente que não retorna: null quando retorna. `unverified` = barrado só pelo token (fragmento). */

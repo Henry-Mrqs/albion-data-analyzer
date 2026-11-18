@@ -6,7 +6,7 @@ import { fmt, pct, feeIsUnconfirmedDefault } from '../lib/econ';
 import { computeCraft, craftChainIds, keyOf, waitSavings } from '../lib/craftPlan';
 import { effectiveDaily, showDailyNote, DAILY_NOTE } from '../lib/dailyBonus';
 import { annotateOptions, pickExit } from '../lib/exits';
-import { pickCheapest, returnBadge } from '../lib/recipeAlt';
+import { pickCheapest, resolveVariant, returnBadge } from '../lib/recipeAlt';
 import RecipePicker from './RecipePicker';
 import { useSettings, usePersisted } from '../lib/settings';
 import ItemSelector from './ItemSelector';
@@ -41,7 +41,8 @@ export default function Crafting() {
   const cfgEff = { ...cfg, craftDaily: daily.value };
   const results = variants.map((v) => computeCraft({ rec: v.rec, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling }));
   const auto = pickCheapest(results);
-  const idx = cfg.recipeVariant === undefined || cfg.recipeVariant === 'auto' ? auto : Math.min(Math.max(+cfg.recipeVariant || 0, 0), variants.length - 1);
+  const idx = resolveVariant(cfg.recipeVariant, variants.length, auto);
+  const pickerMode = cfg.recipeVariant === undefined || cfg.recipeVariant === 'auto' ? 'auto' : idx;
   const rec = variants[idx]?.rec ?? null;
   const c = results[idx] ?? computeCraft({ rec: null, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling });
   const savings = waitSavings({ rec, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling });
@@ -61,7 +62,7 @@ export default function Crafting() {
         <h2>Craft</h2>
         <ItemSelector value={sel} onChange={(v) => { setSel(v); if (cfg.specialty !== null) set({ specialty: null }); if (v.id !== sel.id && cfg.recipeVariant !== undefined && cfg.recipeVariant !== 'auto') set({ recipeVariant: 'auto' }); }} onlyCraftable />
         {item && <div className="hint">{categoryLabel(item.c)} · <code>{targetMid}</code></div>}
-        <RecipePicker variants={variants} results={results} auto={auto} mode={cfg.recipeVariant} onChange={(v) => set({ recipeVariant: v })} />
+        <RecipePicker variants={variants} results={results} auto={auto} mode={pickerMode}onChange={(v) => set({ recipeVariant: v })} />
 
         <hr className="sep" style={{ margin: 0 }} />
         <h3>Produção</h3>

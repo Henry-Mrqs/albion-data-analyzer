@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { recipeVariants } from './catalog';
 import { computeCraft } from './craftPlan';
-import { FEE_DEPENDENCE_WARNING, feeDecides, pickCheapest, returnBadge, variantLabel } from './recipeAlt';
+import { FEE_DEPENDENCE_WARNING, feeDecides, pickCheapest, resolveVariant, returnBadge, variantLabel } from './recipeAlt';
 import { loadFixtureCatalog, mkPrices } from '../test/helpers';
 
 beforeEach(loadFixtureCatalog);
@@ -82,7 +82,26 @@ describe('aviso da taxa de bancada (D-034/D-012): a escolha depende da taxa?', (
     expect(feeDecides(run(price(null, null))).depends).toBe(false);
     expect(feeDecides([{ missing: [], totalCost: 10, matCost: 10 }]).depends).toBe(false);
   });
-  it('texto do aviso', () => expect(FEE_DEPENDENCE_WARNING).toBe('a escolha depende da taxa de bancada (valor do artefato na taxa não verificado)'));
+  it('texto do aviso', () => expect(FEE_DEPENDENCE_WARNING).toBe('a escolha depende da taxa de bancada (valor do artefato na taxa NÃO verificado)'));
+  it('texto mostrado ao usuário não traz referência interna (D-0xx)', () => expect(FEE_DEPENDENCE_WARNING).not.toMatch(/D-\d+/));
+});
+
+describe('resolveVariant: escolha salva no navegador', () => {
+  it('ausente ou "auto": usa a mais barata', () => {
+    expect(resolveVariant(undefined, 3, 2)).toBe(2);
+    expect(resolveVariant('auto', 3, 1)).toBe(1);
+  });
+  it('índice válido (número ou texto): vale', () => {
+    expect(resolveVariant(1, 3, 0)).toBe(1);
+    expect(resolveVariant('2', 3, 0)).toBe(2);
+  });
+  it.each([[1.5], [-1], [3], [99], [NaN], ['x'], [null], [{}], [Infinity]])('inválido %s ou fora de faixa: variante 0, sem lançar', (v) => {
+    expect(resolveVariant(v, 3, 2)).toBe(0);
+  });
+  it('item que perdeu variantes: índice 1 salvo com 1 receita só cai em 0; sem receitas: 0', () => {
+    expect(resolveVariant(1, 1, 0)).toBe(0);
+    expect(resolveVariant('auto', 0, 0)).toBe(0);
+  });
 });
 
 describe('variantLabel', () => {

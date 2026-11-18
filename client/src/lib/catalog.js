@@ -131,13 +131,14 @@ function baseEntries(it, ench) {
 
 /**
  * Receita do item (id base) em um encantamento. Retorna {amount, focus, variants, res:[{uniq, mid, count, name, value, returnable}]}.
- * variant 0 = receita de sempre; k>0 troca o ingrediente `alt.at` por `alt.v[k-1]` (IDEIA-049); variante inexistente => null.
+ * variant 0 = receita de sempre; k>0 troca o ingrediente `alt.at` por `alt.v[k-1]` (IDEIA-049); variante inválida => variante 0.
  */
 export function recipeOf(baseId, ench = 0, variant = 0) {
   const it = byId.get(baseId);
   if (!it?.r) return null;
   const nVar = 1 + (it.alt?.v.length ?? 0);
-  if (variant < 0 || variant >= nVar) return null;
+  // o índice vem do navegador (estado salvo): qualquer valor inválido ou fora de faixa cai na receita de sempre
+  if (!Number.isInteger(variant) || variant < 0 || variant >= nVar) variant = 0;
   let entries = baseEntries(it, ench);
   if (variant > 0) entries = entries.map((e, k) => (k === it.alt.at ? it.alt.v[variant - 1] : e));
   return { amount: it.a || 1, focus: it.f || 0, variants: nVar, res: entries.map(toRes) };
