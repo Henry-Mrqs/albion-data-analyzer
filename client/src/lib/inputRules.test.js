@@ -86,6 +86,7 @@ describe('achados dos Testers', () => {
       expect(r.issues[0].level).toBe('warn');
     }
     expect(v({ crafts: 1e9 }).issues).toEqual([]);
+    expect(v({ crafts: 1e308 }).issues[0].msg).toBe('Quantidade 1e308 acima do limite de 1.000.000.000: usando 1.000.000.000.');
   });
   it('taxa −400 → 0; Infinity → teto; texto → 400', () => {
     const r = v({ feePer100: -400 });

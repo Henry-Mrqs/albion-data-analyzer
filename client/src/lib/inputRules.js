@@ -8,7 +8,8 @@ const DAILY_OK = [0, 10, 20];
 
 const isEmpty = (x) => x == null || (typeof x === 'string' && x.trim() === '');
 const toNum = (x) => Number(String(x).trim());
-const br = (n) => (Number.isFinite(n) ? n.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) : String(n));
+const br = (n) =>
+  !Number.isFinite(n) ? String(n) : Math.abs(n) >= 1e15 ? n.toExponential().replace('e+', 'e') : n.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 const shown = (raw) => (typeof raw === 'string' ? `"${raw.trim()}"` : br(raw));
 const round2 = (x) => Math.round(x * 100) / 100;
 
@@ -96,7 +97,7 @@ export function validateInputs(input = {}, ctx = {}) {
         add('crafts', 'error', 'qty-invalid', `Quantidade ${shown(raw)} é inválida: usando 1.`, raw, 1);
       } else if (n > maxQty) {
         used = maxQty;
-        add('crafts', 'warn', 'qty-max', `Quantidade ${Number.isFinite(n) ? br(n) : '∞'} acima do limite de ${br(maxQty)}: usando ${br(maxQty)}.`, raw, used);
+        add('crafts', 'warn', 'qty-max', `Quantidade ${Number.isFinite(n) ? br(n) : 'infinita'} acima do limite de ${br(maxQty)}: usando ${br(maxQty)}.`, raw, used);
       } else {
         const f = Math.floor(n);
         if (f < 1) add('crafts', 'error', 'qty-invalid', `Quantidade ${br(n)} é inválida: usando 1.`, raw, 1);
@@ -119,7 +120,7 @@ export function validateInputs(input = {}, ctx = {}) {
         add('relists', 'error', 'relists-invalid', `Relistagens ${shown(raw)} inválidas: usando 0.`, raw, 0);
       } else if (Math.floor(n) > max) {
         used = max;
-        add('relists', 'warn', 'relists-max', `Relistagens ${Number.isFinite(n) ? br(n) : '∞'} acima do máximo de ${max} (o líquido zeraria): usando ${max}.`, raw, used);
+        add('relists', 'warn', 'relists-max', `Relistagens ${Number.isFinite(n) ? br(n) : 'infinita'} acima do máximo de ${max} (o líquido zeraria): usando ${max}.`, raw, used);
       } else {
         used = Math.floor(n);
         if (used !== n) add('relists', 'warn', 'relists-decimal', `Relistagens ${br(n)} não é inteiro: usando ${used}.`, raw, used);
