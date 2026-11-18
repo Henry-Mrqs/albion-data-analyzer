@@ -1,6 +1,6 @@
 # QA IDEIA-060 — Validação das entradas pelas faixas do jogo
 
-**Veredito: APROVADO (com 3 ressalvas não bloqueantes, seção 10).** Branch `feat/IDEIA-060` (a8d7a82), base de comparação = merge-base com master (ae61c3e).
+**Veredito: APROVADO (re-teste do retrabalho nº 1 em 18/11: ressalvas da seção 10 fechadas; ver adendo no fim).** Branch `feat/IDEIA-060`.
 
 ## 1. Funcional
 - `npm run check` na worktree: lint 0 erros, **177 testes passam (8 arquivos)**, build ok.
@@ -67,3 +67,19 @@ Mercado e Flipper abrem. Erros de console vistos (`craftBonusCity ... split`) vi
 
 ## 11. Evidências
 Scripts e saídas em `C:\Users\henry\AppData\Local\Temp\claude\957f91f7a64c930e\6e1f11d4-084e-4248-9930-f6512436786e\scratchpad\` (oracle.mjs, oracle-out.json, gen.js, diff-master.json, diff-branch.json, ach-*.json, ceil.json, mut.mjs, mut-out.txt). Nenhum arquivo do repositório foi alterado por esta QA exceto este laudo.
+
+---
+
+# Re-teste do retrabalho nº 1 (D-030; commits 8b67877, 8f9be92, d7c44d2)
+
+**Veredito após o re-teste: APROVADO.** As 3 ressalvas da seção 10 foram fechadas. Nenhum número normal mudou. Sobram 2 lacunas de teste (limites de `fmt`) e 1 detalhe de texto, nenhum bloqueante.
+
+1. **Merge.** `npm run check`: 269 testes, lint e build ok. `git diff master...feat/IDEIA-060 --stat`: 18 arquivos, só 060 (acrescenta `inputRules.d030.test.js`, `ui.jsx`, `econ.js` só em `fmt`, `InputIssues`, `FeeField`); docs, catálogo e `exits.js` intactos. Os 4 conflitos preservam os três comportamentos: RrrCalculator mantém `craftCategories`/`cityOfCategory`/`itemCraftInfo` (038) e acrescenta só `validateInputs`; TargetPrice mantém `bestBuyer` e a nota "Limitação" (066) e acrescenta só a validação; rrrCalc mantém `cityOfCategory`/`craftCategoryLabel`. Os testes da master (inclusive `exits`, `catalog.real`) rodam dentro da branch e passam.
+2. **`fmt`/`Money` (meu oráculo, fórmula da master).** 2.100.078 comparações (inteiros, negativos, decimais, 0, −0, 1e14, 999999999999999, meios .5, `Money` com e sem `signed` renderizado): **idênticos**. Únicas diferenças: valores cujo arredondamento chega a 1e15 (ex.: 999999999999999,5), que passam a "1e15" por regra. ≥1e15 e não finitos: "1,23e15", "1e300", "valor enorme" (NaN/±Infinity). Locale, sinais e arredondamento intactos.
+3. **`feeCeiling`.** Oráculo escrito antes de ler o código: 13.770 combinações (1.530 tetos x 9 taxas). Zero divergências (ausente = padrão sem aviso, aceito). Texto numérico `'5000'`, null, 0, negativo, NaN, 1e300, Infinity, 1e6+1 voltam a 1.000 e avisam; 1e6 vale. Detalhe: a mensagem diz "de 1 a 1.000.000", mas 0<teto<1 também é aceito.
+4. **Selo, modo, daily.** Selo conta só o visível (PLANKS 15 numa espada: "1 valor corrigido"). Modo "foo" diz "usando ordem de venda"; vazio/null/undefined sem aviso. Aba RRR com `daily` 15 avisa e usa 0 (RRR 36,71% = 58/158).
+5. **TDD de d7c44d2 por mutação (12 mutantes de `fmt`).** 10 mortos (não finito, texto, 1e14, 1e16, 3→2 e 3→4 algarismos, `e+`, vírgula, locale, round→trunc). **2 sobreviventes**: `>= 1e15` virar `> 1e15` (1e15 exato não é testado) e o limite sem `Math.abs` (nenhum teste de negativo grande). Lacuna real de teste, sem efeito no comportamento atual.
+6. **Mutações do retrabalho (12).** Teto `>0`→`>=0`, `<=1e6`→`<`, 1e6→1e7, teto inválido sem aviso, teto ausente avisando, modo vazio avisando, msg de modo sem valor, selo sem filtro (2), `daily` da aba RRR sem validar: todos mortos. 2 sobreviventes são equivalentes (`Number.isFinite` já rejeita texto e ∞). Sem teste unitário (só UI): botão "Aceitar" limitado a 1e6, `CeilingNotice`, `Money`.
+7. **UI (localhost:5197, aba nova, storage próprio limpo ao fim).** Taxa 1e300: aviso "usando 1.000", sem botão Aceitar. Taxa 1e6: botão "Aceitar 1.000.000" grava `feeCeiling=1000000`; com crafts 1e9 mostra "1,73e15"/"1,78e15", sem ∞/NaN; aviso permanente "Teto de taxa aceito: 1.000.000. Restaurar 1.000"; Restaurar volta a 1.000 e o aviso some. Teto salvo 1e300: aviso "Teto de taxa salvo (1e300) é inválido... usando 1.000" e taxa 5.000 vira 1.000 (custo 3.456 = 2 crafts). Modo "foo" e relistagens −3 avisam. 038: `T4_BAG` mostra "Brecilien (bônus)"; RRR mostra categoria. 066: espada T4 mostra "Comprador", "ilusória" e a nota de limitação. Console sem erros; servidor parado.
+
+Scripts: `fmt.test.js`, `ceil.test.js`, `q60mut.mjs`/`q60mut-out.txt` na pasta de scratchpad (`b2/client/src/qa`).

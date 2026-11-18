@@ -177,5 +177,13 @@ O plano da 057 não previu variantes com 2 transmutações: lição para os plan
 **Aprovada.** Confirmado de forma independente o que aceitei em D-029 (`vals` com 2 chaves novas, nenhuma receita as usa, `ingredientValue` idêntico em 1.311 ids). Observações, nenhuma bloqueia: (1) a busca "Madeira" no Craft dá 0 também na master porque os itens se chamam "Troncos de ..."; tábuas e barras seguem craftáveis como antes; (2) o dossiê 050 R3 ("prata igual para todos") não vale para pedra, já corrigido no dossiê; (3) `refineUnit` chamado direto em um recurso bruto agora devolve "sem receita": a UI nunca faz essa chamada.
 **Ordem:** deploy 6 = 067 (em curso), deploy 7 = 057. A 039 (planejada com a regra conservadora D-017) e a 031 (preço de fixture compartilhada) só começam depois do deploy 7, porque mexem em `build-catalog.mjs`/fixture. A 041 espera a 060 estar mesclada.
 
+## D-033 — IDEIA-060 aprovada no re-teste; dívidas e ordem
+**Aprovada.** As 3 ressalvas fecharam; `fmt`/`Money` preservam o texto de todo número normal. Dívidas, nenhuma bloqueia:
+1. **DT-008:** 2 lacunas reais de teste no commit d7c44d2 (o mesmo que o Executor escreveu sem ver falhar, como ele próprio admitiu): `fmt` com `>=` trocado por `>` em 1e15 exato e `fmt` sem `Math.abs` com negativo grande; e faltam testes unitários do limite do botão "Aceitar", de `CeilingNotice` e de `Money`. Fecham no primeiro plano que tocar `inputRules.js`/`fmt`.
+2. A mensagem do teto diz "de 1 a 1.000.000", mas tetos entre 0 e 1 também são aceitos: texto a alinhar com a regra, trivial.
+**Registro de processo:** o Tester provou por mutação que o TDD pulado no d7c44d2 deixou de fato 2 comportamentos sem proteção. É o argumento concreto a favor da regra do briefing ("testes antes").
+**Ordem de deploy:** 7 = 057 (em curso), 8 = **060**. A 041 (plano aprovado) começa depois do deploy 8, parte da `master` com a validação; 039 e 031 depois do deploy 7.
+**Aproveitamento da espera:** o Planejador escreve os planos da 010 (liquidez, base de 062, 053 e 065), 002 (foco) e 049 (receitas alternativas). Cuidado com a API de histórico: limite do AODP (~180 req/min) e cache.
+
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.
