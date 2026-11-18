@@ -46,7 +46,38 @@ describe('validateCatalog', () => {
   });
 });
 
+describe('validateCatalog: itens e alt (DT-007, IDEIA-049)', () => {
+  const comItens = (items) => ({ ...GOOD, items });
+  const base = GOOD.items.slice(0, 3);
+  const arc = GOOD.items.find((i) => i.i === 'T4_2H_ARCANESTAFF_HELL');
+  it('item null, sem i ou com i não string: inválido, apontando o índice', () => {
+    for (const bad of [null, {}, { i: 5 }, 'x']) {
+      const r = validateCatalog(comItens([...base, bad]));
+      expect(r.ok).toBe(false);
+      expect(r.problems.join(' ')).toMatch(/items\[3\]/);
+    }
+  });
+  it('alt malformado: at não inteiro, v não lista, v[0] sem id', () => {
+    for (const alt of [{ at: 'x', v: [['A', 1, 1]] }, { at: 1.5, v: [['A', 1, 1]] }, { at: 2, v: 'x' }, { at: 2, v: [[]] }, { at: 2, v: [[7, 1]] }, { at: 2, v: [] }, 5, { at: -1, v: [['A', 1]] }]) {
+      const r = validateCatalog(comItens([...base, { ...arc, alt }]));
+      expect(r.ok).toBe(false);
+      expect(r.problems.join(' ')).toMatch(/alt/);
+    }
+  });
+  it('alt ausente é válido (catálogo antigo e novo); alt bom é válido', () => {
+    const { alt, ...semAlt } = arc; // eslint-disable-line no-unused-vars
+    expect(validateCatalog(comItens([...base, semAlt])).ok).toBe(true);
+    expect(validateCatalog(comItens([...base, arc])).ok).toBe(true);
+  });
+});
+
 describe('fetchCatalog', () => {
+  it('DT-007: corpo que não é JSON (HTML de erro, resposta cortada) dá a mensagem clara, não o erro cru de JSON.parse', async () => {
+    for (const texto of ['<!doctype html><html>', '{"items":[{"i":"T4_']) {
+      const f = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => JSON.parse(texto) });
+      await expect(fetchCatalog({ fetchFn: f, base: '/' })).rejects.toThrow(/A resposta do catálogo não é um JSON válido.*Recarregue a página \(Ctrl\+F5\)/s);
+    }
+  });
   it('catálogo bom: 1 requisição, URL versionada', async () => {
     const f = vi.fn().mockResolvedValue(ok(GOOD));
     const d = await fetchCatalog({ fetchFn: f, base: '/', id: 'abc' });

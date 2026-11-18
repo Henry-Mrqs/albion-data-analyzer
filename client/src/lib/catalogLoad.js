@@ -21,16 +21,40 @@ export function catalogUrl(base, id, bust) {
   return u;
 }
 
+const isAlt = (a) =>
+  isObj(a) && Number.isInteger(a.at) && a.at >= 0 && Array.isArray(a.v) && a.v.length > 0 &&
+  a.v.every((x) => Array.isArray(x) && typeof x[0] === 'string' && x[0] !== '' && typeof x[1] === 'number');
+
+// DT-007: item null, sem id ou com alt malformado; aponta o índice (no máximo 3 por tipo, para a mensagem não crescer)
+function itemProblems(items) {
+  const bad = [];
+  const badAlt = [];
+  items.forEach((it, k) => {
+    if (!isObj(it) || typeof it.i !== 'string' || it.i === '') bad.push(k);
+    else if (it.alt !== undefined && !isAlt(it.alt)) badAlt.push(k);
+  });
+  const fmt = (arr) => arr.slice(0, 3).map((k) => `items[${k}]`).join(', ') + (arr.length > 3 ? ` e mais ${arr.length - 3}` : '');
+  const out = [];
+  if (bad.length) out.push(`item inválido (esperado objeto com id "i" em texto): ${fmt(bad)}`);
+  if (badAlt.length) out.push(`alt malformado (esperado {at, v}): ${fmt(badAlt)}`);
+  return out;
+}
+
 export function validateCatalog(d) {
   if (!isObj(d)) return { ok: false, problems: ['catálogo não é um objeto'] };
   const problems = REQUIRED.filter(([, test]) => !test(d)).map(([, , msg]) => `campo ausente ou inválido: ${msg}`);
+  if (Array.isArray(d.items)) problems.push(...itemProblems(d.items));
   return { ok: problems.length === 0, problems };
 }
 
 async function get(fetchFn, url, opts) {
   const r = await (opts ? fetchFn(url, opts) : fetchFn(url));
   if (!r.ok) throw new Error(`Catálogo indisponível (HTTP ${r.status})`);
-  return r.json();
+  try {
+    return await r.json();
+  } catch {
+    throw new Error('A resposta do catálogo não é um JSON válido (resposta cortada ou página de erro). Recarregue a página (Ctrl+F5); se persistir, avise o responsável.');
+  }
 }
 
 export async function fetchCatalog({ fetchFn, base, id, now = Date.now }) {
