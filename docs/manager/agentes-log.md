@@ -140,3 +140,6 @@ Uma linha por delegação. Prova de que o trabalho é feito por sub agentes dist
 | #95 (resultado) | Tester | Re-QA da 031 APROVADA; erros de dados: nenhum (19.200 comparações; núcleo numérico idêntico em 6.000 entradas; texto = saída usada em 6.400 cenários; D4 1.125 combinações; D3 medido no Chrome; M29/M23 mortos). Observações O7 (rolar a grade e digitar recentraliza) e O8 (rótulos de linha fora da vista) → 080 | docs/qa/IDEIA-031.md | 2026-11-19 |
 | #99 | Deployer (`aaa68321fe32d45e6`) | Deploy 21 da IDEIA-031 delegado | SendMessage | 2026-11-19 |
 | #99 (resultado) | Deployer | Deploy 21 VERIFICADO (IDEIA-031): SHA f08b13b, bundle index-BMIlwWvE.js, catálogo c0f66cb0bd, 1125 testes, 3 seeds shuffle 0 falhas, cartão de estresse no Craft (centro 1.556) e Refino (centro 337), sem imposto ok, sem rollback | docs/deploy/deploy-21.md | 2026-11-19 |
+| #100 | EXECUTOR (novo, sonnet, worktree) | Implementar IDEIA-075 (Preço-alvo respeita Sem imposto; inclui teste estresse×Preço-alvo) em feat/IDEIA-075 | em curso | docs/plans/IDEIA-075.md | 2026-11-19 |
+| #101 | PESQUISADOR (novo, sonnet) | Dossiês 005 (auditor de variáveis), 012 (confiança do preço), 068 (receitas alternativas do refino) | em curso | docs/research/ | 2026-11-19 |
+| #102 | PLANEJADOR (novo, sonnet) | Planos 065, 059, 054 (dossiês existentes) | em curso | docs/plans/ | 2026-11-19 |
