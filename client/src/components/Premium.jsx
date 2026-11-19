@@ -122,7 +122,10 @@ export default function Premium() {
         </div>
 
         <Banner kind="warn" title="O que este cálculo não conta">
-          Não conta: {NOT_COUNTED.join(', ')} (lista da fonte). O resultado é só imposto + foco − custo. Fontes divergem sobre se os demais benefícios compensam; o app não recomenda a compra.
+          Não conta: {NOT_COUNTED.join(', ')} (AO Refinery; confira no jogo). O resultado é só imposto + foco − custo. Fontes divergem sobre se os demais benefícios compensam; o app não recomenda a compra.
+          <div className="hint">
+            Fonte secundária (AO Refinery), não verificada no wiki oficial: 3.750 ouro por 30 dias, 10.000 de foco por dia, +50% de fama e de coleta, 30 pontos de aprendizado, imposto de 4% contra 8%. Confira no jogo.
+          </div>
         </Banner>
       </div>
     </div>
