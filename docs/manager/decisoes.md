@@ -313,3 +313,6 @@ Ordem: 005 → 059 → 065 → 012; 054 independente (em paralelo com a 005). 00
 
 ## D-061 — 075 aprovada; defeitos viram IDEIA-082; coordenação com a 005
 D1 (3 mutantes), D2 (aviso do Preço-alvo citar "melhor saída do modo escolhido" mesmo desmarcado) e D3 (Mercado Negro só tem ordens de compra; aviso diz "ordem de venda") entram como IDEIA-082, baixa prioridade. A 005 foi executada sem a 075: antes da QA da 005, o Tester faz merge da master (com a 075) na branch; o teste de sensibilidade vai exigir mudar a linha noTax do Preço-alvo de "NÃO considerada" para "aplicada"; esse ajuste é parte da QA/retrabalho da 005.
+
+## D-062 — Respostas ao Executor da 054
+Preço do ouro vem do servidor escolhido no cabeçalho (cache por servidor), o Tester confirma que o endpoint existe por servidor; 375px: o Tester confere antes de qualquer mudança (se a 6ª aba cortar, aplica-se a D-060: só ícone, como retrabalho). Desvio aceito: `force`/`refresh` em gold.js (botão "Atualizar").
