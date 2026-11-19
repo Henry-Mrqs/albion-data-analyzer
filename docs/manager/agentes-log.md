@@ -146,3 +146,5 @@ Uma linha por delegação. Prova de que o trabalho é feito por sub agentes dist
 | #100 (resultado) | Executor | 075 entregue em feat/IDEIA-075 (1158 testes, +41; números do plano batem; smoke Craft 5.085↔4.755 e Refino 1.146↔1.072). Ponto para o Tester: estresse usa c.best (melhor saída geral), Preço-alvo usa a melhor do modo escolhido | 3 commits | 2026-11-19 |
 | #103 | TESTER (novo, sonnet) | QA da IDEIA-075 (oráculo, concordância com estresse, mutação, UI) | docs/qa/IDEIA-075.md | 2026-11-19 |
 | #101/#102 (nota) | Gerente | Pesquisador e Planejador cortados pelo limite de 5h; trabalho parcial salvo (dossiês 005, 012; plano 059); retomados por SendMessage (funcionou) | — | 2026-11-19 |
+| #101 (resultado) | Pesquisador | Dossiês 005, 012 e 068 entregues (005 corrigido 3.983; 012 com limiares como decisão de produto; 068: 85 receitas alternativas = 25 refinados + 5 DEMON_BP em encantos; coração custa 23–37 mil e quase nunca compensa) + 7 perguntas | docs/research/IDEIA-005.md, 012, 068 | 2026-11-19 |
+| #104 | Planejador (`ae07017c48cd1fc11`) | Acrescentar planos 005 (1ª a executar) e 012 após 065/059/054 | SendMessage | 2026-11-19 |

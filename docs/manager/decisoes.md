@@ -304,3 +304,6 @@ Portão de qualidade: o cartão de estresse precisa dizer quais materiais variam
 
 ## D-058 — 076 aprovada; defeitos baixos viram IDEIA-079
 D1 (texto digitado longo sem espaços estoura a página: `overflow-wrap: anywhere` em `.hint`/`.bad`), D2 (mode não finito ecoa), D3 (trim em sanitizeFeeCeiling), D4 (testes de CSS/etiqueta/trim) entram como IDEIA-079, baixa prioridade. Aprovada para deploy sem retrabalho.
+
+## D-059 — Respostas ao Pesquisador (005/012/068)
+1) "Diário" do usuário = bônus diário +10/+20 (já no app); diário de ofício (journal) não é modelado e entra no auditor como "não considerado". 2) Auditor da 005 é o primeiro dos novos a executar (cada ideia nova cria linhas nele). 3) Limiares da 012 aprovados como constantes de produto, exibidos como "regra do app". 4) 068 adiada: comprando o coração (23–37 mil) quase nunca compensa; só vale para quem ganha corações por facção; reavaliar depois (se implementada, o preço do coração é digitado, sem padrão). 5) Coração retornável ou não: NÃO VERIFICADO, depende de conferência em jogo. 6) Receitas em lote do bloco de pedra viram IDEIA-081 (baixa prioridade). 7) Conferências em jogo pendentes seguem na lista ao usuário (valor do artefato na taxa de bancada; foco +59).

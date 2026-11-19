@@ -109,7 +109,7 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 
 | ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
 |---|---|---|---|---|---|---|---|
-| IDEIA-068 | **Receitas alternativas do refino** com ficha de facção (30 refinados; ex.: `T4_PLANKS` = 1 madeira + 1 ficha + 1 tábua T3): hoje o Refino ignora essa receita. Precisa de dossiê (o Pesquisador está em espera) | 3 | 4 | 3 | 4 | 14 | NOVA (sem dossiê; D-034) |
+| IDEIA-068 | **Receitas alternativas do refino** com ficha de facção (30 refinados; ex.: `T4_PLANKS` = 1 madeira + 1 ficha + 1 tábua T3): hoje o Refino ignora essa receita. Precisa de dossiê (o Pesquisador está em espera) | 3 | 4 | 3 | 4 | 14 | ADIADA (D-059) |
 
 ## Infra acrescentada no Loop 6 (padrão repetido nos laudos)
 
@@ -137,3 +137,4 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 | IDEIA-078 | **Caçar teste instável (flaky)**: 1 teste falhou numa execução de `npm test` na master pós-071 (1038 testes) e passou nas seguintes; identificar por repetição (≥20 execuções, shuffle) e corrigir a causa (relógio/ordem/estado compartilhado) | 4 | 3 | 4 | 1 | 12 | VERIFICADA (deploy 20) |
 | IDEIA-079 | **Acabamento de textos longos (076)**: `overflow-wrap: anywhere` em `.hint`/`.bad`, mode não finito sem eco, trim documentado, testes de CSS/etiqueta/trim (D-058; + valor corrompido chega ao input numérico e gera avisos nativos do navegador) | 3 | 3 | 5 | 1 | 12 | NOVA |
 | IDEIA-080 | **Polimento da grade de estresse (031)**: coluna de rótulos fixa (`position: sticky`), não recentralizar ao digitar após o usuário rolar, testes de ligação Refino e de 2+ opções de venda no Craft (O7, O8, N07/N08/N09/N13) | 3 | 3 | 4 | 1 | 11 | NOVA |
+| IDEIA-081 | **Receitas em lote do bloco de pedra** (rocha encantada rende 2, 4 ou 8 blocos por craft; 15 receitas que o app ignora e o parser da 049 não aceita) (D-059) | 3 | 3 | 2 | 3 | 11 | NOVA |
