@@ -32,9 +32,9 @@ export default function ExtrasCard({ list, onChange, issues, crafts, kind = 'cra
       </p>
       {rows.map((r, i) => (
         <div key={i} className="stack" style={{ gap: 4 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto', gap: 8, alignItems: 'center' }}>
+          <div className="extra-row">
             <input
-              className="input input-sm"
+              className="input input-sm extra-name"
               type="text"
               maxLength={200}
               placeholder="Nome (opcional)"
