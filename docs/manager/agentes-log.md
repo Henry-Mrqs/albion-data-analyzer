@@ -88,3 +88,5 @@ Uma linha por delegação. Prova de que o trabalho é feito por sub agentes dist
 | #73 | EXECUTOR (`a02800502b839d8f1`, worktree) | Implementar IDEIA-058 (comparar cidades de craft) em feat/IDEIA-058 | Loop 3 | — | em curso | docs/plans/IDEIA-058.md | 2026-11-19 |
 | #73 (resultado) | Executor | 058 entregue em feat/IDEIA-058 (822 testes, +25; números do dossiê batem; sem smoke visual) | commits 5cf3e70, 27d90e0 | 2026-11-19 |
 | #74 | TESTER (`acf39466f130ed677`) | QA da IDEIA-058 (oráculo independente, UI, estado antigo, mutação) | docs/qa/IDEIA-058.md | 2026-11-19 |
+| #72 (resultado) | Executor | 069 entregue em feat/IDEIA-069 (867 testes: 798 logic + 69 ui; ~64 mutações derrubadas; sem alteração de produção). Desvios: restrição de persistSchemas.test.js sobre `usePersisted('chave'` em .jsx; recipeVariant '9' → 0 | commits e706756..c0addc6 | 2026-11-19 |
+| #75 | TESTER (`ab80650f3b95aac4c`) | QA da IDEIA-069 (diff só de testes, bundle idêntico, mutantes, flakiness) | docs/qa/IDEIA-069.md | 2026-11-19 |

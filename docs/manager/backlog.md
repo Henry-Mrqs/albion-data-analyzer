@@ -115,7 +115,7 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 
 | ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
 |---|---|---|---|---|---|---|---|
-| IDEIA-069 | **Testes de componente (jsdom + Testing Library)**: o mesmo buraco apareceu em 4 ideias (060 `CeilingNotice`/botão "Aceitar", 039 selo "não verificado", 041 avisos e nota no JSX, 049 seletor): mutantes que só a UI revela sobrevivem porque não há teste de componente. Infra, não conta para os 50 (D-001) | — | — | — | — | GATE de qualidade | EM_EXECUÇÃO (plano aprovado, D-040; infra) |
+| IDEIA-069 | **Testes de componente (jsdom + Testing Library)**: o mesmo buraco apareceu em 4 ideias (060 `CeilingNotice`/botão "Aceitar", 039 selo "não verificado", 041 avisos e nota no JSX, 049 seletor): mutantes que só a UI revela sobrevivem porque não há teste de componente. Infra, não conta para os 50 (D-001) | — | — | — | — | GATE de qualidade | EM_QA (Tester #75) (plano aprovado, D-040; infra) |
 
 ## Correção acrescentada no Loop 7 (achado do Gerente ao rever o relato da 010)
 
