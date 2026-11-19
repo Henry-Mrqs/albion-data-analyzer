@@ -13,6 +13,7 @@ import { validateInputs } from '../lib/inputRules';
 import { craftFocusSummary, focusValues } from '../lib/focus';
 import { compareCraftCities } from '../lib/cityCompare';
 import CityCompare from './CityCompare';
+import ExtrasCard from './ExtrasCard';
 import FocusCard, { FocusFields } from './FocusCard';
 import RecipePicker from './RecipePicker';
 import { GiroCard, GiroCell } from './Giro';
@@ -59,11 +60,12 @@ export default function Crafting() {
   const fbase = item ? focusOf(sel.id, sel.ench) : null;
   const fs = rec && prices ? craftFocusSummary({ rec, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling, base: fbase, ...fv.values }) : null;
   // Comparar cidades (IDEIA-058): uma chamada de computeCraft por cidade; nenhum número do resto da tela muda
+  const noTaxMap = cfg.noTax && typeof cfg.noTax === 'object' && !Array.isArray(cfg.noTax) ? cfg.noTax : {};
   const feeByCity = cfg.feeByCity && typeof cfg.feeByCity === 'object' && !Array.isArray(cfg.feeByCity) ? cfg.feeByCity : {};
   const compare = rec && prices ? compareCraftCities({ rec, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling, scenario: cfg.cityScenario === 'own' ? 'own' : 'best', feeByCity: feeByCity }) : null;
   const note = showDailyNote({ craftDaily: cfg.craftDaily, hasCard: !!savings });
   const { specialty, autoRRR, craftRRR } = c.rates;
-  const { issues, lines, fee, totalCost, units, unitCost, missing, options, best, ready, plan, used, refinable, allBest } = c;
+  const { issues, lines, fee, extras, totalCost, units, unitCost, missing, options, best, ready, plan, used, refinable, allBest } = c;
 
   const opts = annotateOptions(options, prices, targetMid);
   const { best: shown, bestReal } = pickExit(opts);
@@ -235,6 +237,14 @@ export default function Crafting() {
                       <td></td>
                       <td><Money value={fee} /></td>
                     </tr>
+                    {extras > 0 && (
+                      <tr>
+                        <td>Despesas extras</td>
+                        <td></td>
+                        <td></td>
+                        <td><Money value={extras} /></td>
+                      </tr>
+                    )}
                     <tr>
                       <td><strong>Custo total</strong></td>
                       <td></td>
@@ -285,6 +295,8 @@ export default function Crafting() {
           )}
         </div>
 
+        {rec && <ExtrasCard list={cfg.extras} onChange={(v) => set({ extras: v })} issues={issues} crafts={c.rates.crafts} />}
+
         {rec && <FocusCard summary={fs} ench={sel.ench} hasBase={fbase != null} />}
 
         {rec && options.length > 0 && (
@@ -301,6 +313,7 @@ export default function Crafting() {
                     <th>Margem</th>
                     <th>Comprador</th>
                     <th title="Vendas registradas por dia nos últimos 7 dias completos">Giro</th>
+                    <th title="Venda fora do mercado (guilda, troca direta, encomenda): sem imposto e sem taxa de criação">Sem imposto</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -323,6 +336,15 @@ export default function Crafting() {
                         {o.stale && <small className="muted">dado velho</small>}
                       </td>
                       <td><GiroCell stats={statsOf(o.city)} loading={histLoading} /></td>
+                      <td>
+                        <input
+                          type="checkbox"
+                          aria-label={`Sem imposto: ${cityLabel(o.city)}, ${o.label}`}
+                          checked={o.noTax}
+                          onChange={(e) => set({ noTax: { ...noTaxMap, [`${o.city}|${o.mode}`]: e.target.checked } })}
+                        />
+                        {o.noTax && <small>venda fora do mercado</small>}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -330,7 +352,7 @@ export default function Crafting() {
             </div>
             <p className="hint" style={{ marginTop: 10 }}>
               Ordem de venda: você lista o item (imposto {premium ? '4%' : '8%'} + 2,5% de taxa). Ordem de compra: vende na hora a um comprador (imposto {premium ? '4%' : '8%'}).
-              {illusoryHint()} Giro: vendas registradas por dia nos últimos 7 dias completos (veja o cartão “Giro do item”).
+              {illusoryHint()} Sem imposto: venda fora do mercado (guilda, troca direta, encomenda), sem imposto nem taxa de criação; o preço continua sendo a referência do mercado e não garante comprador. Giro: vendas registradas por dia nos últimos 7 dias completos (veja o cartão “Giro do item”).
             </p>
             {histError && <Banner kind="warn">Giro indisponível: {histError}</Banner>}
           </div>
@@ -387,11 +409,19 @@ export default function Crafting() {
                     <td></td>
                     <td><Money value={fee} /></td>
                   </tr>
+                  {extras > 0 && (
+                    <tr>
+                      <td>Despesas extras</td>
+                      <td></td>
+                      <td></td>
+                      <td><Money value={extras} /></td>
+                    </tr>
+                  )}
                   <tr>
                     <td><strong>Total</strong></td>
                     <td></td>
                     <td></td>
-                    <td><strong><Money value={plan.reduce((a, p) => a + p.total, 0) + fee} /></strong></td>
+                    <td><strong><Money value={plan.reduce((a, p) => a + p.total, 0) + fee + extras} /></strong></td>
                   </tr>
                 </tbody>
               </table>

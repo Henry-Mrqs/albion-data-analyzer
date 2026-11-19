@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_EXTRAS, extrasPerUnit, extrasTotal } from './extras';
+import { MAX_EXTRAS, extrasParts, extrasPerUnit, extrasTotal } from './extras';
 
 const L = [{ name: 'Transporte', value: 150, scope: 'craft' }, { name: 'Comida de buff', value: 80, scope: 'craft' }];
 
@@ -26,4 +26,9 @@ describe('extras (IDEIA-048, dossiê §4)', () => {
   });
   it('escopo desconhecido conta como por craft (a validação já corrige antes)', () =>
     expect(extrasTotal([{ value: 10, scope: 'x' }], 3)).toBe(30));
+  it('extrasParts: 230 por craft em 10 crafts = 2.300 no lote; misto separa craft e lote; vazio = zeros', () => {
+    expect(extrasParts(L, 10)).toEqual({ perCraft: 230, perLote: 0, total: 2300 });
+    expect(extrasParts([{ value: 150, scope: 'craft' }, { value: 80, scope: 'lote' }], 10)).toEqual({ perCraft: 150, perLote: 80, total: 1580 });
+    expect(extrasParts(undefined, 3)).toEqual({ perCraft: 0, perLote: 0, total: 0 });
+  });
 });
