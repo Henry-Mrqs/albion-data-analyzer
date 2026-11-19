@@ -5,6 +5,8 @@ import { SERVERS, setSettings, useSettings } from './lib/settings';
 import { dismissNotice, pendingNotices } from './lib/migrationNotes';
 import { Banner, Loading } from './components/ui';
 import Market from './components/Market';
+import ErrorBoundary from './components/ErrorBoundary';
+import RestoreSettings from './components/RestoreSettings';
 
 const Refining = lazy(() => import('./components/Refining'));
 const Crafting = lazy(() => import('./components/Crafting'));
@@ -100,9 +102,11 @@ export default function App() {
       ) : !ready ? (
         <Loading text="Carregando catálogo de itens…" />
       ) : (
-        <Suspense fallback={<Loading />}>
-          <View />
-        </Suspense>
+        <ErrorBoundary resetKey={tab}>
+          <Suspense fallback={<Loading />}>
+            <View />
+          </Suspense>
+        </ErrorBoundary>
       )}
 
       <footer className="footer">
@@ -111,6 +115,9 @@ export default function App() {
           <Download size={11} /> Albion Data Client
         </a>{' '}
         ligado no mesmo servidor ({SERVERS[server]}).
+        <div style={{ marginTop: 10 }}>
+          <RestoreSettings compact />
+        </div>
       </footer>
     </div>
   );
