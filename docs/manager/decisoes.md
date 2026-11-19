@@ -292,3 +292,6 @@ D1 (Preço-alvo ignora noTax, erra para o lado seguro) segue na IDEIA-075. D2 (a
 
 ## D-054 — 071 aprovada; pendências viram IDEIA-077
 Pendências do laudo (teste de `lazy` rejeitado no App, mutantes M17/M26/M27/M33/M35/M40, item salvo inválido suprimindo o aviso, import dinâmico de migrationNotes para devolver ~6 kB gzip ao chunk principal) entram como IDEIA-077, prioridade média-baixa.
+
+## D-055 — Respostas ao Executor da 031
+±N% global em todos os materiais (inclusive artefatos) aceito; semáforo 5% do custo é decisão de produto aceita; Flipper e sugestão por histórico fora do escopo; grade usa o melhor destino sem escolha. Erros de conta do plano (não do dossiê) corrigidos; o Tester os reconfere.
