@@ -289,3 +289,6 @@ Refino fica na mesma ideia; despesa negativa bloqueada (vira 0 com aviso); Preç
 
 ## D-053 — 048 aprovada; defeitos viram IDEIA-076
 D1 (Preço-alvo ignora noTax, erra para o lado seguro) segue na IDEIA-075. D2 (a 375px o seletor "por craft/por lote" fica truncado em "por"), D3 (aviso ecoa "-Infinity"/"[object Object]"), D4 (Comparar cidades: custo total inclui despesas sem coluna/nota; marca noTax global; "Melhor destino" sem indicar sem imposto) e D5 (7 mutantes sobreviventes, lacunas de teste) entram como IDEIA-076, prioridade alta por D2 (campo que muda o cálculo ilegível no celular).
+
+## D-054 — 071 aprovada; pendências viram IDEIA-077
+Pendências do laudo (teste de `lazy` rejeitado no App, mutantes M17/M26/M27/M33/M35/M40, item salvo inválido suprimindo o aviso, import dinâmico de migrationNotes para devolver ~6 kB gzip ao chunk principal) entram como IDEIA-077, prioridade média-baixa.

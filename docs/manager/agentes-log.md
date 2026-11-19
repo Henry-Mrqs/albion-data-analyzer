@@ -112,3 +112,5 @@ Uma linha por delegação. Prova de que o trabalho é feito por sub agentes dist
 | #86 | Deployer | Deploy 17 da IDEIA-048 delegado | SendMessage | 2026-11-19 |
 | #86 (nota) | Gerente | Retomada do Deployer antigo falhou (`model_not_found`); novo Deployer `aaa68321fe32d45e6` criado com briefing completo (leia deploy-15/16 para o protocolo) | Agent | 2026-11-19 |
 | #86 (resultado) | Deployer | Deploy 17 VERIFICADO (IDEIA-048): SHA 24cf529, bundle index-fm5oOycB.js, catálogo c0f66cb0bd, despesas e sem imposto ok, estado antigo ok, sem rollback. Ressalva: 375px exatos não emulável (mínimo 500px; sem rolagem em 500px) | docs/deploy/deploy-17.md | 2026-11-19 |
+| #84 (resultado) | Tester | IDEIA-071 APROVADO; erros de dados: nenhum (200 telas sem branco; restaurar só albion:*; 40 mutantes/32 mortos). Pendências baixas: teste de lazy rejeitado no App (M22), M17/M26/M27/M33/M35/M40 sem teste, item salvo inválido suprime aviso, chunk index +6 kB gzip | docs/qa/IDEIA-071.md | 2026-11-19 |
+| #87 | Deployer (`aaa68321fe32d45e6`) | Deploy 18 da IDEIA-071 delegado | SendMessage | 2026-11-19 |
