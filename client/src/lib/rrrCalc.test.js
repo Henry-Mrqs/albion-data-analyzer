@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { loadFixtureCatalog } from '../test/helpers';
 import { cityOfCategory, getItem, recipeOf } from './catalog';
-import { isSpecialty, itemCraftInfo, recipeReturn, referenceTable, rrrFor } from './rrrCalc';
+import { isSpecialty, itemCraftInfo, pbParts, recipeReturn, referenceTable, rrrFor } from './rrrCalc';
 
 beforeEach(loadFixtureCatalog);
 
@@ -128,6 +128,32 @@ describe('recipeReturn', () => {
     for (const c of [0, '', -3]) {
       const rows = recipeReturn(recipeOf('T6_MAIN_SWORD'), c, 0.25);
       expect(rows.map((r) => r.gross)).toEqual([16, 8]);
+    }
+  });
+});
+
+describe('pbParts (IDEIA-005: decomposição do PB extraída do rrrFor)', () => {
+  it('craft com especialização, foco e diário 20 = { base: 18, specialty: 15, focus: 59, daily: 20 } (soma 112)', () => {
+    const p = pbParts({ kind: 'craft', specialty: true, focus: true, daily: 20 });
+    expect(Object.keys(p).sort()).toEqual(['base', 'daily', 'focus', 'specialty']);
+    expect(p.base).toBeCloseTo(18, 9);
+    expect(p.specialty).toBeCloseTo(15, 9);
+    expect(p.focus).toBeCloseTo(59, 9);
+    expect(p.daily).toBeCloseTo(20, 9);
+    expect(p.base + p.specialty + p.focus + p.daily).toBeCloseTo(112, 9);
+  });
+  it('refino usa +40 de especialização; sem especialização/foco/diário só sobra a base', () => {
+    expect(pbParts({ kind: 'refine', specialty: true, focus: false }).specialty).toBeCloseTo(40, 9);
+    const p = pbParts({ kind: 'craft', specialty: false, focus: false });
+    expect([p.base, p.specialty, p.focus, p.daily].map((x) => +x.toFixed(9))).toEqual([18, 0, 0, 0]);
+  });
+  it('rrrFor continua devolvendo as mesmas partes e o mesmo PB', () => {
+    for (const [kind, specialty, focus, daily] of [['craft', true, true, 20], ['refine', true, false, 10], ['craft', false, true, 0]]) {
+      const city = kind === 'refine' ? 'Fort Sterling' : specialty ? ESPECIALISTA() : 'Caerleon';
+      const r = rrrFor({ kind, city, category: 'sword', resource: 'PLANKS', focus, daily });
+      const p = pbParts({ kind, specialty: r.specialty, focus, daily });
+      expect(r.parts).toEqual(p);
+      expect(r.pb).toBeCloseTo(p.base + p.specialty + p.focus + p.daily, 9);
     }
   });
 });

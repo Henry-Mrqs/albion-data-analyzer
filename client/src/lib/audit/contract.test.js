@@ -6,6 +6,7 @@ import { PERSISTED } from '../persistSchemas';
 import { CURRENT_DEFAULTS } from '../../test/savedStates';
 import { setFields } from '../../test/setFields';
 import { getScreen, screenIds, uncoveredFields } from './registry';
+import './craft';
 
 const COMP = join(import.meta.dirname, '..', '..', 'components');
 const read = (f) => readFileSync(join(COMP, f), 'utf8');
