@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { validateInputs, cleanCraftCfg, cleanRefineCfg, MAX_QTY } from './inputRules';
+import { sanitizeFeeCeiling } from './inputRules';
 import { stationFee } from './econ';
 import { DEFAULT_SHARE_PCT } from './liquidity';
 import { DAILY_FOCUS_PREMIUM, MAX_FOCUS_EFFICIENCY } from './focusConsts';
@@ -338,5 +339,61 @@ describe('IDEIA-002: campos de foco (eficiência, foco do jogo, orçamento, refe
     const r = v({ efficiency: undefined, focusPoints: undefined, focusBudget: undefined, focusRef: undefined });
     expect(r.values).toEqual({ efficiency: 0, focusPoints: null, focusBudget: DAILY_FOCUS_PREMIUM, focusRef: null });
     expect(r.issues).toEqual([]);
+  });
+});
+
+describe('sem eco de lixo (D3, 076)', () => {
+  const JUNK = /Infinity|NaN|undefined|\[object|\btrue\b|\bfalse\b|\bnull\b/;
+  const semAspas = (m) => m.replace(/"[^"]*"/g, ''); // texto digitado entre aspas é do usuário: fica
+  const CAMPOS = ['feePer100', 'customRRR', 'daily', 'crafts', 'relists', 'share', 'efficiency', 'focusPoints', 'focusBudget', 'focusRef', 'mode'];
+  const ctx = { kind: 'craft', premium: true, feeCeiling: 1000 };
+  const msgs = (input) => v(input, ctx).issues.map((i) => i.msg);
+  it.each(CAMPOS)('%s: com {}, [], true, NaN, Infinity, -Infinity e () => 1 nenhuma mensagem contém lixo', (campo) => {
+    for (const x of [{}, [], [[1]], true, NaN, Infinity, -Infinity, () => 1]) {
+      for (const m of msgs({ [campo]: x })) expect(semAspas(m)).not.toMatch(JUNK);
+    }
+  });
+  it('teto de taxa corrompido ({}, NaN, Infinity, array, booleano) não mostra lixo; texto digitado fica entre aspas, sem corte', () => {
+    for (const x of [{}, NaN, Infinity, [], true]) expect(sanitizeFeeCeiling(x).issue.msg).not.toMatch(JUNK);
+    expect(sanitizeFeeCeiling({}).issue.msg).toBe('Teto de taxa salvo é inválido (use um valor de 1 a 1.000.000): usando 1.000.');
+    expect(sanitizeFeeCeiling(null).issue.msg).toBe('Teto de taxa salvo (vazio) é inválido (use um valor de 1 a 1.000.000): usando 1.000.');
+    expect(sanitizeFeeCeiling(-5).issue.msg).toBe('Teto de taxa salvo (-5) é inválido (use um valor de 1 a 1.000.000): usando 1.000.');
+    expect(sanitizeFeeCeiling('a'.repeat(30)).issue.msg).toContain(`"${'a'.repeat(30)}"`);
+  });
+  it('taxa -Infinity: "Taxa é negativa: usando 0."; taxa -400 continua "Taxa -400 é negativa: usando 0."', () => {
+    expect(msgs({ feePer100: -Infinity })).toEqual(['Taxa é negativa: usando 0.']);
+    expect(msgs({ feePer100: -400 })).toEqual(['Taxa -400 é negativa: usando 0.']);
+  });
+  it('taxa Infinity: "Taxa acima do teto de 1.000: usando 1.000."; taxa 5000 mantém o número', () => {
+    expect(msgs({ feePer100: Infinity })).toEqual(['Taxa acima do teto de 1.000: usando 1.000.']);
+    expect(msgs({ feePer100: 5000 })).toEqual(['Taxa 5.000 acima do teto de 1.000: usando 1.000.']);
+  });
+  it('RRR manual -Infinity: "RRR manual é impossível (fora de 0 a 100%): usando o RRR automático."; -5 continua "RRR manual -5% é impossível..."', () => {
+    expect(msgs({ customRRR: -Infinity })).toEqual(['RRR manual é impossível (fora de 0 a 100%): usando o RRR automático.']);
+    expect(msgs({ customRRR: -5 })).toEqual(['RRR manual -5% é impossível (fora de 0 a 100%): usando o RRR automático.']);
+  });
+  it('taxa {} -> "Taxa não é um número: usando o padrão 400."; "abc" continua com o eco entre aspas', () => {
+    expect(msgs({ feePer100: {} })).toEqual(['Taxa não é um número: usando o padrão 400.']);
+    expect(msgs({ feePer100: 'abc' })).toEqual(['Taxa "abc" não é um número: usando o padrão 400.']);
+  });
+  it('quantidade {} -> "Quantidade é inválida: usando 1."; relistagens {} -> "Relistagens inválidas: usando 0."; diário {} -> "Bônus diário inválido (use 0, 10 ou 20): usando 0."', () => {
+    expect(msgs({ crafts: {} })).toEqual(['Quantidade é inválida: usando 1.']);
+    expect(msgs({ crafts: -3 })).toEqual(['Quantidade -3 é inválida: usando 1.']);
+    expect(msgs({ relists: {} })).toEqual(['Relistagens inválidas: usando 0.']);
+    expect(msgs({ relists: 'x' })).toEqual(['Relistagens "x" inválidas: usando 0.']);
+    expect(msgs({ daily: {} })).toEqual(['Bônus diário inválido (use 0, 10 ou 20): usando 0.']);
+    expect(msgs({ daily: 15 })).toEqual(['Bônus diário 15 inválido (use 0, 10 ou 20): usando 0.']);
+  });
+  it('demais campos: sem eco para objeto; idênticas para número finito e texto', () => {
+    expect(msgs({ share: {} })).toEqual([`Parte do mercado é inválida (use um valor maior que 0, até 100): usando ${DEFAULT_SHARE_PCT}%.`]);
+    expect(msgs({ share: -1 })).toEqual([`Parte do mercado -1 é inválida (use um valor maior que 0, até 100): usando ${DEFAULT_SHARE_PCT}%.`]);
+    expect(msgs({ efficiency: {} })).toEqual(['Eficiência de foco é inválida (use de 0 a 31.000): usando 0.']);
+    expect(msgs({ efficiency: -1 })).toEqual(['Eficiência de foco -1 é inválida (use de 0 a 31.000): usando 0.']);
+    expect(msgs({ focusPoints: {} })).toEqual(['Foco por craft é inválido (use um valor maior que 0, ou deixe vazio): ignorando.']);
+    expect(msgs({ focusBudget: {} })).toEqual(['Foco disponível é inválido: usando o padrão 10.000.']);
+    expect(msgs({ focusRef: {} })).toEqual(['Valor por ponto é inválido (use 0 ou mais, ou deixe vazio): ignorando a referência.']);
+    expect(msgs({ mode: {} })).toEqual(['Modo de venda inválido: usando ordem de venda.']);
+    expect(msgs({ mode: 'foo' })).toEqual(['Modo de venda "foo" inválido: usando ordem de venda.']);
+    expect(msgs({ mode: 5 })).toEqual(['Modo de venda "5" inválido: usando ordem de venda.']);
   });
 });

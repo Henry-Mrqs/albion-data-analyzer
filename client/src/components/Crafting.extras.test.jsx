@@ -63,6 +63,13 @@ describe('Crafting: despesas extras (048)', () => {
     expect(document.body.textContent).toContain('1 valor corrigido');
     expect(totalRow()).toContain('3.524');
   });
+  it('estado salvo corrompido ({} na despesa, taxa e RRR; "-Infinity" em texto; JSON não guarda Infinity): avisos na tela sem lixo técnico (D3, 076)', () => {
+    mount({ feePer100: {}, customRRR: {}, extras: [{ name: '', value: {}, scope: 'craft' }, { name: '', value: '-Infinity', scope: 'craft' }] });
+    const t = document.body.textContent;
+    expect(t).toContain('Despesa 1: o valor não é um número: usando 0.');
+    expect(t).toContain('Despesa 2: o valor é negativo: usando 0.');
+    expect(t).not.toMatch(/\[object|Infinity|NaN|undefined/);
+  });
   it('lote ÷ unidades: 230 por lote em 10 crafts = 23 por craft (custo/un. 3.547)', () => {
     mount({ crafts: 10, extras: [{ name: '', value: '230', scope: 'lote' }] });
     expect(screen.getAllByText('Custo total', { selector: 'strong' })[0].closest('tr').textContent).toContain('3.547');

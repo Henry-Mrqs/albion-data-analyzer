@@ -123,3 +123,25 @@ describe('cleanCraftCfg e cleanRefineCfg com extras e noTax (048)', () => {
     expect(r.issues.filter((i) => i.level !== 'info' && i.field.startsWith('extras'))).toHaveLength(1);
   });
 });
+
+describe('despesas sem eco de lixo (D3, 076)', () => {
+  const msg = (value) => ve([row({ value })]).issues[0].msg;
+  it('objeto, array de 2, booleano e NaN: "o valor não é um número", sem "[object Object]", "true" nem "NaN"', () => {
+    for (const v of [{}, [1, 2], true, NaN]) expect(msg(v)).toBe('Despesa 1: o valor não é um número: usando 0.');
+  });
+  it('texto digitado continua ecoado entre aspas: "abc" -> valor "abc" não é um número', () => {
+    expect(msg('abc')).toBe('Despesa 1: valor "abc" não é um número: usando 0.');
+  });
+  it('-Infinity (número) e "-Infinity" (texto): "o valor é negativo", sem "Infinity"; o valor usado é 0', () => {
+    for (const v of [-Infinity, '-Infinity']) {
+      const r = ve([row({ value: v })]);
+      expect(r.issues[0].msg).toBe('Despesa 1: o valor é negativo: usando 0.');
+      expect(r.values[0].value).toBe(0);
+    }
+  });
+  it('negativo finito mantém o texto antigo: -50 e -0,01', () => {
+    expect(msg(-50)).toBe('Despesa 1: valor -50 é negativo: usando 0.');
+    expect(msg(-0.01)).toBe('Despesa 1: valor -0,01 é negativo: usando 0.');
+  });
+  it('"acima do limite" continua com "infinito" para Infinity (não mudou)', () => expect(msg(Infinity)).toContain('infinito'));
+});

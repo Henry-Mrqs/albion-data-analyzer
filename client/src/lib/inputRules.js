@@ -14,7 +14,10 @@ const isEmpty = (x) => x == null || (typeof x === 'string' && x.trim() === '');
 const toNum = (x) => Number(String(x).trim());
 const br = (n) =>
   !Number.isFinite(n) ? String(n) : Math.abs(n) >= 1e15 ? n.toExponential().replace('e+', 'e') : n.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
-const shown = (raw) => (typeof raw === 'string' ? `"${raw.trim()}"` : br(raw));
+// Eco do valor do usuário numa mensagem: '' (nada a mostrar) ou ' ' + texto + suffix. Texto digitado vira "texto";
+// número finito vira br(n); qualquer outra coisa (objeto, array, booleano, NaN, ±Infinity, função, undefined) não é ecoada.
+const echoValue = (raw, suffix = '') =>
+  typeof raw === 'string' ? ` "${raw.trim()}"${suffix}` : typeof raw === 'number' && Number.isFinite(raw) ? ` ${br(raw)}${suffix}` : '';
 const round2 = (x) => Math.round(x * 100) / 100;
 
 /**
@@ -24,14 +27,14 @@ const round2 = (x) => Math.round(x * 100) / 100;
 export function sanitizeFeeCeiling(raw) {
   if (raw === undefined) return { value: FEE_CEILING, issue: null };
   if (typeof raw === 'number' && Number.isFinite(raw) && raw > 0 && raw <= HARD_FEE_CEILING) return { value: raw, issue: null };
-  const was = typeof raw === 'number' ? br(raw) : raw == null ? 'vazio' : `"${String(raw).slice(0, 20)}"`;
+  const was = raw === null ? ' (vazio)' : echoValue(raw) ? ` (${echoValue(raw).trim()})` : '';
   return {
     value: FEE_CEILING,
     issue: {
       field: 'feeCeiling',
       level: 'warn',
       code: 'ceiling-invalid',
-      msg: `Teto de taxa salvo (${was}) é inválido (use um valor de 1 a ${br(HARD_FEE_CEILING)}): usando ${br(FEE_CEILING)}.`,
+      msg: `Teto de taxa salvo${was} é inválido (use um valor de 1 a ${br(HARD_FEE_CEILING)}): usando ${br(FEE_CEILING)}.`,
       raw,
       used: FEE_CEILING,
     },
@@ -72,13 +75,13 @@ export function validateInputs(input = {}, ctx = {}) {
       const n = toNum(raw);
       if (Number.isNaN(n)) {
         used = DEFAULT_FEE;
-        add('feePer100', 'error', 'fee-nan', `Taxa ${shown(raw)} não é um número: usando o padrão ${br(used)}.`, raw, used);
+        add('feePer100', 'error', 'fee-nan', `Taxa${echoValue(raw)} não é um número: usando o padrão ${br(used)}.`, raw, used);
       } else if (n < 0) {
         used = 0;
-        add('feePer100', 'error', 'fee-neg', `Taxa ${br(n)} é negativa: usando 0.`, raw, used);
+        add('feePer100', 'error', 'fee-neg', `Taxa${echoValue(n)} é negativa: usando 0.`, raw, used);
       } else if (n > feeCeiling) {
         used = feeCeiling;
-        add('feePer100', 'warn', 'fee-ceiling', `Taxa ${br(n)} acima do teto de ${br(feeCeiling)}: usando ${br(used)}.`, raw, used);
+        add('feePer100', 'warn', 'fee-ceiling', `Taxa${echoValue(n)} acima do teto de ${br(feeCeiling)}: usando ${br(used)}.`, raw, used);
       } else used = n;
     }
     values.feePer100 = used;
@@ -91,9 +94,9 @@ export function validateInputs(input = {}, ctx = {}) {
       const n = toNum(raw);
       const max = maxRRR(kind);
       if (Number.isNaN(n)) {
-        add('customRRR', 'warn', 'rrr-nan', `RRR manual ${shown(raw)} não é um número: usando o RRR automático.`, raw, null);
+        add('customRRR', 'warn', 'rrr-nan', `RRR manual${echoValue(raw)} não é um número: usando o RRR automático.`, raw, null);
       } else if (n < 0 || n >= 100) {
-        add('customRRR', 'error', 'rrr-impossible', `RRR manual ${br(n)}% é impossível (fora de 0 a 100%): usando o RRR automático.`, raw, null);
+        add('customRRR', 'error', 'rrr-impossible', `RRR manual${echoValue(n, '%')} é impossível (fora de 0 a 100%): usando o RRR automático.`, raw, null);
       } else if (round2(n) > round2(max * 100)) {
         used = max;
         add('customRRR', 'warn', 'rrr-max', `RRR manual ${br(n)}% acima do máximo conhecido de ${br(round2(max * 100))}% (${kind === 'refine' ? 'refino' : 'craft'}): usando ${br(round2(max * 100))}%.`, raw, used);
@@ -108,7 +111,7 @@ export function validateInputs(input = {}, ctx = {}) {
     if (!isEmpty(raw)) {
       const n = toNum(raw);
       if (DAILY_OK.includes(n)) used = n;
-      else add('daily', 'error', 'daily-invalid', `Bônus diário ${shown(raw)} inválido (use 0, 10 ou 20): usando 0.`, raw, 0);
+      else add('daily', 'error', 'daily-invalid', `Bônus diário${echoValue(raw)} inválido (use 0, 10 ou 20): usando 0.`, raw, 0);
     }
     values.daily = used;
   }
@@ -121,7 +124,7 @@ export function validateInputs(input = {}, ctx = {}) {
     } else {
       const n = toNum(raw);
       if (Number.isNaN(n) || n <= 0) {
-        add('crafts', 'error', 'qty-invalid', `Quantidade ${shown(raw)} é inválida: usando 1.`, raw, 1);
+        add('crafts', 'error', 'qty-invalid', `Quantidade${echoValue(raw)} é inválida: usando 1.`, raw, 1);
       } else if (n > maxQty) {
         used = maxQty;
         add('crafts', 'warn', 'qty-max', `Quantidade ${Number.isFinite(n) ? br(n) : 'infinita'} acima do limite de ${br(maxQty)}: usando ${br(maxQty)}.`, raw, used);
@@ -144,7 +147,7 @@ export function validateInputs(input = {}, ctx = {}) {
     if (!isEmpty(raw)) {
       const n = toNum(raw);
       if (Number.isNaN(n) || n < 0) {
-        add('relists', 'error', 'relists-invalid', `Relistagens ${shown(raw)} inválidas: usando 0.`, raw, 0);
+        add('relists', 'error', 'relists-invalid', `Relistagens${echoValue(raw)} inválidas: usando 0.`, raw, 0);
       } else if (Math.floor(n) > max) {
         used = max;
         add('relists', 'warn', 'relists-max', `Relistagens ${Number.isFinite(n) ? br(n) : 'infinita'} acima do máximo de ${max} (o líquido zeraria): usando ${max}.`, raw, used);
@@ -163,7 +166,7 @@ export function validateInputs(input = {}, ctx = {}) {
     if (!isEmpty(raw)) {
       const n = toNum(raw);
       if (Number.isNaN(n) || n <= 0) {
-        add('share', 'error', 'share-invalid', `Parte do mercado ${shown(raw)} é inválida (use um valor maior que 0, até 100): usando ${DEFAULT_SHARE_PCT}%.`, raw, DEFAULT_SHARE_PCT);
+        add('share', 'error', 'share-invalid', `Parte do mercado${echoValue(raw)} é inválida (use um valor maior que 0, até 100): usando ${DEFAULT_SHARE_PCT}%.`, raw, DEFAULT_SHARE_PCT);
       } else if (n > 100) {
         used = 100;
         add('share', 'warn', 'share-max', `Parte do mercado ${Number.isFinite(n) ? br(n) : 'infinita'}% acima de 100%: usando 100%.`, raw, used);
@@ -182,7 +185,7 @@ export function validateInputs(input = {}, ctx = {}) {
     if (!isEmpty(raw)) {
       const n = toNum(raw);
       if (Number.isNaN(n) || n < 0) {
-        add('efficiency', 'error', 'eff-invalid', `Eficiência de foco ${shown(raw)} é inválida (use de 0 a ${br(MAX_FOCUS_EFFICIENCY)}): usando 0.`, raw, 0);
+        add('efficiency', 'error', 'eff-invalid', `Eficiência de foco${echoValue(raw)} é inválida (use de 0 a ${br(MAX_FOCUS_EFFICIENCY)}): usando 0.`, raw, 0);
       } else if (n > MAX_FOCUS_EFFICIENCY) {
         used = MAX_FOCUS_EFFICIENCY;
         add('efficiency', 'warn', 'eff-max', `Eficiência de foco ${big(n)} acima do máximo conhecido de ${br(MAX_FOCUS_EFFICIENCY)} (100/100): usando ${br(used)}.`, raw, used);
@@ -198,7 +201,7 @@ export function validateInputs(input = {}, ctx = {}) {
     if (!isEmpty(raw)) {
       const n = toNum(raw);
       if (Number.isNaN(n) || n <= 0) {
-        add('focusPoints', 'error', 'focus-points-invalid', `Foco por craft ${shown(raw)} é inválido (use um valor maior que 0, ou deixe vazio): ignorando.`, raw, null);
+        add('focusPoints', 'error', 'focus-points-invalid', `Foco por craft${echoValue(raw)} é inválido (use um valor maior que 0, ou deixe vazio): ignorando.`, raw, null);
       } else if (n > maxQty) {
         used = maxQty;
         add('focusPoints', 'warn', 'focus-points-max', `Foco por craft ${big(n)} acima do limite de ${br(maxQty)}: usando ${br(maxQty)}.`, raw, used);
@@ -214,7 +217,7 @@ export function validateInputs(input = {}, ctx = {}) {
     if (!isEmpty(raw)) {
       const n = toNum(raw);
       if (Number.isNaN(n) || n < 0) {
-        add('focusBudget', 'error', 'focus-budget-invalid', `Foco disponível ${shown(raw)} é inválido: usando o padrão ${br(DAILY_FOCUS_PREMIUM)}.`, raw, DAILY_FOCUS_PREMIUM);
+        add('focusBudget', 'error', 'focus-budget-invalid', `Foco disponível${echoValue(raw)} é inválido: usando o padrão ${br(DAILY_FOCUS_PREMIUM)}.`, raw, DAILY_FOCUS_PREMIUM);
       } else if (n > maxQty) {
         used = maxQty;
         add('focusBudget', 'warn', 'focus-budget-max', `Foco disponível ${big(n)} acima do limite de ${br(maxQty)}: usando ${br(maxQty)}.`, raw, used);
@@ -230,7 +233,7 @@ export function validateInputs(input = {}, ctx = {}) {
     if (!isEmpty(raw)) {
       const n = toNum(raw);
       if (Number.isNaN(n) || n < 0) {
-        add('focusRef', 'error', 'focus-ref-invalid', `Valor por ponto ${shown(raw)} é inválido (use 0 ou mais, ou deixe vazio): ignorando a referência.`, raw, null);
+        add('focusRef', 'error', 'focus-ref-invalid', `Valor por ponto${echoValue(raw)} é inválido (use 0 ou mais, ou deixe vazio): ignorando a referência.`, raw, null);
       } else if (n > maxQty) {
         used = maxQty;
         add('focusRef', 'warn', 'focus-ref-max', `Valor por ponto ${big(n)} acima do limite de ${br(maxQty)}: usando ${br(maxQty)}.`, raw, used);
@@ -245,7 +248,7 @@ export function validateInputs(input = {}, ctx = {}) {
     else {
       values.mode = null;
       // vazio/null/undefined = ausente (sem aviso); só texto não vazio fora dos modos válidos avisa. A tela usa 'order'.
-      if (!isEmpty(raw)) add('mode', 'error', 'mode-invalid', `Modo de venda ${shown(String(raw))} inválido: usando ordem de venda.`, raw, 'order');
+      if (!isEmpty(raw)) add('mode', 'error', 'mode-invalid', `Modo de venda${echoValue(typeof raw === 'number' ? String(raw) : raw)} inválido: usando ordem de venda.`, raw, 'order');
     }
   }
 
@@ -342,9 +345,9 @@ export function validateExtras(list) {
     if (!isEmpty(o.value)) {
       const n = typeof o.value === 'number' ? o.value : toNum(o.value);
       if (Number.isNaN(n)) {
-        add(`${at}.value`, 'error', 'extra-nan', `${label}: valor ${shown(o.value)} não é um número: usando 0.`, o.value, 0);
+        add(`${at}.value`, 'error', 'extra-nan', `${label}: ${echoValue(o.value) ? `valor${echoValue(o.value)}` : 'o valor'} não é um número: usando 0.`, o.value, 0);
       } else if (n < 0) {
-        add(`${at}.value`, 'error', 'extra-neg', `${label}: valor ${br(n)} é negativo: usando 0.`, o.value, 0);
+        add(`${at}.value`, 'error', 'extra-neg', `${label}: ${echoValue(n) ? `valor${echoValue(n)}` : 'o valor'} é negativo: usando 0.`, o.value, 0);
       } else if (n > MAX_QTY) {
         value = MAX_QTY;
         add(`${at}.value`, 'warn', 'extra-max', `${label}: valor ${Number.isFinite(n) ? br(n) : 'infinito'} acima do limite de ${br(MAX_QTY)}: usando ${br(MAX_QTY)}.`, o.value, MAX_QTY);
