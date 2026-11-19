@@ -1,0 +1,87 @@
+import { CITIES } from '../lib/market';
+import { fmt } from '../lib/econ';
+import InputIssues from './InputIssues';
+import { Money, NumberInput, Segmented } from './ui';
+
+/**
+ * IDEIA-058: custo de craftar o mesmo item em cada cidade. Só apresentação: o cálculo está em lib/cityCompare.js.
+ * result = compareCraftCities(...); general = { value, touched } da taxa geral da tela; units = unidades de produto do lote.
+ */
+export default function CityCompare({ result, scenario, onScenario, feeByCity, onFee, general, units }) {
+  const { rows, best, spread, issues } = result;
+  const anyCityFee = rows.some((r) => r.feeSource === 'city');
+  const fees = feeByCity ?? {};
+  const why = (r) => {
+    if (scenario === 'own' && !CITIES.includes(r.city)) return 'sem preços (cidade não consultada)';
+    return r.missing.length ? `sem preço de ${r.missing.join(', ')}` : 'sem preço';
+  };
+
+  return (
+    <div className="card stack">
+      <h2>Comparar cidades de craft</h2>
+      <Segmented
+        value={scenario}
+        onChange={onScenario}
+        options={[{ value: 'own', label: 'Comprar na própria cidade' }, { value: 'best', label: 'Comprar na mais barata' }]}
+      />
+      {!anyCityFee && !general.touched && (
+        <div className="hint warn" data-testid="city-fee-default">
+          Usando {fmt(general.value)} do app em todas as cidades: informe a taxa de cada bancada; sem isso a comparação não vale.
+        </div>
+      )}
+      {!anyCityFee && general.touched && <div className="hint" data-testid="city-fee-same">Mesma taxa em todas as cidades.</div>}
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Cidade</th>
+              <th>RRR</th>
+              <th>Material</th>
+              <th title="Prata por 100 de nutrição; vazio = taxa geral da tela">Taxa (por 100)</th>
+              <th>Custo total</th>
+              <th>Por unidade</th>
+              <th title="Quanto a mais (+) ou a menos (−) que a cidade de bônus do item">Dif. p/ cidade de bônus</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.city} className={r === best ? 'best' : ''} style={r.complete ? undefined : { opacity: 0.6 }}>
+                <td>
+                  {r.city}
+                  {r.isBonus && <small className="good">bônus</small>}
+                </td>
+                <td className="num">{(r.rrr * 100).toFixed(1)}%</td>
+                <td>{r.complete ? <Money value={r.matCost} /> : <span className="muted">{why(r)}</span>}</td>
+                <td>
+                  <NumberInput
+                    small
+                    value={fees[r.city] ?? ''}
+                    placeholder={fmt(general.value)}
+                    onChange={(v) => onFee(r.city, v)}
+                    aria-label={`Taxa da bancada em ${r.city}`}
+                  />
+                  <InputIssues issues={issues} field={`feeByCity.${r.city}`} />
+                  <small>{fmt(r.fee)} por craft</small>
+                </td>
+                <td>{r.complete ? <strong><Money value={r.totalCost} /></strong> : <span className="muted">—</span>}</td>
+                <td>{r.complete ? <Money value={r.unitCost} /> : <span className="muted">—</span>}</td>
+                <td>{r.deltaVsBonus == null ? <span className="muted">—</span> : <Money value={r.deltaVsBonus} signed />}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {spread != null && best && (
+        <p className="hint">
+          Melhor: <b>{best.city}</b>. Da mais barata à mais cara há {fmt(spread)} de diferença no lote ({units} {units === 1 ? 'unidade' : 'unidades'} de produto).
+        </p>
+      )}
+      <p className="hint">
+        Compara só o custo de produzir; não inclui transporte, peso nem risco da rota. A tabela ignora o interruptor de especialização e o RRR manual da tela: a especialização vem da regra do item e o RRR é o automático de cada cidade. Foco, bônus diário, refino, ordens de compra e nº de crafts valem para todas.
+        {scenario === 'own'
+          ? ' Cada cidade usa os preços de material da própria cidade; sem preço, a linha fica incompleta (nunca custo 0). Brecilien não tem preços consultados.'
+          : ' Todas usam o material mais barato de cada item, de qualquer cidade; só o RRR e a taxa mudam.'}
+      </p>
+    </div>
+  );
+}
