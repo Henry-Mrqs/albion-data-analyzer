@@ -76,7 +76,7 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 |---|---|---|---|---|---|---|---|
 | IDEIA-049 | **Receitas alternativas**: artefato **ou** ficha de favor; base Royal SET1/2/3; escolhe a mais barata (560 itens com artefato/ficha + 45 Royal) | 4 | 5 | 3 | 5 | 17 | **VERIFICADA** (deploy 12) |
 | IDEIA-048 | **Despesas extras** no lucro e "venda sem imposto de mercado" | 4 | 4 | 4 | 4 | 16 | VERIFICADA (deploy 17) (plano aprovado, D-040) |
-| IDEIA-054 | **"Vale pagar Premium?"**: ponto de equilíbrio com o preço do ouro (constantes editáveis e datadas) | 3 | 4 | 4 | 4 | 15 | EM_QA (re-QA, Tester #110) (MÉDIA) |
+| IDEIA-054 | **"Vale pagar Premium?"**: ponto de equilíbrio com o preço do ouro (constantes editáveis e datadas) | 3 | 4 | 4 | 4 | 15 | APROVADA (deploy 23) (MÉDIA) |
 | IDEIA-057 | **Corrigir transmutação listada como receita de craft**: 20 recursos brutos (`T5_WOOD` ← `T4_WOOD`...) aparecem como craftáveis no catálogo. Confirmado pelo Gerente em `catalog.json` | 3 | 5 | 5 | 2 | 15 | **VERIFICADA** (deploy 7) |
 | IDEIA-050 | **Calculadora de transmutação** de recursos brutos | 3 | 4 | 3 | 4 | 14 | NOVA (bloqueada: fator do servidor precisa de 1 medição do usuário) |
 | IDEIA-051 | **Dimensionar o lote**: limites de foco, demanda, materiais e prata | 4 | 3 | 2 | 5 | 14 | TRIADA (MÉDIA, depende de 002) |
@@ -139,3 +139,4 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 | IDEIA-080 | **Polimento da grade de estresse (031)**: coluna de rótulos fixa (`position: sticky`), não recentralizar ao digitar após o usuário rolar, testes de ligação Refino e de 2+ opções de venda no Craft (O7, O8, N07/N08/N09/N13) | 3 | 3 | 4 | 1 | 11 | NOVA |
 | IDEIA-081 | **Receitas em lote do bloco de pedra** (rocha encantada rende 2, 4 ou 8 blocos por craft; 15 receitas que o app ignora e o parser da 049 não aceita) (D-059) | 3 | 3 | 2 | 3 | 11 | NOVA |
 | IDEIA-082 | **Acabamento do Preço-alvo com noTax (075)**: testes dos mutantes M19/M23/M30, aviso citando a saída do modo escolhido mesmo desmarcado, rótulo para Mercado Negro (só ordens de compra) (D-061) | 3 | 3 | 4 | 1 | 11 | NOVA |
+| IDEIA-084 | **Acabamento da aba Premium e das abas (054)**: atribuição exata das fontes, `aria-current`, rótulos 701–960px, números enormes em notação científica, teste dos cortes de CSS (D-065) | 3 | 3 | 4 | 1 | 11 | NOVA |

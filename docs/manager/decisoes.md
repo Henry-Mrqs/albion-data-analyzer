@@ -322,3 +322,6 @@ Reprovação por D1 (aba Premium cortada em telas estreitas), não por dado. Dec
 
 ## D-064 — Respostas ao Executor da 005
 Quem adiciona linhas quando 059/065/012/054 entrarem: o plano de cada uma (o contrato já reprova campo salvo novo sem linha — desejado). Preço-alvo mostrando só "definidos no cartão" aceito por ora; o Tester avalia se engana; se sim, IDEIA-083 (valores vivos do Preço-alvo no auditor, exige mexer em TargetPrice.jsx). 375px: o Tester confere. O auditor é a peça que ataca a dor central (variáveis esquecidas): a QA audita a VERDADE de cada linha, não só a cobertura.
+
+## D-065 — 054 aprovada na re-QA; acabamento vira IDEIA-084
+Observações viram IDEIA-084 (baixa): atribuição exata de cada item da lista (AO Refinery × wiki/dossiê), `aria-current` na aba ativa, avaliar rótulos entre 701–960px, números enormes como `3e19`, teste dos cortes de CSS (navegador real). Retrabalho gasto: 1 de 2.
