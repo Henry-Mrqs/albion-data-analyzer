@@ -188,21 +188,25 @@ for (const [id, { it }] of all) {
     entry.r = base.r;
     base.r.forEach(([rid]) => needed.add(rid));
     const er = {};
+    const ef = {}; // IDEIA-002: foco (@craftingfocus) por encanto, só se > 0
     for (const en of enchs) {
       const n = num(en['@enchantmentlevel']);
       const rec = parseRecipe(en.craftingrequirements);
       if (!rec) continue;
       rec.r.forEach(([rid]) => needed.add(rid));
+      if (rec.f > 0) ef[n] = rec.f;
       if (!sameRes(rec.r, ruleRes(base.r, n))) {
         er[n] = rec.r;
         deviations++;
       }
     }
     if (Object.keys(er).length) entry.er = er;
+    if (Object.keys(ef).length) entry.ef = ef;
   }
   if (isResource) {
     // recursos encantados são itens próprios (T4_PLANKS_LEVEL1) com receita própria
     const er = {};
+    const ef = {};
     const tm = {};
     const tm0 = parseTransmute(it.craftingrequirements);
     if (tm0.length) {
@@ -221,10 +225,12 @@ for (const [id, { it }] of all) {
       const rec = parseRecipe(v.it.craftingrequirements);
       if (rec) {
         er[n] = rec.r;
+        if (rec.f > 0) ef[n] = rec.f;
         rec.r.forEach(([rid]) => needed.add(rid));
       }
     }
     if (Object.keys(er).length) entry.er = er;
+    if (Object.keys(ef).length) entry.ef = ef;
     if (Object.keys(tm).length) entry.tm = tm;
   }
   items.push(entry);

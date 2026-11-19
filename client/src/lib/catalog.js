@@ -144,6 +144,17 @@ export function recipeOf(baseId, ench = 0, variant = 0) {
   return { amount: it.a || 1, focus: it.f || 0, variants: nVar, res: entries.map(toRes) };
 }
 
+/**
+ * IDEIA-002: foco base (pontos por craft, sem especialização) do item no encanto; null = sem dado.
+ * ench 0: it.f (0 = o dump não traz foco); ench > 0: it.ef[ench] (catálogo antigo sem ef => null, nunca 0).
+ */
+export function focusOf(baseId, ench = 0) {
+  const it = byId.get(baseId);
+  if (!it) return null;
+  const f = ench > 0 ? it.ef?.[ench] : it.f;
+  return f > 0 ? f : null;
+}
+
 /** Todas as receitas do item no encanto: [{ variant, rec, swapped }]; swapped = ingrediente da variante 0 que a variante troca. */
 export function recipeVariants(baseId, ench = 0) {
   const it = byId.get(baseId);

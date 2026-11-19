@@ -2,6 +2,7 @@
 // Política: CORRIGE e AVISA (nunca bloqueia, nunca calcula calado com valor impossível).
 import { rrr, netSale, SETUP_FEE, DEFAULT_FEE } from './econ';
 import { DEFAULT_SHARE_PCT } from './liquidity';
+import { DAILY_FOCUS_PREMIUM, MAX_FOCUS_EFFICIENCY } from './focusConsts';
 
 export const MAX_QTY = 1e9; // teto técnico (não é regra do jogo): evita ∞/NaN
 export const FEE_CEILING = 1000; // teto da taxa de bancada por 100 de nutrição (post de desenvolvedor, confiança média)
@@ -168,6 +169,73 @@ export function validateInputs(input = {}, ctx = {}) {
       } else used = n;
     }
     values.share = used;
+  }
+
+  // ----- foco (IDEIA-002): todos os campos são entradas do usuário; vazio/ausente (estado salvo antigo) = padrão, sem aviso -----
+  const big = (n) => (Number.isFinite(n) ? br(n) : 'infinito');
+
+  if ('efficiency' in input) {
+    // Eficiência de foco em pontos: 0 a 31.000 (100/100 do exemplo da AFM). Decimal aceito.
+    const raw = input.efficiency;
+    let used = 0;
+    if (!isEmpty(raw)) {
+      const n = toNum(raw);
+      if (Number.isNaN(n) || n < 0) {
+        add('efficiency', 'error', 'eff-invalid', `Eficiência de foco ${shown(raw)} é inválida (use de 0 a ${br(MAX_FOCUS_EFFICIENCY)}): usando 0.`, raw, 0);
+      } else if (n > MAX_FOCUS_EFFICIENCY) {
+        used = MAX_FOCUS_EFFICIENCY;
+        add('efficiency', 'warn', 'eff-max', `Eficiência de foco ${big(n)} acima do máximo conhecido de ${br(MAX_FOCUS_EFFICIENCY)} (100/100): usando ${br(used)}.`, raw, used);
+      } else used = n;
+    }
+    values.efficiency = used;
+  }
+
+  if ('focusPoints' in input) {
+    // Foco por craft mostrado na janela de craft do jogo (override opcional): só > 0; vazio = sem override.
+    const raw = input.focusPoints;
+    let used = null;
+    if (!isEmpty(raw)) {
+      const n = toNum(raw);
+      if (Number.isNaN(n) || n <= 0) {
+        add('focusPoints', 'error', 'focus-points-invalid', `Foco por craft ${shown(raw)} é inválido (use um valor maior que 0, ou deixe vazio): ignorando.`, raw, null);
+      } else if (n > maxQty) {
+        used = maxQty;
+        add('focusPoints', 'warn', 'focus-points-max', `Foco por craft ${big(n)} acima do limite de ${br(maxQty)}: usando ${br(maxQty)}.`, raw, used);
+      } else used = n;
+    }
+    values.focusPoints = used;
+  }
+
+  if ('focusBudget' in input) {
+    // Foco disponível hoje: vazio = padrão Premium (10.000); 0 é legítimo (o foco do dia acabou).
+    const raw = input.focusBudget;
+    let used = DAILY_FOCUS_PREMIUM;
+    if (!isEmpty(raw)) {
+      const n = toNum(raw);
+      if (Number.isNaN(n) || n < 0) {
+        add('focusBudget', 'error', 'focus-budget-invalid', `Foco disponível ${shown(raw)} é inválido: usando o padrão ${br(DAILY_FOCUS_PREMIUM)}.`, raw, DAILY_FOCUS_PREMIUM);
+      } else if (n > maxQty) {
+        used = maxQty;
+        add('focusBudget', 'warn', 'focus-budget-max', `Foco disponível ${big(n)} acima do limite de ${br(maxQty)}: usando ${br(maxQty)}.`, raw, used);
+      } else used = n;
+    }
+    values.focusBudget = used;
+  }
+
+  if ('focusRef' in input) {
+    // Quanto vale 1 ponto para o usuário (prata, referência do "vale usar foco?"): vazio = sem referência; 0 aceito.
+    const raw = input.focusRef;
+    let used = null;
+    if (!isEmpty(raw)) {
+      const n = toNum(raw);
+      if (Number.isNaN(n) || n < 0) {
+        add('focusRef', 'error', 'focus-ref-invalid', `Valor por ponto ${shown(raw)} é inválido (use 0 ou mais, ou deixe vazio): ignorando a referência.`, raw, null);
+      } else if (n > maxQty) {
+        used = maxQty;
+        add('focusRef', 'warn', 'focus-ref-max', `Valor por ponto ${big(n)} acima do limite de ${br(maxQty)}: usando ${br(maxQty)}.`, raw, used);
+      } else used = n;
+    }
+    values.focusRef = used;
   }
 
   if ('mode' in input) {

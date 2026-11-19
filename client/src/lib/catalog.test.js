@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
-  CRAFT_CITIES, allItems, cityOfCategory, craftBonusCity, craftCategoryLabel, getItem, ingredientValue, marketId, nameOf,
+  CRAFT_CITIES, allItems, cityOfCategory, craftBonusCity, craftCategoryLabel, focusOf, getItem, ingredientValue, marketId, nameOf,
   recipeOf, recipeValue, recipeVariants, refinedTypeOf, resetCatalog, searchItems, setCatalog, tierOf, weightOf,
 } from './catalog';
 import { refineChainIds } from './econ';
@@ -222,4 +222,21 @@ describe('IDEIA-049: recipeOf com variante e recipeVariants', () => {
     const res = recipeOf('T6_ARTEFACT_MAIN_SWORD_CRYSTAL').res;
     expect(res.map((x) => [x.uniq, x.returnable, x.unverified])).toEqual([['T6_SHARD_CRYSTAL', false, true]]);
   });
+});
+
+describe('IDEIA-002: focusOf', () => {
+  it('nível 0 usa f; nível n usa ef[n]; sem dado = null', () => {
+    expect(focusOf('T4_MAIN_SWORD', 0)).toBe(1286);
+    expect(focusOf('T4_MAIN_SWORD', 3)).toBe(6893);
+    expect(focusOf('T4_PLANKS', 1)).toBe(94);
+    expect(focusOf('T4_ARMOR_PLATE_ROYAL', 2)).toBeNull();
+    expect(focusOf('T9_NADA')).toBeNull();
+  });
+  it('catálogo antigo sem ef (cache velho): ench > 0 devolve null, não 0; nível 0 segue valendo', () => {
+    resetCatalog();
+    setCatalog({ built: 'x', src: 'x', cityOf: {}, items: [{ i: 'T4_X', p: 'X', e: 'X', c: 'weapons/sword', t: 4, w: 1, v: 1, x: 0, a: 1, f: 100, r: [['T4_Y', 1]] }], extra: {}, vals: {}, encNames: {} });
+    expect(focusOf('T4_X', 1)).toBeNull();
+    expect(focusOf('T4_X', 0)).toBe(100);
+  });
+  it('item com f 0 no nível 0 = null (sem dado), não 0', () => expect(focusOf('T4_ARMOR_PLATE_ROYAL', 0)).toBeNull());
 });
