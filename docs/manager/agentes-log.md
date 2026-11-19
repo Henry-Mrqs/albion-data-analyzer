@@ -108,3 +108,5 @@ Uma linha por delegação. Prova de que o trabalho é feito por sub agentes dist
 | #83 (resultado) | Gerente | Retomada dos Testers #81 e #82 falhou 3x (erro de infraestrutura `model_not_found` ao retomar; os agentes não tinham salvo laudo). Reiniciados do zero com agentes novos (modelo sonnet explícito) | — | 2026-11-19 |
 | #84 | TESTER (`a053cc4b4dfe17b2d`) | QA da IDEIA-071 (reinício) | docs/qa/IDEIA-071.md | 2026-11-19 |
 | #85 | TESTER (`a1157fd0e29cb8132`) | QA da IDEIA-048 (reinício) | docs/qa/IDEIA-048.md | 2026-11-19 |
+| #85 (resultado) | Tester | IDEIA-048 APROVADO; erros de dados: nenhum (3.500+1.500 diferenciais sem diferença; 2.321 cenários com despesa; 47 mutantes/40 mortos). Defeitos D1–D5 não bloqueantes | docs/qa/IDEIA-048.md | 2026-11-19 |
+| #86 | Deployer | Deploy 17 da IDEIA-048 delegado | SendMessage | 2026-11-19 |

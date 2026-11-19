@@ -75,7 +75,7 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 | ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
 |---|---|---|---|---|---|---|---|
 | IDEIA-049 | **Receitas alternativas**: artefato **ou** ficha de favor; base Royal SET1/2/3; escolhe a mais barata (560 itens com artefato/ficha + 45 Royal) | 4 | 5 | 3 | 5 | 17 | **VERIFICADA** (deploy 12) |
-| IDEIA-048 | **Despesas extras** no lucro e "venda sem imposto de mercado" | 4 | 4 | 4 | 4 | 16 | EM_QA (Tester #85) (plano aprovado, D-040) |
+| IDEIA-048 | **Despesas extras** no lucro e "venda sem imposto de mercado" | 4 | 4 | 4 | 4 | 16 | APROVADA (deploy 17) (plano aprovado, D-040) |
 | IDEIA-054 | **"Vale pagar Premium?"**: ponto de equilíbrio com o preço do ouro (constantes editáveis e datadas) | 3 | 4 | 4 | 4 | 15 | TRIADA (MÉDIA) |
 | IDEIA-057 | **Corrigir transmutação listada como receita de craft**: 20 recursos brutos (`T5_WOOD` ← `T4_WOOD`...) aparecem como craftáveis no catálogo. Confirmado pelo Gerente em `catalog.json` | 3 | 5 | 5 | 2 | 15 | **VERIFICADA** (deploy 7) |
 | IDEIA-050 | **Calculadora de transmutação** de recursos brutos | 3 | 4 | 3 | 4 | 14 | NOVA (bloqueada: fator do servidor precisa de 1 medição do usuário) |
@@ -132,3 +132,4 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 | IDEIA-072 | **Foco: pendências da 002**: selo "N valores corrigidos" conta foco, `validateCatalog` valida `ef`, explicação com RRR manual (D-047) | 3 | 3 | 4 | 1 | 11 | NOVA |
 | IDEIA-074 | **Testes de ligação do Crafting (069)**: matar M19/M54/M55/M41/M47/M48, teste da ficha com valor que distingue auto, `craftCfg()` = CURRENT_DEFAULTS, filtrar `.test.jsx` na varredura de persistSchemas.test.js, README (D-050) | 3 | 3 | 4 | 1 | 11 | NOVA |
 | IDEIA-075 | **Preço-alvo e demais cartões respeitam "Sem imposto" (048)**: hoje o cartão Preço-alvo usa o imposto de mercado mesmo com noTax marcado (D-052) | 4 | 4 | 4 | 1 | 13 | NOVA |
+| IDEIA-076 | **Acabamento das despesas extras (048)**: seletor de escopo legível em 375px, aviso sem eco de lixo, Comparar cidades explica despesas e noTax, testes para 7 mutantes (D-053) | 4 | 4 | 4 | 1 | 13 | NOVA |

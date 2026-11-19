@@ -286,3 +286,6 @@ Dois níveis de limite de erro; botão restaurar também no rodapé; restaurar a
 
 ## D-052 — Respostas ao Executor da 048
 Refino fica na mesma ideia; despesa negativa bloqueada (vira 0 com aviso); Preço-alvo ignorando "Sem imposto" é limitação conhecida: o Tester classifica a gravidade e a IDEIA-075 (Preço-alvo e demais cartões respeitarem noTax e despesas) fica aberta de qualquer forma. A branch precisa de rebase/merge na master atual (docs andaram); Deployer resolve conforme D-045.
+
+## D-053 — 048 aprovada; defeitos viram IDEIA-076
+D1 (Preço-alvo ignora noTax, erra para o lado seguro) segue na IDEIA-075. D2 (a 375px o seletor "por craft/por lote" fica truncado em "por"), D3 (aviso ecoa "-Infinity"/"[object Object]"), D4 (Comparar cidades: custo total inclui despesas sem coluna/nota; marca noTax global; "Melhor destino" sem indicar sem imposto) e D5 (7 mutantes sobreviventes, lacunas de teste) entram como IDEIA-076, prioridade alta por D2 (campo que muda o cálculo ilegível no celular).
