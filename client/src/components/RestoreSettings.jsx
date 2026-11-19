@@ -43,7 +43,8 @@ export default function RestoreSettings({ storage = defaultStorage(), reload = (
           <p style={{ margin: '0 0 8px' }}>Não há configurações salvas neste navegador.</p>
         ) : (
           <p style={{ margin: '0 0 8px' }}>
-            <strong>Restaurar configurações?</strong> Isto apaga as configurações salvas por este app neste navegador (servidor, Premium, taxas de bancada, cidades, itens e receitas escolhidas, avisos já dispensados):{' '}
+            <strong>Restaurar configurações?</strong>{' '}
+            Isto apaga as configurações salvas por este app neste navegador (servidor, Premium, taxas de bancada, cidades, itens e receitas escolhidas, avisos já dispensados):{' '}
             <strong>{count === 1 ? '1 item' : `${count} itens`}</strong>. Preços e dados do jogo não são afetados e nada fora do app é apagado. A página será recarregada.
           </p>
         )}
