@@ -1,10 +1,15 @@
 // Mensagens de erro de request() (compartilhado entre preços e histórico): o nome da API vem do chamador.
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { MarketError, request } from './market';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MarketError, request, resetThrottleForTests } from './market';
 import { fetchHistory, clearHistoryCache } from './history';
 
 const stub = (res) => vi.stubGlobal('fetch', vi.fn(async () => res));
-afterEach(() => vi.unstubAllGlobals());
+// o 429 grava `blockedUntil` no módulo: zera antes e depois de cada teste para a ordem (shuffle) não importar.
+beforeEach(resetThrottleForTests);
+afterEach(() => {
+  vi.unstubAllGlobals();
+  resetThrottleForTests();
+});
 
 const msgOf = async (p) => p.then(() => null, (e) => e);
 
