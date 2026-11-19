@@ -28,6 +28,10 @@ export function stressGrid(input, steps = STEPS) {
 export const THIN_MARGIN = 0.05;
 export const verdict = (profit, cost) => (profit < 0 ? 'loss' : profit < THIN_MARGIN * cost ? 'thin' : 'ok');
 
+// Rótulos de modo iguais aos da tabela "Onde vender" do Craft; só descreve a saída variada, não calcula nada.
+const EXIT_LABEL = { order: 'Ordem de venda', instant: 'Ordem de compra' };
+const exitInfo = (city, label, noTax) => ({ city, label, noTax: noTax === true });
+
 /** Adaptador do Craft a partir de computeCraft: taxas de bancada (craft e etapas de refino) e despesas extras são fixas. */
 export function craftStressInput(c, premium) {
   if (!c || !c.ready || !(c.units > 0) || !(c.best?.price > 0)) return null;
@@ -40,6 +44,7 @@ export function craftStressInput(c, premium) {
     k: netSale(1, mode, premium),
     mode,
     units: c.units,
+    ...exitInfo(c.best.city, c.best.label, c.best.noTax),
   };
 }
 
@@ -55,5 +60,6 @@ export function refineStressInput(unit, rrr, sell, premium, { extrasPerUnit = 0,
     k: netSale(1, mode, premium),
     mode,
     units: 1,
+    ...exitInfo(sell.city, EXIT_LABEL[sell.mode], noTax),
   };
 }

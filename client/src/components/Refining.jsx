@@ -308,7 +308,7 @@ export default function Refining() {
           )}
         </div>
 
-        {cur && <StressTest input={refineStressInput(cur.unit, rrrValue, { price: cur.sell.price, mode: cur.mode }, premium, { extrasPerUnit: perUnitExtras, noTax })} />}
+        {cur && <StressTest input={refineStressInput(cur.unit, rrrValue, { price: cur.sell.price, mode: cur.mode, city: cur.sell.city }, premium, { extrasPerUnit: perUnitExtras, noTax })} />}
 
         <ExtrasCard list={cfg.extras} onChange={(v) => set({ extras: v })} issues={issues} crafts={vcfg.qty} kind="refine" />
 

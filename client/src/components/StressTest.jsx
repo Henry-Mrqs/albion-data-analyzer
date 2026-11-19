@@ -1,15 +1,24 @@
+import { useEffect, useRef } from 'react';
 import { breakEven, stressGrid, stressProfit, verdict } from '../lib/stress';
 import { fmt } from '../lib/econ';
+import { cityLabel } from '../lib/market';
 
 const CLS = { loss: 'bad', thin: 'warn', ok: 'good' };
 const SIGN = (n) => `${n > 0 ? '+' : ''}${Math.round(n * 100)}%`;
-const P1 = (n) => `${(Math.abs(n) * 100).toFixed(1).replace('.', ',')}%`;
+const P1 = (n) => (Number.isFinite(n) ? `${(Math.abs(n) * 100).toFixed(1).replace('.', ',')}%` : fmt(n)); // nunca Infinity%/NaN%
 
 /**
  * IDEIA-031: teste de estresse (só apresenta; quem calcula é lib/stress.js). `input` vem de craftStressInput /
  * refineStressInput (null = faltam preços). Lucro por unidade; taxa de bancada, despesas e RRR não mudam.
  */
 export default function StressTest({ input }) {
+  const wrapRef = useRef(null);
+  // Em tela estreita a grade rola na horizontal: começa com a coluna 0% (centro) à vista.
+  useEffect(() => {
+    const w = wrapRef.current;
+    const c = w?.querySelector('[data-testid="stress-center"]');
+    if (w && c && w.scrollWidth > w.clientWidth) w.scrollLeft = c.offsetLeft - (w.clientWidth - c.offsetWidth) / 2;
+  }, [input]);
   if (!input) {
     return (
       <div className="card stack" data-testid="stress-card">
@@ -39,7 +48,7 @@ export default function StressTest({ input }) {
       <p style={{ margin: 0 }} data-testid="stress-summary">
         Lucro hoje <b className={CLS[verdict(base, cost)]}>{fmt(base)}</b> por unidade. {priceText} {matText}
       </p>
-      <div className="table-wrap">
+      <div className="table-wrap" ref={wrapRef}>
         <table data-testid="stress-grid">
           <thead>
             <tr>
@@ -72,7 +81,16 @@ export default function StressTest({ input }) {
         </table>
       </div>
       <div className="hint">
-        Lucro por unidade em cada cenário: vermelho = prejuízo, amarelo = menos de 5% do custo, verde = folgado. Taxa de bancada, despesas e RRR não mudam; a rota (comprar/produzir) é mantida.
+        {input.city && (
+          <>
+            Saída de venda variada: {cityLabel(input.city)}, {input.label}
+            {input.noTax ? ', sem imposto' : ''}.{' '}
+          </>
+        )}
+        A variação de material (±5% a ±20%) vale para todos os materiais, inclusive artefatos.
+      </div>
+      <div className="hint">
+        Lucro por unidade em cada cenário: vermelho = prejuízo, amarelo = menos de 5% do custo, verde = folgado. Taxa de bancada, despesas e RRR não mudam; a rota (comprar/produzir) é mantida. Em tela estreita, role a grade para os lados.
       </div>
     </div>
   );
