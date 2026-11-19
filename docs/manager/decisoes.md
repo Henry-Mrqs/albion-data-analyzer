@@ -265,3 +265,6 @@ O Deployer fez o que a regra manda: ao conflitar, **abortou** e relatou (nada me
 
 ## Exceções registradas (Gerente escreveu algo que não é gestão)
 - Nenhuma até aqui nesta fase. O código atual (Mercado, Refino, Craft, Flipper) foi escrito por mim **antes** de este processo existir e não passou pelo pipeline; por isso suas fórmulas entram na auditoria de D-008.
+
+## D-046 — IDEIA-070 aprovada com pendências de baixa gravidade
+Tester aprovou sem perda de configuração do usuário. Texto do aviso ("RRR +40" deveria dizer bônus de produção +40, RRR sobe ~21 pp) e aviso mesmo sem refino ficam como ajuste de texto na 071; mutante M25 vai para a 069 (infra jsdom). Fonte: docs/qa/IDEIA-070.md.
