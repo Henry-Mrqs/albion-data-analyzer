@@ -111,3 +111,4 @@ Uma linha por delegação. Prova de que o trabalho é feito por sub agentes dist
 | #85 (resultado) | Tester | IDEIA-048 APROVADO; erros de dados: nenhum (3.500+1.500 diferenciais sem diferença; 2.321 cenários com despesa; 47 mutantes/40 mortos). Defeitos D1–D5 não bloqueantes | docs/qa/IDEIA-048.md | 2026-11-19 |
 | #86 | Deployer | Deploy 17 da IDEIA-048 delegado | SendMessage | 2026-11-19 |
 | #86 (nota) | Gerente | Retomada do Deployer antigo falhou (`model_not_found`); novo Deployer `aaa68321fe32d45e6` criado com briefing completo (leia deploy-15/16 para o protocolo) | Agent | 2026-11-19 |
+| #86 (resultado) | Deployer | Deploy 17 VERIFICADO (IDEIA-048): SHA 24cf529, bundle index-fm5oOycB.js, catálogo c0f66cb0bd, despesas e sem imposto ok, estado antigo ok, sem rollback. Ressalva: 375px exatos não emulável (mínimo 500px; sem rolagem em 500px) | docs/deploy/deploy-17.md | 2026-11-19 |
