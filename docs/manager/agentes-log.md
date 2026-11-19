@@ -100,3 +100,5 @@ Uma linha por delegação. Prova de que o trabalho é feito por sub agentes dist
 | #78 (resultado) | Planejador | Plano da 071 entregue (2 limites de erro, resetState, aviso item-aware) + 6 perguntas | docs/plans/IDEIA-071.md | 2026-11-19 |
 | #79 | EXECUTOR (`a9068070e7aac666e`, worktree) | Implementar IDEIA-071 em feat/IDEIA-071 | em curso | docs/plans/IDEIA-071.md | 2026-11-19 |
 | #80 | EXECUTOR (`a5dead3c75c703910`, worktree) | Implementar IDEIA-048 em feat/IDEIA-048 | em curso | docs/plans/IDEIA-048.md | 2026-11-19 |
+| #79 (resultado) | Executor | 071 entregue em feat/IDEIA-071 (959 testes; 63 novos vistos falhar antes; smoke ok). Desvios: leitura única do item salvo no 1º render; 15%/37% fixos no texto (teste os deriva de rrr()); 1 teste existente alterado (migrationNotes, permitido pelo plano) | commits 453742f..7fe61f4 | 2026-11-19 |
+| #81 | TESTER (`afe4a304a78abbbd2`) | QA da IDEIA-071 (restaurar só albion:*, limites de erro, aviso de migração, mutação) | docs/qa/IDEIA-071.md | 2026-11-19 |
