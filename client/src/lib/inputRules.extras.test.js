@@ -1,6 +1,7 @@
 // IDEIA-048: validação das despesas extras e do mapa de saídas sem imposto.
 import { describe, expect, it } from 'vitest';
 import { MAX_QTY, cleanCraftCfg, cleanRefineCfg, validateExtras } from './inputRules';
+import { cleanNoTax } from './inputRules';
 import { MAX_EXTRAS } from './extras';
 
 const row = (over = {}) => ({ name: 'Transporte', value: 150, scope: 'craft', ...over });
@@ -121,6 +122,13 @@ describe('cleanCraftCfg e cleanRefineCfg com extras e noTax (048)', () => {
   it('os avisos das despesas contam no selo "valores corrigidos" (level warn/error)', () => {
     const r = cleanCraftCfg({ ...craftBase, extras: [row({ value: -1 })] }, {});
     expect(r.issues.filter((i) => i.level !== 'info' && i.field.startsWith('extras'))).toHaveLength(1);
+  });
+});
+
+describe('cleanNoTax: só as chaves Cidade|order e Cidade|instant (D5, mutante 26, 076)', () => {
+  it('descarta Cidade|none, cidade vazia e chave com espaço; mantém order e instant', () => {
+    expect(cleanNoTax({ 'Caerleon|none': true, 'Caerleon|order': true, 'Martlock|instant': true, '|order': true, 'Caerleon|order ': true })).toEqual({ 'Caerleon|order': true, 'Martlock|instant': true });
+    expect(cleanNoTax({ 'Caerleon|none': true })).toEqual({});
   });
 });
 

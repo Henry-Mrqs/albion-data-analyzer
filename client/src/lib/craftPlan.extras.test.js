@@ -105,3 +105,11 @@ describe('computeCraft com despesas extras (048)', () => {
     expect(c.totalCost).toBeCloseTo(3524.27, 2);
   });
 });
+
+describe('computeCraft: margem inclui as despesas (D5, mutante 13, 076)', () => {
+  it('230 de despesas: margem 12,07% (lucro 453,23 ÷ custo 3.754,27); sem despesas 19,39% (683,23 ÷ 3.524,27)', () => {
+    expect(run({ extras: L }).best.margin).toBeCloseTo(12.07, 2);
+    expect(run().best.margin).toBeCloseTo(19.39, 2);
+  });
+});
+

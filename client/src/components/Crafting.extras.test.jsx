@@ -76,6 +76,32 @@ describe('Crafting: despesas extras (048)', () => {
   });
 });
 
+describe('Crafting: mutantes sobreviventes da 048 (D5, 076)', () => {
+  it('mutante 13: com 230 de despesas a margem do Melhor destino é +12.1% (o mutante mostraria +12.9%)', () => {
+    mount({ extras: L });
+    expect(bestBox()).toContain('+12.1%');
+    expect(bestBox()).not.toContain('12.9');
+  });
+  it('mutante 37: a linha Total do plano de compra soma as despesas (3.754; sem despesas 3.524) e a despesa aparece uma vez só', () => {
+    const planTotal = () => screen.getByText('Total', { selector: 'strong' }).closest('tr');
+    const { unmount } = mount({ extras: L });
+    expect(planTotal().textContent).toContain('3.754');
+    const rows = [...planTotal().closest('table').querySelectorAll('tr')].filter((tr) => tr.textContent.startsWith('Despesas extras'));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].textContent).toContain('230');
+    unmount();
+    mount();
+    expect(planTotal().textContent).toContain('3.524');
+  });
+  it('mutante 38: lote de 10 crafts: "(1.580 no lote de 10)" e custo por unidade 3.682', () => {
+    mount({ crafts: 10, extras: [{ name: '', value: '150', scope: 'craft' }, { name: '', value: '80', scope: 'lote' }] });
+    const t = document.body.textContent;
+    expect(t).toContain('Despesas: 150 por craft + 80 por lote (1.580 no lote de 10)');
+    expect(t).not.toContain('no lote de 1)');
+    expect(totalRow()).toContain('3.682'); // 3.524,27 + 1.580 ÷ 10
+  });
+});
+
 describe('Crafting: coluna "Sem imposto" (048)', () => {
   it('marcar a linha grava a chave Cidade|modo, tira o imposto e a taxa de criação (líquido 4.500, lucro 975)', () => {
     mount();
