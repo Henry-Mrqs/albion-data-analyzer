@@ -18,7 +18,7 @@ const MODES = [
 ];
 
 /** Cartão "Preço-alvo": por quanto listar para lucrar X, ter margem M ou empatar. cost = custo por unidade. */
-export default function TargetPrice({ cost, prices, mid, missing }) {
+export default function TargetPrice({ cost, prices, mid, missing, noTax = { order: null, instant: null } }) {
   const { premium } = useSettings();
   const [cfg, setCfg] = usePersisted('target:cfg', { goal: 'profit', profit: 1000, margin: 20, mode: 'order', relists: 0 });
   const set = (patch) => setCfg((c) => ({ ...c, ...patch }));
@@ -29,9 +29,12 @@ export default function TargetPrice({ cost, prices, mid, missing }) {
   const relists = mode === 'order' ? vals.relists : 0;
   const goalArg = cfg.goal === 'profit' ? { profit: +cfg.profit || 0 } : cfg.goal === 'margin' ? { margin: (+cfg.margin || 0) / 100 } : {};
   const ok = !missing && cost > 0;
-  const target = ok ? targetPrice({ cost, premium, mode, relists, ...goalArg }) : null;
+  // IDEIA-075 (D-056): vale "sem imposto" se a melhor saída DESTE modo está marcada (a cidade vem junto para o aviso)
+  const exit = noTax?.[mode];
+  const off = exit?.on === true;
+  const target = ok ? targetPrice({ cost, premium, mode, relists, noTax: off, ...goalArg }) : null;
 
-  const net = target ? netSale(target, mode, premium) - (mode === 'order' ? relists * SETUP_FEE * target : 0) : 0;
+  const net = target ? netSale(target, off ? 'none' : mode, premium) - (mode === 'order' && !off ? relists * SETUP_FEE * target : 0) : 0;
   // Limitação: compara com o melhor comprador de TODAS as cidades (sem seletor de cidade).
   const market = ok ? bestBuyer(prices, mid) : null;
   const gap = target && market ? marketGap(target, market.price) : null;
@@ -79,6 +82,11 @@ export default function TargetPrice({ cost, prices, mid, missing }) {
               </div>
             </div>
           </div>
+          {off && (
+            <div className="hint">
+              Venda sem imposto marcada ({cityLabel(exit.city)}, {mode === 'order' ? 'ordem de venda' : 'ordem de compra'}): o preço-alvo não desconta imposto nem taxa de criação (relistagens não contam).
+            </div>
+          )}
           {market ? (
             <>
               <div className="hint">
