@@ -241,7 +241,7 @@ const focusPoints = (ctx) => {
   const parts = [];
   if (values.efficiency > 0) parts.push(`eficiência ${values.efficiency}`);
   if (values.override > 0) parts.push(`foco por craft ${values.override}`);
-  if (values.budget > 0) parts.push(`foco disponível ${values.budget}`);
+  if (values.budget > 0 && plain(ctx.cfg.focusBudget) !== 'não informado') parts.push(`foco disponível ${values.budget}`);
   if (values.reference > 0) parts.push(`1 ponto = ${values.reference} prata`);
   return row({
     id: 'focus-points', label: 'Foco como custo em pontos', value: parts.length ? parts.join(' · ') : 'não informado', unit: '', origin: 'user', status: 'info-only',
