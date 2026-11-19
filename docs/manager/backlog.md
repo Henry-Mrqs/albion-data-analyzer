@@ -18,7 +18,7 @@ Status possíveis: `NOVA → TRIADA → PLANEJADA → EM_EXECUÇÃO → EM_QA �
 
 | ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
 |---|---|---|---|---|---|---|---|
-| IDEIA-005 | **Auditor de variáveis**: painel em cada cálculo listando TODAS as variáveis consideradas (RRR, foco, bônus de cidade, taxa de bancada, imposto, setup fee, premium…) e as ignoradas/pressupostas, com avisos ("sem foco", "sem diário"), para resolver o problema de esquecer variável | 5 | 5 | 3 | 5 | 18 | EM_QA (Tester #111) |
+| IDEIA-005 | **Auditor de variáveis**: painel em cada cálculo listando TODAS as variáveis consideradas (RRR, foco, bônus de cidade, taxa de bancada, imposto, setup fee, premium…) e as ignoradas/pressupostas, com avisos ("sem foco", "sem diário"), para resolver o problema de esquecer variável | 5 | 5 | 3 | 5 | 18 | APROVADA (deploy 24) |
 | IDEIA-006 | **Ponto de equilíbrio comprar × produzir**: preço máximo que compensa pagar pela barra/couro pronto em cada tier | 5 | 5 | 4 | 4 | 18 | NOVA |
 | IDEIA-002 | **Foco**: pontos de foco gastos por craft/refino, prata/lucro por ponto de foco, "vale usar foco?" | 5 | 5 | 3 | 4 | 17 | VERIFICADA (deploy 14) |
 | IDEIA-010 | **Liquidez**: volume vendido por dia (API history) em Craft/Flipper/Mercado, aviso de item sem giro | 5 | 4 | 3 | 5 | 17 | **VERIFICADA** (deploy 11) |
@@ -140,3 +140,7 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 | IDEIA-081 | **Receitas em lote do bloco de pedra** (rocha encantada rende 2, 4 ou 8 blocos por craft; 15 receitas que o app ignora e o parser da 049 não aceita) (D-059) | 3 | 3 | 2 | 3 | 11 | NOVA |
 | IDEIA-082 | **Acabamento do Preço-alvo com noTax (075)**: testes dos mutantes M19/M23/M30, aviso citando a saída do modo escolhido mesmo desmarcado, rótulo para Mercado Negro (só ordens de compra) (D-061) | 3 | 3 | 4 | 1 | 11 | NOVA |
 | IDEIA-084 | **Acabamento da aba Premium e das abas (054)**: atribuição exata das fontes, `aria-current`, rótulos 701–960px, números enormes em notação científica, teste dos cortes de CSS (D-065) | 3 | 3 | 4 | 1 | 11 | NOVA |
+| IDEIA-083 | **Preço-alvo no auditor**: linha target-notax "aplicada" quando a melhor saída do modo está marcada e valores vivos de meta/modo/relistagens (exige mexer em TargetPrice.jsx) (D-066) | 4 | 4 | 3 | 2 | 13 | NOVA |
+| IDEIA-085 | **Flake de tempo em App.errors.test.jsx (071)**: falhou 2 de 6 execuções completas do check sob carga; reduzir custo/fixar timeout; provar com ≥30 execuções sob carga (D-066) | 5 | 3 | 4 | 1 | 13 | NOVA |
+| IDEIA-086 | **Registrar a aba Premium no auditor (054)** + contrato que reprova aba com chave persistida sem registerScreen (D-066) | 5 | 5 | 3 | 3 | 16 | NOVA |
+| IDEIA-087 | **Acabamento do auditor (005)**: 4 mutantes sobreviventes, fraquezas do teste de sensibilidade (probe por campo), renderização preguiçosa do cartão recolhido (+14,8 kB gzip nos chunks) (D-066) | 3 | 3 | 3 | 1 | 10 | NOVA |

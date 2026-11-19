@@ -325,3 +325,6 @@ Quem adiciona linhas quando 059/065/012/054 entrarem: o plano de cada uma (o con
 
 ## D-065 — 054 aprovada na re-QA; acabamento vira IDEIA-084
 Observações viram IDEIA-084 (baixa): atribuição exata de cada item da lista (AO Refinery × wiki/dossiê), `aria-current` na aba ativa, avaliar rótulos entre 701–960px, números enormes como `3e19`, teste dos cortes de CSS (navegador real). Retrabalho gasto: 1 de 2.
+
+## D-066 — 005 aprovada; pendências
+D1 (flake de tempo de App.errors.test.jsx, teste da 071 perto do limite de 4 s) vira IDEIA-085 de prioridade alta (qualidade do portão de testes: reduzir custo ou fixar timeout explícito; provar com ≥30 execuções sob carga). D6/premium: IDEIA-086 "Registrar a aba Premium no auditor" (a 054 tem variáveis de cálculo — ouro, volume, prata por foco, foco/dia — que o auditor ainda não lista; e o contrato deve reprovar aba com chave persistida sem registerScreen). D3/D4: IDEIA-083 (Preço-alvo "aplicada" + valores vivos no auditor). D2/D5: testes dos 4 mutantes e renderização preguiçosa do cartão recolhido, na IDEIA-087 (acabamento do auditor). D7: Deployer confere o noTax do Preço-alvo após o merge.
