@@ -295,3 +295,6 @@ Pendências do laudo (teste de `lazy` rejeitado no App, mutantes M17/M26/M27/M33
 
 ## D-055 — Respostas ao Executor da 031
 ±N% global em todos os materiais (inclusive artefatos) aceito; semáforo 5% do custo é decisão de produto aceita; Flipper e sugestão por histórico fora do escopo; grade usa o melhor destino sem escolha. Erros de conta do plano (não do dossiê) corrigidos; o Tester os reconfere.
+
+## D-056 — Respostas ao Planejador (075/076)
+075: noTax vale por modo e pela mesma saída que o cartão usa (a melhor daquele modo), não "alguma saída"; aviso fixo + cidade usada; após o merge da 031, teste de que estresse e Preço-alvo concordam. 076: marca noTax só explicada na tela; confirmar se `fee` do CityCompare é total do lote e, se sim, corrigir o rótulo (honestidade de dado); `echoValue` em todas as mensagens com eco de lixo, sem mudar mensagens com número finito nem testes existentes (senão PARAR e reportar); layout 375px em duas filas.

@@ -119,3 +119,4 @@ Uma linha por delegação. Prova de que o trabalho é feito por sub agentes dist
 | #89 | PLANEJADOR (novo, `a25c5f00264f02535`) | Planos das IDEIAS 076 e 075 | em curso | docs/plans/IDEIA-076.md, IDEIA-075.md | 2026-11-19 |
 | #88 (resultado) | Executor | 031 entregue em feat/IDEIA-031 (1062 testes, +24; números do dossiê batem; smoke ok). Plano tinha 2 erros de conta, corrigidos pelo Executor (dp*=0,2564; taxa refino 9,4785). TDD junto (sem RED isolado). Sem persistência nova | commits 675ffee, b88a98f | 2026-11-19 |
 | #90 | TESTER (novo, sonnet) | QA da IDEIA-031 (oráculo independente, differential, 10x shuffle p/ 078, mutação) | docs/qa/IDEIA-031.md | 2026-11-19 |
+| #89 (resultado) | Planejador | Planos 075 (3 tasks) e 076 (7 tasks) entregues + 7 perguntas; respostas do gerente enviadas (D-056); planos em atualização | docs/plans/IDEIA-075.md, IDEIA-076.md | 2026-11-19 |
