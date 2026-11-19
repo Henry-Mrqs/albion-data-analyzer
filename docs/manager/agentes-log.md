@@ -105,3 +105,6 @@ Uma linha por delegação. Prova de que o trabalho é feito por sub agentes dist
 | #80 (resultado) | Executor | 048 entregue em feat/IDEIA-048 (971 testes, +48; números do dossiê §4 batem; smoke ok). Limitação: Preço-alvo ignora "Sem imposto". Desvios pequenos (testes *.extras.test.js em arquivos separados; noTax do Refino em `Refino|order`) | 5 commits sobre 830fab7 | 2026-11-19 |
 | #82 | TESTER (`acd7c7ec23b98d7fa`) | QA da IDEIA-048 (oráculo, differential master×branch, noTax, limitação do Preço-alvo, mutação) | docs/qa/IDEIA-048.md | 2026-11-19 |
 | #83 | Gerente | Retomada dos Testers #81 (071) e #82 (048) após limite de 5h da API (não foi erro dos agentes) | SendMessage | 2026-11-19 |
+| #83 (resultado) | Gerente | Retomada dos Testers #81 e #82 falhou 3x (erro de infraestrutura `model_not_found` ao retomar; os agentes não tinham salvo laudo). Reiniciados do zero com agentes novos (modelo sonnet explícito) | — | 2026-11-19 |
+| #84 | TESTER (`a053cc4b4dfe17b2d`) | QA da IDEIA-071 (reinício) | docs/qa/IDEIA-071.md | 2026-11-19 |
+| #85 | TESTER (`a1157fd0e29cb8132`) | QA da IDEIA-048 (reinício) | docs/qa/IDEIA-048.md | 2026-11-19 |
