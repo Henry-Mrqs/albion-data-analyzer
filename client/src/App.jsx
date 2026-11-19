@@ -1,5 +1,5 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
-import { BarChart3, Download, Flame, Hammer, Percent, Truck } from 'lucide-react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { BarChart3, Coins, Download, Flame, Hammer, Percent, Truck } from 'lucide-react';
 import { useCatalog } from './lib/catalog';
 import { SERVERS, setSettings, useSettings } from './lib/settings';
 import { craftUsesRefine, dismissNotice, noticeApplies, pendingNotices } from './lib/migrationNotes';
@@ -12,6 +12,7 @@ const Refining = lazy(() => import('./components/Refining'));
 const Crafting = lazy(() => import('./components/Crafting'));
 const Flipper = lazy(() => import('./components/Flipper'));
 const RrrCalculator = lazy(() => import('./components/RrrCalculator'));
+const Premium = lazy(() => import('./components/Premium'));
 
 const TABS = [
   { id: 'market', label: 'Mercado', icon: BarChart3, View: Market },
@@ -19,6 +20,7 @@ const TABS = [
   { id: 'crafting', label: 'Craft', icon: Hammer, View: Crafting },
   { id: 'flipper', label: 'Flipper', icon: Truck, View: Flipper },
   { id: 'rrr', label: 'RRR', icon: Percent, View: RrrCalculator },
+  { id: 'premium', label: 'Premium', icon: Coins, View: Premium },
 ];
 
 const fromHash = () => (TABS.find((t) => t.id === location.hash.slice(1)) ?? TABS[0]).id;
@@ -54,6 +56,7 @@ export default function App() {
     if (s) dismissNotice(s, id);
     setNotices((ns) => ns.filter((n) => n.id !== id));
   };
+  const navRef = useRef(null);
   const { server, premium } = useSettings();
   const { ready, error } = useCatalog();
 
@@ -62,6 +65,11 @@ export default function App() {
     window.addEventListener('hashchange', on);
     return () => window.removeEventListener('hashchange', on);
   }, []);
+
+  // Em tela estreita as abas viram só ícone (CSS); a aba ativa é levada para a vista dentro da barra, sem mexer na página (nearest).
+  useEffect(() => {
+    navRef.current?.querySelector('.tab.active')?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  }, [tab]);
 
   const go = (id) => {
     window.history.pushState(null, "", `#${id}`);
@@ -75,10 +83,10 @@ export default function App() {
         <div className="brand">
           ALBION <b>DATA</b>
         </div>
-        <nav className="tabs">
+        <nav className="tabs" ref={navRef}>
           {TABS.map(({ id, label, icon: Icon }) => (
-            <button key={id} className={`tab ${tab === id ? 'active' : ''}`} onClick={() => go(id)}>
-              <Icon size={16} /> {label}
+            <button key={id} className={`tab ${tab === id ? 'active' : ''}`} aria-label={label} title={label} onClick={() => go(id)}>
+              <Icon size={16} /> <span className="tab-label">{label}</span>
             </button>
           ))}
         </nav>

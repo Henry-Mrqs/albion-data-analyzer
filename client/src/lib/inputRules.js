@@ -12,11 +12,11 @@ const DAILY_OK = [0, 10, 20];
 
 const isEmpty = (x) => x == null || (typeof x === 'string' && x.trim() === '');
 const toNum = (x) => Number(String(x).trim());
-const br = (n) =>
+export const br = (n) =>
   !Number.isFinite(n) ? String(n) : Math.abs(n) >= 1e15 ? n.toExponential().replace('e+', 'e') : n.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 // Eco do valor do usuário numa mensagem: '' (nada a mostrar) ou ' ' + texto + suffix. Texto digitado vira "texto";
 // número finito vira br(n); qualquer outra coisa (objeto, array, booleano, NaN, ±Infinity, função, undefined) não é ecoada.
-const echoValue = (raw, suffix = '') =>
+export const echoValue = (raw, suffix = '') =>
   typeof raw === 'string' ? ` "${raw.trim()}"${suffix}` : typeof raw === 'number' && Number.isFinite(raw) ? ` ${br(raw)}${suffix}` : '';
 const round2 = (x) => Math.round(x * 100) / 100;
 

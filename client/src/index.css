@@ -144,4 +144,6 @@ td.cell-used { box-shadow: inset 0 0 0 2px var(--accent); border-radius: 6px; ba
 details > summary { cursor: pointer; color: var(--text-2); }
 .footer { margin-top: 32px; text-align: center; color: var(--text-3); font-size: 12px; }
 .kv small { display: inline; margin-left: 4px; }
-@media (max-width: 640px) { .tabs { order: 3; flex-basis: 100%; } .header { gap: 8px; } }
+@media (max-width: 700px) { .tabs { order: 3; flex-basis: 100%; } .header { gap: 8px; } }
+/* 6 abas com rótulo pedem ~567 px: abaixo de 960 px (na linha única o rótulo pede ~567 px de barra, que só há a partir de ~940 px) ficam só ícone (6x44 + 5x4 = 284 px; aria-label/title dão o nome) */
+@media (max-width: 960px) { .tab-label { display: none; } }

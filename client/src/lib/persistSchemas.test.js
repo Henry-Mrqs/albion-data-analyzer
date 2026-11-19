@@ -82,7 +82,7 @@ function setFields(src) {
 }
 
 describe('contrato: todo campo gravado por set({...}) existe no esquema ou nos padrões da chave', () => {
-  const FILES = { 'Crafting.jsx': 'craft:cfg', 'Refining.jsx': 'refine:cfg', 'Flipper.jsx': 'flip:cfg', 'RrrCalculator.jsx': 'rrr:cfg', 'TargetPrice.jsx': 'target:cfg' };
+  const FILES = { 'Crafting.jsx': 'craft:cfg', 'Refining.jsx': 'refine:cfg', 'Flipper.jsx': 'flip:cfg', 'RrrCalculator.jsx': 'rrr:cfg', 'TargetPrice.jsx': 'target:cfg', 'Premium.jsx': 'premium:cfg' };
   // componentes que recebem o `set` da tela por props e gravam no cfg dela
   for (const [file, key] of Object.entries(FILES)) {
     it(`${file} → ${key}`, () => {
@@ -105,8 +105,8 @@ describe('contrato: toda chave usePersisted do código tem entrada em PERSISTED 
   const used = new Map();
   for (const f of files) for (const m of read(f).matchAll(/usePersisted\('([^']+)'/g)) used.set(m[1], f);
 
-  it('as 8 chaves do plano estão em uso, e PERSISTED também cobre settings', () => {
-    expect([...used.keys()].sort()).toEqual(['craft:cfg', 'craft:item', 'flip:cfg', 'market:item', 'market:quality', 'refine:cfg', 'rrr:cfg', 'target:cfg']);
+  it('as 9 chaves do plano estão em uso, e PERSISTED também cobre settings', () => {
+    expect([...used.keys()].sort()).toEqual(['craft:cfg', 'craft:item', 'flip:cfg', 'market:item', 'market:quality', 'premium:cfg', 'refine:cfg', 'rrr:cfg', 'target:cfg']);
     expect(Object.keys(PERSISTED).sort()).toEqual([...used.keys(), 'settings'].sort());
   });
 

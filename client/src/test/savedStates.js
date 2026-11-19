@@ -31,6 +31,7 @@ export const CURRENT_DEFAULTS = {
     focus: false, daily: 0, item: null, crafts: 100,
   },
   'target:cfg': { goal: 'profit', profit: 1000, margin: 20, mode: 'order', relists: 0 },
+  'premium:cfg': { gold: '', goldCost: '', volume: '', silverPerFocus: '', focusPerDay: '' },
   settings: { server: 'west', premium: true, feeCeiling: 1000 },
 };
 
@@ -159,6 +160,14 @@ export const SAVED_STATES = [
   // ---- market
   { key: 'market:item', commit: '8bf3014', note: 'estável', current: true, saved: { id: 'T5_ARMOR_PLATE_SET1', ench: 2 } },
   { key: 'market:quality', commit: '8bf3014', note: 'estável', current: true, saved: 3 },
+  // ---- premium:cfg (IDEIA-054; formato novo, ainda sem versão anterior: os casos abaixo cobrem o estado limpo, texto lixo e número no lugar de texto)
+  { key: 'premium:cfg', commit: 'IDEIA-054', current: true, note: 'atual, campos vazios', saved: { gold: '', goldCost: '', volume: '', silverPerFocus: '', focusPerDay: '' } },
+  {
+    key: 'premium:cfg', commit: 'IDEIA-054', current: true, note: 'atual, campos preenchidos (texto)',
+    saved: { gold: '9414', goldCost: '3750', volume: '20000000', silverPerFocus: '43', focusPerDay: '10000' },
+  },
+  { key: 'premium:cfg', commit: 'IDEIA-054', note: 'texto lixo digitado no ouro', saved: { gold: 'abc', goldCost: '', volume: '', silverPerFocus: '', focusPerDay: '' } },
+  { key: 'premium:cfg', commit: 'IDEIA-054', note: 'campos como número', saved: { gold: 9414, goldCost: 3750, volume: 2e7, silverPerFocus: 43, focusPerDay: 10000 } },
   // ---- settings
   { key: 'settings', commit: '8bf3014', note: 'sem feeCeiling', saved: { server: 'europe', premium: false } },
   { key: 'settings', commit: 'da8bf1c (060)', current: true, note: 'atual', saved: { server: 'east', premium: true, feeCeiling: 500 } },

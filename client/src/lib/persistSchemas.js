@@ -185,6 +185,11 @@ export const PERSISTED = {
       relists: 'numText',
     },
   },
+  'premium:cfg': {
+    version: 1,
+    migrations: {},
+    schema: { gold: 'numText', goldCost: 'numText', volume: 'numText', silverPerFocus: 'numText', focusPerDay: 'numText' }, // IDEIA-054
+  },
   settings: {
     version: 1,
     migrations: {},
