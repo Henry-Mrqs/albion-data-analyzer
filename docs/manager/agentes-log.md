@@ -115,3 +115,5 @@ Uma linha por delegação. Prova de que o trabalho é feito por sub agentes dist
 | #84 (resultado) | Tester | IDEIA-071 APROVADO; erros de dados: nenhum (200 telas sem branco; restaurar só albion:*; 40 mutantes/32 mortos). Pendências baixas: teste de lazy rejeitado no App (M22), M17/M26/M27/M33/M35/M40 sem teste, item salvo inválido suprime aviso, chunk index +6 kB gzip | docs/qa/IDEIA-071.md | 2026-11-19 |
 | #87 | Deployer (`aaa68321fe32d45e6`) | Deploy 18 da IDEIA-071 delegado | SendMessage | 2026-11-19 |
 | #87 (resultado) | Deployer | Deploy 18 VERIFICADO (IDEIA-071): SHA 6c9c9e0, bundle index-Tkuarln4.js, catálogo c0f66cb0bd, 1038 testes, restaurar/aviso/null ok, sem rollback. Ressalva: 1 teste falhou numa execução e passou nas 2 seguintes (possível teste instável, não identificado) | docs/deploy/deploy-18.md | 2026-11-19 |
+| #88 | EXECUTOR (`a08a15cfdf29c42ad`, worktree) | Implementar IDEIA-031 (teste de estresse) em feat/IDEIA-031, adaptando plano antigo | em curso | docs/plans/IDEIA-031.md | 2026-11-19 |
+| #89 | PLANEJADOR (novo, `a25c5f00264f02535`) | Planos das IDEIAS 076 e 075 | em curso | docs/plans/IDEIA-076.md, IDEIA-075.md | 2026-11-19 |
