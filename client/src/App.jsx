@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { BarChart3, Download, Flame, Hammer, Percent, Truck } from 'lucide-react';
+import { BarChart3, Coins, Download, Flame, Hammer, Percent, Truck } from 'lucide-react';
 import { useCatalog } from './lib/catalog';
 import { SERVERS, setSettings, useSettings } from './lib/settings';
 import { craftUsesRefine, dismissNotice, noticeApplies, pendingNotices } from './lib/migrationNotes';
@@ -12,6 +12,7 @@ const Refining = lazy(() => import('./components/Refining'));
 const Crafting = lazy(() => import('./components/Crafting'));
 const Flipper = lazy(() => import('./components/Flipper'));
 const RrrCalculator = lazy(() => import('./components/RrrCalculator'));
+const Premium = lazy(() => import('./components/Premium'));
 
 const TABS = [
   { id: 'market', label: 'Mercado', icon: BarChart3, View: Market },
@@ -19,6 +20,7 @@ const TABS = [
   { id: 'crafting', label: 'Craft', icon: Hammer, View: Crafting },
   { id: 'flipper', label: 'Flipper', icon: Truck, View: Flipper },
   { id: 'rrr', label: 'RRR', icon: Percent, View: RrrCalculator },
+  { id: 'premium', label: 'Premium', icon: Coins, View: Premium },
 ];
 
 const fromHash = () => (TABS.find((t) => t.id === location.hash.slice(1)) ?? TABS[0]).id;
