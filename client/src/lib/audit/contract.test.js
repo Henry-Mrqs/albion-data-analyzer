@@ -7,6 +7,8 @@ import { CURRENT_DEFAULTS } from '../../test/savedStates';
 import { setFields } from '../../test/setFields';
 import { getScreen, screenIds, uncoveredFields } from './registry';
 import './craft';
+import './refine';
+import './rrr';
 
 const COMP = join(import.meta.dirname, '..', '..', 'components');
 const read = (f) => readFileSync(join(COMP, f), 'utf8');
@@ -50,6 +52,24 @@ describe('contrato do auditor: cada campo salvo tem linha (ou motivo em ignoredF
   it('campo em ignoredFields com motivo passa; var que cobre o campo passa', () => {
     const d = { cfgKeys: ['k'], ignoredFields: { velho: 'legado, nunca mais gravado' }, vars: [{ fields: ['a'] }] };
     expect(uncoveredFields('t', d, { k: ['a', 'velho'] })).toEqual([]);
+  });
+
+  it('as 3 telas v1 estão registradas, com as chaves certas; Craft e Refino cobrem também target:cfg (o cartão Preço-alvo mora nelas)', () => {
+    expect(screenIds().sort()).toEqual(['craft', 'refine', 'rrr']);
+    expect(getScreen('craft').cfgKeys).toEqual(['craft:cfg', 'target:cfg']);
+    expect(getScreen('refine').cfgKeys).toEqual(['refine:cfg', 'target:cfg']);
+    expect(getScreen('rrr').cfgKeys).toEqual(['rrr:cfg']);
+    // os campos de target:cfg que o contrato vigia (se alguém tirar target:cfg do registro, o teste acima reprova)
+    expect(savedFieldsOf('target:cfg').sort()).toEqual(['goal', 'margin', 'mode', 'profit', 'relists']);
+  });
+
+  it('o contrato falha de verdade com target:cfg: campo novo do Preço-alvo sem linha reprova nas duas telas', () => {
+    for (const id of ['craft', 'refine']) {
+      const def = getScreen(id);
+      const fields = Object.fromEntries(def.cfgKeys.map((k) => [k, savedFieldsOf(k)]));
+      fields['target:cfg'] = [...fields['target:cfg'], 'campoNovoDoAlvo'];
+      expect(uncoveredFields(id, def, fields)).toEqual([{ screen: id, cfgKey: 'target:cfg', field: 'campoNovoDoAlvo' }]);
+    }
   });
 
   for (const id of screenIds()) {

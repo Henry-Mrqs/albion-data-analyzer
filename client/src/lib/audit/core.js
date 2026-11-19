@@ -2,6 +2,7 @@
 // O auditor SÓ LÊ o que o cálculo usou (V1): nenhuma fórmula é copiada para cá.
 import { DEFAULT_MAX_AGE_H } from '../exits';
 import { STEPS, THIN_MARGIN } from '../stress';
+import { salesTax, SETUP_FEE } from '../econ';
 
 export const ORIGINS = ['game', 'app-default', 'user', 'api', 'derived'];
 export const STATUSES = ['applied', 'unconfirmed', 'stale', 'not-considered', 'info-only'];
@@ -53,6 +54,32 @@ const shown = (v) => {
   if (typeof v === 'number') return Number.isFinite(v) ? String(v) : '(valor inválido)';
   return v === null || v === undefined ? '(vazio)' : '(valor inválido)';
 };
+
+const SRC_TAX = 'wiki e AFM 2026 (média-alta)';
+const SRC_SETUP = 'wiki (média-alta)';
+
+/**
+ * Linhas de Premium, imposto, taxa de criação e fator líquido (Craft e Refino). `sale` descreve a saída que a tela usou:
+ * null (sem saída calculada) | { mode: 'order'|'instant', noTax, factor } com factor = líquido ÷ preço, LIDO do resultado.
+ */
+export function taxRows({ premium, sale }) {
+  const noTax = !!sale?.noTax;
+  const rows = [
+    row({ id: 'premium', label: 'Premium', value: premium ? 'ligado' : 'desligado', unit: '', origin: 'user', status: 'applied', note: 'Configuração do app (Ajustes).' }),
+    row({
+      id: 'sales-tax', label: 'Imposto de venda', value: noTax ? 0 : salesTax(premium) * 100, unit: '%', origin: 'game', status: 'applied', source: SRC_TAX,
+      note: noTax ? 'Não cobrado (venda sem imposto).' : premium ? '4% com Premium.' : '8% sem Premium.',
+    }),
+  ];
+  let setup;
+  if (!sale) setup = { value: SETUP_FEE * 100, note: 'Cobrada só numa ordem de venda; ainda não há destino calculado.' };
+  else if (noTax) setup = { value: 0, note: 'Taxa de criação: não cobrada (venda sem imposto).' };
+  else if (sale.mode === 'instant') setup = { value: 0, note: 'Taxa de criação: não cobrada (venda instantânea numa ordem de compra).' };
+  else setup = { value: SETUP_FEE * 100, note: 'Cobrada ao criar a ordem de venda.' };
+  rows.push(row({ id: 'setup-fee', label: 'Taxa de criação da ordem de venda', ...setup, unit: '%', origin: 'game', status: 'applied', source: SRC_SETUP }));
+  if (sale && Number.isFinite(sale.factor)) rows.push(row({ id: 'net-factor', label: 'Líquido por prata vendida', value: sale.factor, unit: '', origin: 'derived', status: 'applied', note: 'Já com imposto e taxa de criação.' }));
+  return rows;
+}
 
 /** Texto de um valor digitado para exibir: texto/número como vieram; vazio = "não informado"; objeto/lista = "(valor inválido)" (nunca "[object Object]"). */
 export const plain = (v) => (v === undefined || v === null || v === '' ? 'não informado' : typeof v === 'string' || (typeof v === 'number' && Number.isFinite(v)) ? String(v) : '(valor inválido)');
