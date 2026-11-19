@@ -13,7 +13,7 @@ export const PREMIUM = {
   source: 'AO Refinery (aorefinery.com/gold) e trecho da wiki; fonte secundária, pode mudar por patch',
 };
 
-/** P5: diferença de imposto de mercado sem Premium e com Premium (0,08 − 0,04), derivada de econ.js. */
+/** P5: diferença de imposto de mercado sem Premium e com Premium (8% − 4%), derivada de econ.js. */
 export const TAX_SAVING = salesTax(false) - salesTax(true);
 
 export const MAX_VOLUME = 1e15; // teto técnico do volume mensal (evita ∞/NaN)

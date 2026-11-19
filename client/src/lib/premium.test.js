@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { NOT_COUNTED, PREMIUM, TAX_SAVING, cleanPremiumInputs, premiumBalance } from './premium';
 
@@ -17,6 +18,12 @@ describe('constantes', () => {
 });
 
 describe('premiumBalance', () => {
+  it('o código não escreve 0,04 à mão (divide por TAX_SAVING, derivado de salesTax)', () => {
+    const src = readFileSync(new URL('./premium.js', import.meta.url), 'utf8').replace(/\/\/.*$/gm, '');
+    expect(src).not.toMatch(/0[.,]04/);
+  });
+
+
   it('G 9.414, V 20.000.000, s 43, foco 10.000: cost 35.302.500, taxSaving 800.000, focusValue 12.900.000, balance −21.602.500', () => {
     const r = premiumBalance(V());
     expect(r.state).toBe('ok');
