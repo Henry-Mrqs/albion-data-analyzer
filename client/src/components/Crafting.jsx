@@ -261,7 +261,7 @@ export default function Crafting() {
                   <div>
                     <div className="label">Melhor destino</div>
                     <div>
-                      <b>{cityLabel(best.city)}</b> · {best.label} ({fmt(best.price)}){best.noTax && <small className="good">sem imposto</small>}
+                      <b>{cityLabel(best.city)}</b> · {best.label} ({fmt(best.price)}){best.noTax && <>{' '}<small className="good">sem imposto</small></>}
                     </div>
                     <div className="hint">
                       Venda líquida {fmt(best.net)}{best.noTax ? ' (sem imposto)' : ''} − custo {fmt(totalCost)}
