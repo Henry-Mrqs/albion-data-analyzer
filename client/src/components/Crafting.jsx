@@ -26,6 +26,7 @@ import DailyWait from './DailyWait';
 import InputIssues, { CorrectedBadge } from './InputIssues';
 import PriceMatrix from './PriceMatrix';
 import TargetPrice from './TargetPrice';
+import { exitNoTaxByMode } from '../lib/targetPrice';
 import { Age, Banner, Field, Money, NumberInput, PriceStatus, Segmented, Switch } from './ui';
 
 export default function Crafting() {
@@ -371,7 +372,7 @@ export default function Crafting() {
           </GiroCard>
         )}
 
-        {rec && <TargetPrice cost={unitCost} prices={prices} mid={targetMid} missing={missing.length > 0} />}
+        {rec && <TargetPrice cost={unitCost} prices={prices} mid={targetMid} missing={missing.length > 0} noTax={exitNoTaxByMode(options)} />}
 
         {rec && prices && plan.length > 0 && (
           <div className="card stack">

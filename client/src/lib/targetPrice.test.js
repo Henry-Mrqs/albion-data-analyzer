@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { targetPrice, marketGap } from './targetPrice';
+import { targetPrice, marketGap, exitNoTaxByMode } from './targetPrice';
 import { netSale } from './econ';
 
 // Caso do dossiê §4: barra 200 x16 + couro 150 x8, RRR 33/133, taxa 384 x 0,1125 x 5 = 216.
@@ -59,5 +59,54 @@ describe('IDEIA-060: entradas inválidas', () => {
   it('relistagens acima do derivado: null; no limite continua válido', () => {
     expect(targetPrice({ cost: C, premium: true, mode: 'order', profit: 1000, relists: 38 })).toBeNull();
     expect(targetPrice({ cost: C, premium: true, mode: 'order', profit: 1000, relists: 37 })).not.toBeNull();
+  });
+});
+
+describe('targetPrice com noTax (IDEIA-075)', () => {
+  const base = { cost: 1000, profit: 500, premium: true };
+  it('noTax: ordem de venda, premium: 1.500 ÷ 1 = 1.500 (sem noTax: 1.605)', () => {
+    expect(targetPrice({ ...base, mode: 'order' })).toBe(1605);
+    expect(targetPrice({ ...base, mode: 'order', noTax: true })).toBe(1500);
+  });
+  it('noTax: ordem de compra na hora, premium: 1.500 (sem noTax: 1.563)', () => {
+    expect(targetPrice({ ...base, mode: 'instant' })).toBe(1563);
+    expect(targetPrice({ ...base, mode: 'instant', noTax: true })).toBe(1500);
+  });
+  it('noTax sem premium (8%): ordem de venda 1.676; com noTax 1.500', () => {
+    expect(targetPrice({ ...base, premium: false, mode: 'order' })).toBe(1676);
+    expect(targetPrice({ ...base, premium: false, mode: 'order', noTax: true })).toBe(1500);
+  });
+  it('noTax ignora relistagens: 2 relistagens sem noTax = 1.695; com noTax 1.500', () => {
+    expect(targetPrice({ ...base, mode: 'order', relists: 2 })).toBe(1695);
+    expect(targetPrice({ ...base, mode: 'order', relists: 2, noTax: true })).toBe(1500);
+  });
+  it('noTax com margem: 20% de 1.000 = 200; 1.200 (sem noTax 1.284)', () => {
+    expect(targetPrice({ cost: 1000, margin: 0.2, premium: true, mode: 'order' })).toBe(1284);
+    expect(targetPrice({ cost: 1000, margin: 0.2, premium: true, mode: 'order', noTax: true })).toBe(1200);
+  });
+  it('equilíbrio com noTax: preço = custo arredondado para cima (3.754,27 → 3.755)', () => {
+    expect(targetPrice({ cost: 3754.27, premium: true, mode: 'order', noTax: true })).toBe(3755);
+  });
+  it('noTax só vale com true estrito: "true", 1, undefined e null contam como falso', () => {
+    for (const noTax of ['true', 1, undefined, null]) expect(targetPrice({ ...base, mode: 'order', noTax })).toBe(1605);
+  });
+  it('mode inválido continua null mesmo com noTax; custo inválido idem', () => {
+    expect(targetPrice({ ...base, mode: 'none', noTax: true })).toBeNull();
+    expect(targetPrice({ ...base, cost: 0, mode: 'order', noTax: true })).toBeNull();
+  });
+  it('consistência com netSale: com noTax, netSale(alvo, "none") >= custo + lucro e netSale(alvo - 1, "none") < custo + lucro', () => {
+    const p = targetPrice({ cost: 3754.27, profit: 1000, premium: true, mode: 'order', noTax: true });
+    expect(p).toBe(4755);
+    expect(netSale(p, 'none', true)).toBeGreaterThanOrEqual(4754.27);
+    expect(netSale(p - 1, 'none', true)).toBeLessThan(4754.27);
+  });
+  it('exitNoTaxByMode: só a MELHOR (primeira) saída do modo decide; marca em outra saída do mesmo modo não conta', () => {
+    const o = [{ city: 'Caerleon', mode: 'order', noTax: false }, { city: 'Martlock', mode: 'order', noTax: true }, { city: 'Black Market', mode: 'instant', noTax: true }];
+    expect(exitNoTaxByMode(o)).toEqual({ order: { on: false, city: 'Caerleon' }, instant: { on: true, city: 'Black Market' } });
+    expect(exitNoTaxByMode([o[1], o[0]]).order).toEqual({ on: true, city: 'Martlock' });
+  });
+  it('exitNoTaxByMode: modo sem saída é null; noTax só com true estrito; vazio, undefined e não-array dão tudo null', () => {
+    expect(exitNoTaxByMode([{ city: 'Caerleon', mode: 'order', noTax: 'true' }])).toEqual({ order: { on: false, city: 'Caerleon' }, instant: null });
+    for (const x of [[], undefined, null, 'abc', {}]) expect(exitNoTaxByMode(x)).toEqual({ order: null, instant: null });
   });
 });

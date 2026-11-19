@@ -312,7 +312,7 @@ export default function Refining() {
 
         <ExtrasCard list={cfg.extras} onChange={(v) => set({ extras: v })} issues={issues} crafts={vcfg.qty} kind="refine" />
 
-        {cur && <TargetPrice cost={cur.unit.cost + perUnitExtras} prices={prices} mid={cur.mid} missing={missing.length > 0} />}
+        {cur && <TargetPrice cost={cur.unit.cost + perUnitExtras} prices={prices} mid={cur.mid} missing={missing.length > 0} noTax={{ order: { on: noTax, city: cur.sell.city }, instant: { on: noTax, city: cur.sell.city } }} />}
 
         {cur && <FocusCard summary={fs} ench={ench} hasBase={fbase != null} unit="refino" />}
 
