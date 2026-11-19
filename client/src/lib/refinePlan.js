@@ -26,7 +26,8 @@ export function routePath(unit, tier) {
   return steps;
 }
 
-export function evaluateTier({ tier, uniq, prices, ctx, sellCity, sellMode, premium }) {
+// IDEIA-048: extrasPerUnit (despesas por unidade refinada) soma ao custo; noTax = venda fora do mercado (sem imposto nem taxa de criação)
+export function evaluateTier({ tier, uniq, prices, ctx, sellCity, sellMode, premium, extrasPerUnit = 0, noTax = false }) {
   const mid = marketId(uniq);
   const unit = refineUnit(uniq, ctx);
   const sellCities = sellCity === 'best' ? SELL_CITIES : [sellCity];
@@ -36,9 +37,10 @@ export function evaluateTier({ tier, uniq, prices, ctx, sellCity, sellMode, prem
     if (q.price > best.price) best = { ...q, city: c };
   }
   const mode = best.city === 'Black Market' || sellMode === 'instant' ? 'instant' : 'order';
-  const net = netSale(best.price, mode, premium);
-  const profit = net - unit.cost;
-  return { tier, uniq, mid, unit, sell: best, mode, net, profit, margin: unit.cost > 0 ? (profit / unit.cost) * 100 : 0 };
+  const net = netSale(best.price, noTax ? 'none' : mode, premium);
+  const cost = unit.cost + extrasPerUnit;
+  const profit = net - cost;
+  return { tier, uniq, mid, unit, sell: best, mode, net, profit, margin: cost > 0 ? (profit / cost) * 100 : 0, extrasPerUnit };
 }
 
 // rotas: comprar refinado pronto x produzir tudo x melhor combinação
