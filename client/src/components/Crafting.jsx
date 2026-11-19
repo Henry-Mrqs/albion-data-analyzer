@@ -11,6 +11,8 @@ import { useHistory } from '../lib/history';
 import { loadedStats } from '../lib/liquidity';
 import { validateInputs } from '../lib/inputRules';
 import { craftFocusSummary, focusValues } from '../lib/focus';
+import { compareCraftCities } from '../lib/cityCompare';
+import CityCompare from './CityCompare';
 import FocusCard, { FocusFields } from './FocusCard';
 import RecipePicker from './RecipePicker';
 import { GiroCard, GiroCell } from './Giro';
@@ -56,6 +58,9 @@ export default function Crafting() {
   const fv = focusValues(cfg);
   const fbase = item ? focusOf(sel.id, sel.ench) : null;
   const fs = rec && prices ? craftFocusSummary({ rec, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling, base: fbase, ...fv.values }) : null;
+  // Comparar cidades (IDEIA-058): uma chamada de computeCraft por cidade; nenhum número do resto da tela muda
+  const feeByCity = cfg.feeByCity && typeof cfg.feeByCity === 'object' && !Array.isArray(cfg.feeByCity) ? cfg.feeByCity : {};
+  const compare = rec && prices ? compareCraftCities({ rec, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling, scenario: cfg.cityScenario === 'own' ? 'own' : 'best', feeByCity: feeByCity }) : null;
   const note = showDailyNote({ craftDaily: cfg.craftDaily, hasCard: !!savings });
   const { specialty, autoRRR, craftRRR } = c.rates;
   const { issues, lines, fee, totalCost, units, unitCost, missing, options, best, ready, plan, used, refinable, allBest } = c;
@@ -432,6 +437,18 @@ export default function Crafting() {
             </div>
             <p className="hint">Custo total do material para a quantidade acima. As duas últimas colunas mostram quanto você economizaria esperando o dia de bônus de refino daquele recurso (+10% ou +20%). “Melhor” decide em cada tier se compensa comprar o refinado pronto ou refiná-lo (inclusive só de uma parte da cadeia).</p>
           </div>
+        )}
+
+        {compare && (
+          <CityCompare
+            result={compare}
+            scenario={cfg.cityScenario === 'own' ? 'own' : 'best'}
+            onScenario={(v) => set({ cityScenario: v })}
+            feeByCity={feeByCity}
+            onFee={(city, v) => set({ feeByCity: { ...feeByCity, [city]: v } })}
+            general={{ value: cfg.feePer100, touched: !feeIsUnconfirmedDefault(cfg.feePer100, cfg.feeSet) }}
+            units={units}
+          />
         )}
 
         {rec && <DailyWait savings={savings} crafts={c.rates.crafts} waitCost={cfg.waitCost} onWaitCost={(v) => set({ waitCost: v })} />}

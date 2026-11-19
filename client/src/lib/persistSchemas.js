@@ -110,6 +110,8 @@ export const PERSISTED = {
       waitCost: 'numText',
       recipeVariant: 'recipeVariant',
       share: 'numText', // IDEIA-010 (opcional até entrar na master)
+      cityScenario: { enum: ['own', 'best'] }, // IDEIA-058
+      feeByCity: { map: 'numText' }, // IDEIA-058: taxa de bancada por cidade (vazio = taxa geral)
     },
   },
   'refine:cfg': {
