@@ -74,7 +74,11 @@ function migrateRrr(o) {
  */
 const REFINE_CITY_NOTE = {
   id: 'craft-refine-city',
-  message: 'Sua configuração antiga foi atualizada: o refino agora usa a cidade especializada de cada recurso (RRR +40).',
+  // IDEIA-071: +40 é o bônus de produção (PB), não o RRR; 15% e 37% são rrr() de refino sem/com especialização
+  // (18/118 e 58/158; migrationNotes.test.js confere com rrr()). Só vale para quem refina no Craft: `when`.
+  message:
+    "Sua configuração antiga foi atualizada: o refino dos materiais do Craft agora usa o bônus de produção da cidade especializada de cada recurso (+40). O RRR do refino sobe de cerca de 15% para 37% e o custo do craft cai. Antes o app calculava esse refino sem o bônus, embora a tela dissesse 'cada recurso na sua cidade de bônus'.",
+  when: 'craft-uses-refine',
 };
 function craftNotes(saved, fromVersion) {
   return fromVersion === 0 && Object.keys(saved).length > 0 && saved.refineCity === undefined ? [REFINE_CITY_NOTE] : [];

@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { BarChart3, Download, Flame, Hammer, Percent, Truck } from 'lucide-react';
 import { useCatalog } from './lib/catalog';
 import { SERVERS, setSettings, useSettings } from './lib/settings';
-import { dismissNotice, pendingNotices } from './lib/migrationNotes';
+import { craftUsesRefine, dismissNotice, noticeApplies, pendingNotices } from './lib/migrationNotes';
 import { Banner, Loading } from './components/ui';
 import Market from './components/Market';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -31,14 +31,24 @@ const storage = () => {
     return null;
   }
 };
-const STARTUP_NOTICES = (() => {
+const DEFAULT_CRAFT_ITEM = { id: 'T6_MAIN_SWORD', ench: 0 }; // o padrão de Crafting.jsx
+// Lido no primeiro render do App (antes de qualquer aba montar e regravar o estado): avisos pendentes e o item salvo do Craft.
+const readStartup = () => {
   const s = storage();
-  return s ? pendingNotices(s) : [];
-})();
+  if (!s) return { notices: [], craftItem: DEFAULT_CRAFT_ITEM };
+  let craftItem = DEFAULT_CRAFT_ITEM;
+  try {
+    craftItem = JSON.parse(s.getItem('albion:craft:item') ?? 'null') ?? DEFAULT_CRAFT_ITEM;
+  } catch {
+    /* estado ilegível: usa o item padrão */
+  }
+  return { notices: pendingNotices(s), craftItem };
+};
 
 export default function App() {
   const [tab, setTab] = useState(fromHash);
-  const [notices, setNotices] = useState(STARTUP_NOTICES);
+  const [startup] = useState(readStartup);
+  const [notices, setNotices] = useState(startup.notices);
   const dismiss = (id) => {
     const s = storage();
     if (s) dismissNotice(s, id);
@@ -86,7 +96,7 @@ export default function App() {
         </div>
       </header>
 
-      {notices.map((n) => (
+      {(ready ? notices.filter((n) => noticeApplies(n, { craftUsesRefine: craftUsesRefine(startup.craftItem) })) : []).map((n) => (
         <Banner key={n.id} kind="warn" title="Configuração antiga atualizada">
           {n.message}{' '}
           <button className="btn sm" onClick={() => dismiss(n.id)}>
