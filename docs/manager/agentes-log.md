@@ -137,3 +137,5 @@ Uma linha por delegação. Prova de que o trabalho é feito por sub agentes dist
 | #96 (resultado) | Tester | IDEIA-078 APROVADO; dist/ idêntico (14 arquivos sha256); master 7/12 seeds falham, branch 52/52 passam; mutação prova causalidade; 24 seeds de suíte completa sem outra instabilidade; erros de dados: nenhum | docs/qa/IDEIA-078.md | 2026-11-19 |
 | #98 | Deployer (`aaa68321fe32d45e6`) | Deploy 20 da IDEIA-078 delegado | SendMessage | 2026-11-19 |
 | #98 (resultado) | Deployer | Deploy 20 VERIFICADO (IDEIA-078): SHA e0f9d36, bundle inalterado index-CBQksK6R.js, catálogo c0f66cb0bd, 1089 testes, 3 seeds shuffle 0 falhas, sem rollback | docs/deploy/deploy-20.md | 2026-11-19 |
+| #95 (resultado) | Tester | Re-QA da 031 APROVADA; erros de dados: nenhum (19.200 comparações; núcleo numérico idêntico em 6.000 entradas; texto = saída usada em 6.400 cenários; D4 1.125 combinações; D3 medido no Chrome; M29/M23 mortos). Observações O7 (rolar a grade e digitar recentraliza) e O8 (rótulos de linha fora da vista) → 080 | docs/qa/IDEIA-031.md | 2026-11-19 |
+| #99 | Deployer (`aaa68321fe32d45e6`) | Deploy 21 da IDEIA-031 delegado | SendMessage | 2026-11-19 |

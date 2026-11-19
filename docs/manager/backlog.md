@@ -30,7 +30,7 @@ Status possíveis: `NOVA → TRIADA → PLANEJADA → EM_EXECUÇÃO → EM_QA �
 | IDEIA-023 | **Calculadora de RRR** isolada com tabela de referência de todos os bônus | 3 | 5 | 5 | 3 | 16 | **VERIFICADA** (deploy 2) |
 | IDEIA-029 | **Craft em lote multi-item**: vários itens somando materiais e compras | 5 | 4 | 2 | 5 | 16 | NOVA |
 | IDEIA-030 | **Preço-alvo reverso**: por quanto preciso vender para lucrar X | 4 | 5 | 4 | 3 | 16 | **VERIFICADA** (deploy 2) |
-| IDEIA-031 | **Teste de estresse**: lucro se o preço de venda cair/subir ±N% | 4 | 4 | 4 | 4 | 16 | EM_QA (re-QA, Tester #95) (plano aprovado, D-013) |
+| IDEIA-031 | **Teste de estresse**: lucro se o preço de venda cair/subir ±N% | 4 | 4 | 4 | 4 | 16 | APROVADA (deploy 21) (plano aprovado, D-013) |
 | IDEIA-034 | **"Como foi calculado"**: tooltip com a fórmula e os números de cada valor da tela | 4 | 5 | 4 | 3 | 16 | NOVA |
 | IDEIA-007 | **Lucro por hora**: tempo de produção e fila | 4 | 4 | 3 | 4 | 15 | NOVA |
 | IDEIA-011 | **Tendência e médias** 7/30 dias (API history) | 4 | 4 | 3 | 4 | 15 | NOVA |
@@ -136,3 +136,4 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 | IDEIA-077 | **Acabamento do limite de erro (071)**: teste de lazy rejeitado no App, mutantes M17/M26/M27/M33/M35/M40, aviso com item salvo inválido, import dinâmico de migrationNotes (D-054) | 3 | 3 | 4 | 1 | 11 | NOVA |
 | IDEIA-078 | **Caçar teste instável (flaky)**: 1 teste falhou numa execução de `npm test` na master pós-071 (1038 testes) e passou nas seguintes; identificar por repetição (≥20 execuções, shuffle) e corrigir a causa (relógio/ordem/estado compartilhado) | 4 | 3 | 4 | 1 | 12 | VERIFICADA (deploy 20) |
 | IDEIA-079 | **Acabamento de textos longos (076)**: `overflow-wrap: anywhere` em `.hint`/`.bad`, mode não finito sem eco, trim documentado, testes de CSS/etiqueta/trim (D-058; + valor corrompido chega ao input numérico e gera avisos nativos do navegador) | 3 | 3 | 5 | 1 | 12 | NOVA |
+| IDEIA-080 | **Polimento da grade de estresse (031)**: coluna de rótulos fixa (`position: sticky`), não recentralizar ao digitar após o usuário rolar, testes de ligação Refino e de 2+ opções de venda no Craft (O7, O8, N07/N08/N09/N13) | 3 | 3 | 4 | 1 | 11 | NOVA |
