@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { BarChart3, Download, Flame, Hammer, Percent, Truck } from 'lucide-react';
 import { useCatalog } from './lib/catalog';
 import { SERVERS, setSettings, useSettings } from './lib/settings';
+import { dismissNotice, pendingNotices } from './lib/migrationNotes';
 import { Banner, Loading } from './components/ui';
 import Market from './components/Market';
 
@@ -20,8 +21,27 @@ const TABS = [
 
 const fromHash = () => (TABS.find((t) => t.id === location.hash.slice(1)) ?? TABS[0]).id;
 
+// IDEIA-070 / D-042: avisos de migração do estado salvo, lidos UMA vez na carga (antes de qualquer tela regravar)
+const storage = () => {
+  try {
+    return localStorage;
+  } catch {
+    return null;
+  }
+};
+const STARTUP_NOTICES = (() => {
+  const s = storage();
+  return s ? pendingNotices(s) : [];
+})();
+
 export default function App() {
   const [tab, setTab] = useState(fromHash);
+  const [notices, setNotices] = useState(STARTUP_NOTICES);
+  const dismiss = (id) => {
+    const s = storage();
+    if (s) dismissNotice(s, id);
+    setNotices((ns) => ns.filter((n) => n.id !== id));
+  };
   const { server, premium } = useSettings();
   const { ready, error } = useCatalog();
 
@@ -63,6 +83,15 @@ export default function App() {
           </label>
         </div>
       </header>
+
+      {notices.map((n) => (
+        <Banner key={n.id} kind="warn" title="Configuração antiga atualizada">
+          {n.message}{' '}
+          <button className="btn sm" onClick={() => dismiss(n.id)}>
+            Entendi
+          </button>
+        </Banner>
+      ))}
 
       {error ? (
         <Banner kind="err" title="Falha ao carregar o catálogo de itens">
