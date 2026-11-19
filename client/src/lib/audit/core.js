@@ -121,10 +121,11 @@ export function notConsideredRows(ids) {
 }
 
 /**
- * Seção "Preço-alvo" (Craft e Refino). costOf(ctx) devolve o custo por unidade que a tela passou ao cartão; ctx.noTaxOn diz se há venda sem imposto marcada.
+ * Seção "Preço-alvo" (Craft e Refino). costOf(ctx) devolve o custo por unidade que a tela passou ao cartão; noTaxOf(ctx) devolve
+ * { order, instant } = { on, city } da melhor saída de cada modo (o objeto que a tela passa ao cartão, IDEIA-075).
  * Os campos do cartão (target:cfg) são do cartão Preço-alvo, que guarda o próprio estado: aqui só se diz ONDE estão (o valor vivo está no cartão).
  */
-export const targetVars = (costOf) => [
+export const targetVars = (costOf, noTaxOf) => [
   {
     id: 'target-card', label: 'Preço-alvo: objetivo, modo e relistagens', section: 'Preço-alvo', fields: ['goal', 'profit', 'margin', 'mode', 'relists'], kind: 'info-only', affects: 'none',
     build: (ctx) => [
@@ -133,13 +134,24 @@ export const targetVars = (costOf) => [
     ],
   },
   {
-    id: 'target-notax', label: 'Preço-alvo: venda sem imposto', section: 'Preço-alvo', fields: [], kind: 'not-considered', affects: 'none',
-    build: (ctx) => row({
-      id: 'target-notax', label: 'Venda sem imposto neste alvo', value: 'NÃO considerada', unit: '', origin: 'app-default', status: 'not-considered',
-      note: ctx.noTaxOn
-        ? 'Você marcou venda sem imposto, mas o alvo continua contando imposto e taxa de criação: pode ficar de 4% a 10,5% acima do necessário. (Muda quando a IDEIA-075 entrar.)'
-        : 'O alvo sempre conta imposto e taxa de criação; numa venda sem imposto ele fica acima do necessário. (Muda quando a IDEIA-075 entrar.)',
-    }),
+    id: 'target-notax', label: 'Preço-alvo: venda sem imposto', section: 'Preço-alvo', fields: [], kind: 'info-only', affects: 'none',
+    build: (ctx) => {
+      // IDEIA-075 (D-056): o alvo respeita "Sem imposto" quando a melhor saída DO MODO está marcada; lê o mesmo objeto que a tela passa ao cartão
+      const by = noTaxOf(ctx) ?? {};
+      const MODE = { order: 'ordem de venda', instant: 'ordem de compra' };
+      const on = ['order', 'instant'].filter((m) => by[m]?.on === true);
+      if (!on.length) {
+        return row({
+          id: 'target-notax', label: 'Venda sem imposto neste alvo', value: 'só se a melhor saída do modo estiver marcada', unit: '', origin: 'derived', status: 'info-only',
+          note: 'O preço-alvo respeita "Sem imposto" só quando a melhor saída do modo de venda do cartão está marcada. Nenhuma está marcada: o alvo conta imposto e taxa de criação.',
+        });
+      }
+      const where = on.map((m) => `${MODE[m]} (${by[m].city ?? '—'})`).join(' e ');
+      return row({
+        id: 'target-notax', label: 'Venda sem imposto neste alvo', value: 'considerada', unit: '', origin: 'derived', status: 'info-only',
+        note: `Considerada: ${where} marcada "sem imposto". No modo de venda do cartão que for essa, o alvo não desconta imposto nem taxa de criação (relistagens não contam).`,
+      });
+    },
   },
 ];
 
