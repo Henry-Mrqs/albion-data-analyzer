@@ -271,3 +271,6 @@ Tester aprovou sem perda de configuração do usuário. Texto do aviso ("RRR +40
 
 ## D-047 — IDEIA-002 aprovada com 3 pendências menores
 Aprovada para produção. Pendências (selo de correções, validação de `ef` em validateCatalog, aviso com RRR manual) entram como IDEIA-072 no backlog (baixa prioridade). Refino usa a mesma eficiência em todas as etapas (aproximação declarada na tela); pedir ao usuário medição do foco no jogo. Fonte: docs/qa/IDEIA-002.md.
+
+## D-048 — Respostas do gerente ao Executor da 058
+Aviso forte da taxa 400 padrão basta (tabela não é escondida); Brecilien sem preços aparece como incompleta no fim (IDEIA-025 fica separada); sem lucro por cidade, só custo; a tabela ignora o interruptor de especialização e o RRR manual (o texto da tela deve dizer isso; Tester confere). Desvio aceito: 2 linhas em persistSchemas.js (teste guarda exige). Typo do plano (diário 20) corrigido pelo Executor.

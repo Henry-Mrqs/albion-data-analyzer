@@ -86,3 +86,5 @@ Uma linha por delegação. Prova de que o trabalho é feito por sub agentes dist
 | #71 (resultado) | Deployer | Deploy 14 VERIFICADO (IDEIA-002): SHA 59ff149, bundle index-C_bJ9bGa.js, catálogo novo c0f66cb0bd (+54.809 B, 1.240 itens com ef), cartão de foco em Craft e Refino, estado antigo ok, sem rollback | docs/deploy/deploy-14.md | 2026-11-19 |
 | #72 | EXECUTOR (`a4815db7d7fbd071b`, worktree) | Implementar IDEIA-069 (jsdom + testes de componente) em feat/IDEIA-069 | Loop 3 | — | em curso | docs/plans/IDEIA-069.md | 2026-11-19 |
 | #73 | EXECUTOR (`a02800502b839d8f1`, worktree) | Implementar IDEIA-058 (comparar cidades de craft) em feat/IDEIA-058 | Loop 3 | — | em curso | docs/plans/IDEIA-058.md | 2026-11-19 |
+| #73 (resultado) | Executor | 058 entregue em feat/IDEIA-058 (822 testes, +25; números do dossiê batem; sem smoke visual) | commits 5cf3e70, 27d90e0 | 2026-11-19 |
+| #74 | TESTER (`acf39466f130ed677`) | QA da IDEIA-058 (oráculo independente, UI, estado antigo, mutação) | docs/qa/IDEIA-058.md | 2026-11-19 |
