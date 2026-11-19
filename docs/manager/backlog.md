@@ -91,7 +91,7 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 |---|---|---|---|---|---|---|---|
 | IDEIA-060 | **Validação das entradas pelas faixas do jogo**: taxa de bancada 0–1.000, bônus diário só 0/10/20, RRR máximo (57,81% refino, 52,83% craft). Evita lucro absurdo por digitação (inclui o achado do Tester, D-015) | 4 | 5 | 5 | 3 | 17 | **VERIFICADA** (deploy 8) |
 | IDEIA-066 | **Aviso de saída ilusória**: preço de venda sem comprador (Caerleon, cidade sem ordem de compra); exemplo real `T4_MAIN_SWORD`: só o Mercado Negro tem comprador e dá prejuízo | 5 | 4 | 3 | 5 | 17 | **VERIFICADA** (deploy 4) |
-| IDEIA-058 | **Comparar cidades de craft**: qual cidade dá o menor custo para o item (taxa por cidade obrigatória) | 4 | 4 | 3 | 5 | 16 | EM_QA (Tester #74) (plano aprovado, D-040) |
+| IDEIA-058 | **Comparar cidades de craft**: qual cidade dá o menor custo para o item (taxa por cidade obrigatória) | 4 | 4 | 3 | 5 | 16 | APROVADA (deploy 15) (plano aprovado, D-040) |
 | IDEIA-065 | **Preço de saída realista** ancorado no histórico quando a oferta é isolada | 4 | 3 | 3 | 5 | 15 | TRIADA (MÉDIA; depende de 010; `k` e `N` são decisão de produto) |
 | IDEIA-059 | **Ciclo de vida da ordem**: cada atualização cobra 2,5% de novo e cancelar não devolve (3 correções = 336,75 por unidade no exemplo) | 4 | 3 | 3 | 4 | 14 | TRIADA (escopo reduzido: só O1–O3; base do fee na atualização configurável, BAIXA) |
 | IDEIA-061 | **Ordem de compra × compra instantânea** de material: economia, idade do dado e spread (sem prometer tempo de preenchimento) | 3 | 4 | 4 | 3 | 14 | TRIADA (MÉDIA) |
@@ -128,3 +128,5 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 | ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
 |---|---|---|---|---|---|---|---|
 | IDEIA-071 | **Limite de erro na tela (error boundary) + restaurar configurações**: hoje qualquer exceção derruba a página inteira em branco (o Tester provou com estado salvo parcial ou `null`) e o usuário não tem como se recuperar sozinho. Mostrar mensagem clara e um botão "restaurar configurações salvas" (apaga só as chaves `albion:*` do app, com confirmação) | 4 | 4 | 4 | 3 | 15 | NOVA (D-043; planejar depois da 070) |
+| IDEIA-073 | **Polimento do cartão de cidades (058)**: aviso 400 em todas as cidades, texto "mesma taxa" com taxa vazia, explicar coluna "Dif. p/ bônus" vazia, Royal sem "melhor", custo total visível em 375px, evitar "-0" (D-049, observações O1–O6) | 3 | 3 | 4 | 2 | 12 | NOVA |
+| IDEIA-072 | **Foco: pendências da 002**: selo "N valores corrigidos" conta foco, `validateCatalog` valida `ef`, explicação com RRR manual (D-047) | 3 | 3 | 4 | 1 | 11 | NOVA |
