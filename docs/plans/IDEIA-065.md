@@ -121,3 +121,6 @@ it('o cartão Foco e o estresse mostram o lucro realista (3.849)', () => {});
 3. **Refino e Flipper** (o dossiê cita a coluna de margem realista no Flipper) ficam fora desta ideia: o Refino não tem histórico carregado e o Flipper só tem histórico sob demanda nas top-30. Abrir ideia à parte?
 4. **`N` editável:** o dossiê diz "configuráveis"; se preferir menos campos, ficam só `k` e o interruptor (N = 7).
 5. **Mediana simples** (E2/Caso 2) em vez de média ponderada por volume (E3, ferramenta de referência). Aceita?
+
+## Adendo D-059: linhas do auditor (IDEIA-005)
+Se a 005 já estiver na `master`, a Task 3 acrescenta ao `audit/craft.js` uma linha "Preço de saída realista" (`fields: ['anchorOn','anchorK','anchorDays']`, `kind: 'applied'`, `affects: 'profit'`, `probe: { cfg: { anchorOn: false } }` com histórico do Caso 1 no contexto do teste de sensibilidade, origem `app-default` e estado `unconfirmed` enquanto k e N forem os padrões: "k = 1,25 e N = 7 são escolhas do app, sem fonte"), mostrando quantas saídas foram ancoradas (`c.anchor.anchoredCount`). A linha "Saída" passa a mostrar também o preço listado. O contrato da 005 reprova sem isso.

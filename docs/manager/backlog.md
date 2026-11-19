@@ -18,11 +18,11 @@ Status possíveis: `NOVA → TRIADA → PLANEJADA → EM_EXECUÇÃO → EM_QA �
 
 | ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
 |---|---|---|---|---|---|---|---|
-| IDEIA-005 | **Auditor de variáveis**: painel em cada cálculo listando TODAS as variáveis consideradas (RRR, foco, bônus de cidade, taxa de bancada, imposto, setup fee, premium…) e as ignoradas/pressupostas, com avisos ("sem foco", "sem diário"), para resolver o problema de esquecer variável | 5 | 5 | 3 | 5 | 18 | TRIADA (dossiê pronto; Planejador #104 planejando) |
+| IDEIA-005 | **Auditor de variáveis**: painel em cada cálculo listando TODAS as variáveis consideradas (RRR, foco, bônus de cidade, taxa de bancada, imposto, setup fee, premium…) e as ignoradas/pressupostas, com avisos ("sem foco", "sem diário"), para resolver o problema de esquecer variável | 5 | 5 | 3 | 5 | 18 | EM_EXECUÇÃO (Executor #105) |
 | IDEIA-006 | **Ponto de equilíbrio comprar × produzir**: preço máximo que compensa pagar pela barra/couro pronto em cada tier | 5 | 5 | 4 | 4 | 18 | NOVA |
 | IDEIA-002 | **Foco**: pontos de foco gastos por craft/refino, prata/lucro por ponto de foco, "vale usar foco?" | 5 | 5 | 3 | 4 | 17 | VERIFICADA (deploy 14) |
 | IDEIA-010 | **Liquidez**: volume vendido por dia (API history) em Craft/Flipper/Mercado, aviso de item sem giro | 5 | 4 | 3 | 5 | 17 | **VERIFICADA** (deploy 11) |
-| IDEIA-012 | **Confiança do preço**: detecção de outlier, dado velho e preço isolado; selo de confiança por célula | 4 | 5 | 4 | 4 | 17 | TRIADA (dossiê pronto; Planejador #104 planejando) |
+| IDEIA-012 | **Confiança do preço**: detecção de outlier, dado velho e preço isolado; selo de confiança por célula | 4 | 5 | 4 | 4 | 17 | PLANEJADA (após 065) |
 | IDEIA-003 | **Diários de trabalho (journals)**: diário vazio/cheio, prata por craft, entra no lucro | 5 | 4 | 3 | 4 | 16 | TRIADA (escopo reduzido: capacidade, IDs e preço do diário; **fama fora** por confiança BAIXA) |
 | IDEIA-009 | **Encantar**: runa/alma/relíquia — comprar .0 e encantar × craftar já encantado | 5 | 4 | 2 | 5 | 16 | TRIADA (escopo reduzido: quantidades por passo e IDs; **taxa de encantar fora**, sem fonte) |
 | IDEIA-017 | **Peso e transporte**: peso total do plano, lucro por kg, capacidade de montaria | 4 | 4 | 4 | 4 | 16 | NOVA |
@@ -76,7 +76,7 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 |---|---|---|---|---|---|---|---|
 | IDEIA-049 | **Receitas alternativas**: artefato **ou** ficha de favor; base Royal SET1/2/3; escolhe a mais barata (560 itens com artefato/ficha + 45 Royal) | 4 | 5 | 3 | 5 | 17 | **VERIFICADA** (deploy 12) |
 | IDEIA-048 | **Despesas extras** no lucro e "venda sem imposto de mercado" | 4 | 4 | 4 | 4 | 16 | VERIFICADA (deploy 17) (plano aprovado, D-040) |
-| IDEIA-054 | **"Vale pagar Premium?"**: ponto de equilíbrio com o preço do ouro (constantes editáveis e datadas) | 3 | 4 | 4 | 4 | 15 | TRIADA (MÉDIA) |
+| IDEIA-054 | **"Vale pagar Premium?"**: ponto de equilíbrio com o preço do ouro (constantes editáveis e datadas) | 3 | 4 | 4 | 4 | 15 | EM_EXECUÇÃO (Executor #106) (MÉDIA) |
 | IDEIA-057 | **Corrigir transmutação listada como receita de craft**: 20 recursos brutos (`T5_WOOD` ← `T4_WOOD`...) aparecem como craftáveis no catálogo. Confirmado pelo Gerente em `catalog.json` | 3 | 5 | 5 | 2 | 15 | **VERIFICADA** (deploy 7) |
 | IDEIA-050 | **Calculadora de transmutação** de recursos brutos | 3 | 4 | 3 | 4 | 14 | NOVA (bloqueada: fator do servidor precisa de 1 medição do usuário) |
 | IDEIA-051 | **Dimensionar o lote**: limites de foco, demanda, materiais e prata | 4 | 3 | 2 | 5 | 14 | TRIADA (MÉDIA, depende de 002) |
@@ -92,8 +92,8 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 | IDEIA-060 | **Validação das entradas pelas faixas do jogo**: taxa de bancada 0–1.000, bônus diário só 0/10/20, RRR máximo (57,81% refino, 52,83% craft). Evita lucro absurdo por digitação (inclui o achado do Tester, D-015) | 4 | 5 | 5 | 3 | 17 | **VERIFICADA** (deploy 8) |
 | IDEIA-066 | **Aviso de saída ilusória**: preço de venda sem comprador (Caerleon, cidade sem ordem de compra); exemplo real `T4_MAIN_SWORD`: só o Mercado Negro tem comprador e dá prejuízo | 5 | 4 | 3 | 5 | 17 | **VERIFICADA** (deploy 4) |
 | IDEIA-058 | **Comparar cidades de craft**: qual cidade dá o menor custo para o item (taxa por cidade obrigatória) | 4 | 4 | 3 | 5 | 16 | VERIFICADA (deploy 15) (plano aprovado, D-040) |
-| IDEIA-065 | **Preço de saída realista** ancorado no histórico quando a oferta é isolada | 4 | 3 | 3 | 5 | 15 | TRIADA (MÉDIA; depende de 010; `k` e `N` são decisão de produto) |
-| IDEIA-059 | **Ciclo de vida da ordem**: cada atualização cobra 2,5% de novo e cancelar não devolve (3 correções = 336,75 por unidade no exemplo) | 4 | 3 | 3 | 4 | 14 | TRIADA (escopo reduzido: só O1–O3; base do fee na atualização configurável, BAIXA) |
+| IDEIA-065 | **Preço de saída realista** ancorado no histórico quando a oferta é isolada | 4 | 3 | 3 | 5 | 15 | PLANEJADA (após 059) (MÉDIA; depende de 010; `k` e `N` são decisão de produto) |
+| IDEIA-059 | **Ciclo de vida da ordem**: cada atualização cobra 2,5% de novo e cancelar não devolve (3 correções = 336,75 por unidade no exemplo) | 4 | 3 | 3 | 4 | 14 | PLANEJADA (após 005) (escopo reduzido: só O1–O3; base do fee na atualização configurável, BAIXA) |
 | IDEIA-061 | **Ordem de compra × compra instantânea** de material: economia, idade do dado e spread (sem prometer tempo de preenchimento) | 3 | 4 | 4 | 3 | 14 | TRIADA (MÉDIA) |
 | IDEIA-062 | **Checagem de oferta do material**: o plano de compra cabe no volume diário? | 4 | 3 | 3 | 4 | 14 | TRIADA (MÉDIA; depende de 010; limiar é decisão de produto) |
 | IDEIA-064 | **Perfil do crafter** (especializações e tiers que sei fazer, uma entrada para tudo) | 3 | 3 | 3 | 4 | 13 | TRIADA (MÉDIA; sem automação por regra de desbloqueio) |

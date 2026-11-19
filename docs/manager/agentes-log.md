@@ -148,3 +148,6 @@ Uma linha por delegação. Prova de que o trabalho é feito por sub agentes dist
 | #101/#102 (nota) | Gerente | Pesquisador e Planejador cortados pelo limite de 5h; trabalho parcial salvo (dossiês 005, 012; plano 059); retomados por SendMessage (funcionou) | — | 2026-11-19 |
 | #101 (resultado) | Pesquisador | Dossiês 005, 012 e 068 entregues (005 corrigido 3.983; 012 com limiares como decisão de produto; 068: 85 receitas alternativas = 25 refinados + 5 DEMON_BP em encantos; coração custa 23–37 mil e quase nunca compensa) + 7 perguntas | docs/research/IDEIA-005.md, 012, 068 | 2026-11-19 |
 | #104 | Planejador (`ae07017c48cd1fc11`) | Acrescentar planos 005 (1ª a executar) e 012 após 065/059/054 | SendMessage | 2026-11-19 |
+| #102/#104 (resultado) | Planejador | 5 planos entregues (005, 012, 054, 059, 065). Ordem: 005 → 059 → 065 → 012; 054 independente. Erros de conta do dossiê 065 (líquido 7.373,64; lucro 3.849,37; diferença 3.846,36 = 49,98%) corrigidos no plano; inconsistências do dossiê 012 decididas no plano | docs/plans/ | 2026-11-19 |
+| #105 | EXECUTOR (novo, sonnet, worktree) | IDEIA-005 auditor de variáveis em feat/IDEIA-005 | em curso | docs/plans/IDEIA-005.md | 2026-11-19 |
+| #106 | EXECUTOR (novo, sonnet, worktree) | IDEIA-054 Vale pagar Premium? em feat/IDEIA-054 | em curso | docs/plans/IDEIA-054.md | 2026-11-19 |

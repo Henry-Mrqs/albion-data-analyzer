@@ -147,3 +147,6 @@ it('persistSchemas: craft:cfg e refine:cfg aceitam relists/relistStep (numText) 
 3. **Escopo:** Flipper (muitas linhas, sem cfg de ordem) e ordem de compra de material (IDEIA-061) ficam de fora. Confirma?
 4. **"Queda de preço por atualização"** é um campo extra que o dossiê só insinua ("passo do undercut"). Mantém (padrão 0) ou fica só o contador?
 5. O teto de 37 atualizações vem da regra já existente (`maxRelists`, líquido zerado); com queda > 0 o líquido pode ficar negativo antes disso e a tela só mostra o prejuízo. Aceita?
+
+## Adendo D-059: linhas do auditor (IDEIA-005)
+A 005 roda **primeiro**. Se ela já estiver na `master`, a Task 4 acrescenta ao `audit/craft.js` e ao `audit/refine.js` uma linha "Atualizações da ordem de venda" (`fields: ['relists','relistStep','relistBase']`, `kind: 'applied'`, `affects: 'profit'`, `probe: { cfg: { relists: '3', relistStep: '10' } }`, origem `user`, nota "base da taxa na atualização NÃO confirmada: suposição do app" com estado `unconfirmed` enquanto `relistBase` for o padrão) e **remove** "relistagens" da lista "NÃO consideradas" do Craft (o Preço-alvo mantém a sua estimativa própria, dita na linha). O teste de contrato da 005 reprova sem isso; o de sensibilidade confere o probe (lucro muda com 3 atualizações; não muda com `relists: 0`).
