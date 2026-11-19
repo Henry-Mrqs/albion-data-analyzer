@@ -2,7 +2,7 @@
 // Inclui as seções Preço-alvo, Estresse e Comparar cidades, que vivem na tela do Craft.
 import { REFINING, refinedTypeOf } from '../catalog';
 import { cityLabel } from '../market';
-import { feeIsUnconfirmedDefault, rrr as calcRRR, salesTax, SETUP_FEE } from '../econ';
+import { feeIsUnconfirmedDefault, rrr as calcRRR } from '../econ';
 import { cleanCraftCfg } from '../inputRules';
 import { keyOf } from '../craftPlan';
 import { feeDecides, FEE_DEPENDENCE_WARNING, returnBadge, variantLabel } from '../recipeAlt';
@@ -11,15 +11,13 @@ import { DEFAULT_MAX_AGE_H } from '../exits';
 import { focusValues } from '../focus';
 import { pbParts } from '../rrrCalc';
 import { SERVERS } from '../settings';
-import { apiRow, correctionNote, joinNote, notConsideredRows, plain, row, stressVars, targetVars } from './core';
+import { apiRow, correctionNote, joinNote, notConsideredRows, plain, row, stressVars, targetVars, taxRows } from './core';
 import { auditScreen, registerScreen } from './registry';
 
 const SRC = {
   pb: 'dump craftingmodifiers.xml (alta)',
   focus: 'regra do servidor, não está no dump (média-alta)',
   daily: 'AUDITORIA-001, wiki e AFM 2026 (média-alta)',
-  tax: 'wiki e AFM 2026 (média-alta)',
-  setup: 'wiki (média-alta)',
   rrr: 'RRR = PB ÷ (100 + PB) (alta)',
   fee: 'valor × 0,1125 × taxa ÷ 100 (alta)',
 };
@@ -206,23 +204,8 @@ const matPrices = (ctx) => {
 
 const premium = (ctx) => {
   const b = ctx.result.best;
-  const rows = [
-    row({ id: 'premium', label: 'Premium', value: ctx.premium ? 'ligado' : 'desligado', unit: '', origin: 'user', status: 'applied', note: 'Configuração do app (Ajustes).' }),
-    row({
-      id: 'sales-tax', label: 'Imposto de venda', value: b?.noTax ? 0 : salesTax(ctx.premium) * 100, unit: '%', origin: 'game', status: 'applied', source: SRC.tax,
-      note: b?.noTax ? 'Não cobrado (venda sem imposto).' : ctx.premium ? '4% com Premium.' : '8% sem Premium.',
-    }),
-  ];
-  let setup;
-  if (!b) setup = { value: SETUP_FEE * 100, unit: '%', note: 'Cobrada só numa ordem de venda; ainda não há destino calculado.' };
-  else if (b.noTax) setup = { value: 0, unit: '%', note: 'Taxa de criação: não cobrada (venda sem imposto).' };
-  else if (b.mode === 'instant') setup = { value: 0, unit: '%', note: 'Taxa de criação: não cobrada (venda instantânea numa ordem de compra).' };
-  else setup = { value: SETUP_FEE * 100, unit: '%', note: 'Cobrada ao criar a ordem de venda.' };
-  rows.push(row({ id: 'setup-fee', label: 'Taxa de criação da ordem de venda', ...setup, origin: 'game', status: 'applied', source: SRC.setup }));
-  if (b && b.price > 0 && ctx.result.units > 0) {
-    rows.push(row({ id: 'net-factor', label: 'Líquido por prata vendida', value: b.net / (b.price * ctx.result.units), unit: '', origin: 'derived', status: 'applied', note: 'Já com imposto e taxa de criação.' }));
-  }
-  return rows;
+  const ok = b && b.price > 0 && ctx.result.units > 0;
+  return taxRows({ premium: ctx.premium, sale: b ? { mode: b.mode, noTax: b.noTax, factor: ok ? b.net / (b.price * ctx.result.units) : NaN } : null });
 };
 
 const exit = (ctx) => {

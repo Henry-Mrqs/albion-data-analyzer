@@ -95,6 +95,7 @@ export const refineCfg = (over = {}) => ({
 export const refinePrices = (now = NOW) =>
   mkPrices(
     planksSpec({
+      T4_WOOD: { 'Fort Sterling': { s: 30, b: 27, sd: now - 3 * H, bd: now - 3 * H } },
       T4_PLANKS: {
         'Fort Sterling': { s: 120, b: 100, sd: now - 3 * H, bd: now - 3 * H },
         Martlock: { s: 135, b: 125, sd: now - 2 * H, bd: now - 2 * H },
