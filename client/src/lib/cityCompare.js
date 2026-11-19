@@ -43,6 +43,7 @@ export function compareCraftCities({ rec, targetMid, prices, cfg, premium, bonus
         rrr: c.rates.craftRRR,
         matCost: complete ? c.matCost : null,
         fee: c.fee,
+        extras: c.extras,
         totalCost: complete ? c.totalCost : null,
         unitCost: complete ? c.unitCost : null,
         complete,
