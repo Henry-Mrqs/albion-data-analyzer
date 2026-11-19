@@ -26,6 +26,28 @@ function mount(cfg = {}) {
 const saved = () => JSON.parse(localStorage.getItem('albion:refine:cfg'));
 const kv = (label) => screen.getByText(label).closest('.kv').textContent;
 
+const targetBig = () => screen.getByText('Liste a').parentElement.querySelector('.big').textContent;
+const bestRouteRow = () => screen.getByText(/^Melhor rota/, { selector: 'h2' }).closest('.card').querySelector('tr.best');
+
+describe('Refining: mutantes sobreviventes da 048 (D5, 076)', () => {
+  it('mutante 40: o Preço-alvo inclui as despesas: 10 por unidade -> 1.146; sem despesas 1.136', () => {
+    const { unmount } = mount({ extras: [{ name: '', value: '10', scope: 'craft' }] });
+    expect(targetBig()).toBe('1.146'); // (61,4734 + 10 + 1.000) ÷ 0,935
+    unmount();
+    mount();
+    expect(targetBig()).toBe('1.136'); // (61,4734 + 1.000) ÷ 0,935
+  });
+  it('mutante 41: a tabela de rotas desconta as despesas: lucro/un. da melhor rota +63 (sem despesas +73)', () => {
+    const { unmount } = mount({ extras: [{ name: '', value: '10', scope: 'craft' }] });
+    const cell = () => bestRouteRow().querySelectorAll('td')[2].textContent;
+    expect(cell()).toContain('+63');
+    expect(cell()).not.toContain('73');
+    unmount();
+    mount();
+    expect(cell()).toContain('+73');
+  });
+});
+
 describe('Refining: despesas extras e venda sem imposto (048)', () => {
   it('sem despesas: lucro por unidade +73 e sem linha de despesas', () => {
     mount();

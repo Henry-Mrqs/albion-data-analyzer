@@ -80,3 +80,23 @@ describe('ExtrasCard (048)', () => {
     expect(screen.queryByRole('status')).toBeNull();
   });
 });
+
+describe('ExtrasCard: escopo legível e classes de layout (D2, mutante 46, 076)', () => {
+  it('mutante 46: o select de escopo MOSTRA o escopo da linha: "lote" para linha por lote, "craft" para por craft e para escopo inválido/ausente', () => {
+    mount({ list: [{ name: '', value: '1', scope: 'lote' }, { name: '', value: '1', scope: 'craft' }, { name: '', value: '1', scope: 'xyz' }, { name: '', value: '1' }] });
+    expect([1, 2, 3, 4].map((i) => screen.getByLabelText(`Escopo da despesa ${i}`).value)).toEqual(['lote', 'craft', 'craft', 'craft']);
+  });
+  it('as opções têm o texto completo: "por craft" e "por lote" (Craft); "por unidade" e "por lote" (Refino)', () => {
+    const opts = () => [...screen.getByLabelText('Escopo da despesa 1').querySelectorAll('option')].map((o) => [o.value, o.textContent]);
+    const { unmount } = mount({ list: L });
+    expect(opts()).toEqual([['craft', 'por craft'], ['lote', 'por lote']]);
+    unmount();
+    mount({ list: L, kind: 'refine' });
+    expect(opts()).toEqual([['craft', 'por unidade'], ['lote', 'por lote']]);
+  });
+  it('cada linha usa as classes extra-row (grade) e extra-name (nome); a classe é a que o CSS responsivo conhece', () => {
+    const { container } = mount({ list: L });
+    expect(container.querySelectorAll('.extra-row')).toHaveLength(2);
+    expect(container.querySelectorAll('.extra-row .extra-name')).toHaveLength(2);
+  });
+});

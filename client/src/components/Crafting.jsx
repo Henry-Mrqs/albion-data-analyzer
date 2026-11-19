@@ -261,10 +261,10 @@ export default function Crafting() {
                   <div>
                     <div className="label">Melhor destino</div>
                     <div>
-                      <b>{cityLabel(best.city)}</b> · {best.label} ({fmt(best.price)})
+                      <b>{cityLabel(best.city)}</b> · {best.label} ({fmt(best.price)}){best.noTax && <>{' '}<small className="good">sem imposto</small></>}
                     </div>
                     <div className="hint">
-                      Venda líquida {fmt(best.net)} − custo {fmt(totalCost)}
+                      Venda líquida {fmt(best.net)}{best.noTax ? ' (sem imposto)' : ''} − custo {fmt(totalCost)}
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
@@ -352,7 +352,7 @@ export default function Crafting() {
             </div>
             <p className="hint" style={{ marginTop: 10 }}>
               Ordem de venda: você lista o item (imposto {premium ? '4%' : '8%'} + 2,5% de taxa). Ordem de compra: vende na hora a um comprador (imposto {premium ? '4%' : '8%'}).
-              {illusoryHint()} Sem imposto: venda fora do mercado (guilda, troca direta, encomenda), sem imposto nem taxa de criação; o preço continua sendo a referência do mercado e não garante comprador. Giro: vendas registradas por dia nos últimos 7 dias completos (veja o cartão “Giro do item”).
+              {illusoryHint()} Sem imposto: venda fora do mercado (guilda, troca direta, encomenda), sem imposto nem taxa de criação; o preço continua sendo a referência do mercado e não garante comprador. A marca vale para todos os itens: fica salva por cidade e modo de venda, não por item. Giro: vendas registradas por dia nos últimos 7 dias completos (veja o cartão “Giro do item”).
             </p>
             {histError && <Banner kind="warn">Giro indisponível: {histError}</Banner>}
           </div>

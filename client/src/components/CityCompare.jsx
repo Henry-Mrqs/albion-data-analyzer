@@ -10,6 +10,7 @@ import { Money, NumberInput, Segmented } from './ui';
 export default function CityCompare({ result, scenario, onScenario, feeByCity, onFee, general, units }) {
   const { rows, best, spread, issues } = result;
   const anyCityFee = rows.some((r) => r.feeSource === 'city');
+  const anyExtras = rows.some((r) => r.extras > 0);
   const fees = feeByCity ?? {};
   const why = (r) => {
     if (scenario === 'own' && !CITIES.includes(r.city)) return 'sem preços (cidade não consultada)';
@@ -38,6 +39,7 @@ export default function CityCompare({ result, scenario, onScenario, feeByCity, o
               <th>RRR</th>
               <th>Material</th>
               <th title="Prata por 100 de nutrição; vazio = taxa geral da tela">Taxa (por 100)</th>
+              {anyExtras && <th title="Despesas extras do lote (as mesmas em todas as cidades); entram no custo total">Despesas</th>}
               <th>Custo total</th>
               <th>Por unidade</th>
               <th title="Quanto a mais (+) ou a menos (−) que a cidade de bônus do item">Dif. p/ cidade de bônus</th>
@@ -61,8 +63,9 @@ export default function CityCompare({ result, scenario, onScenario, feeByCity, o
                     aria-label={`Taxa da bancada em ${r.city}`}
                   />
                   <InputIssues issues={issues} field={`feeByCity.${r.city}`} />
-                  <small>{fmt(r.fee)} por craft</small>
+                  <small>{fmt(r.fee)} no lote</small>
                 </td>
+                {anyExtras && <td>{r.complete ? <Money value={r.extras} /> : <span className="muted">—</span>}</td>}
                 <td>{r.complete ? <strong><Money value={r.totalCost} /></strong> : <span className="muted">—</span>}</td>
                 <td>{r.complete ? <Money value={r.unitCost} /> : <span className="muted">—</span>}</td>
                 <td>{r.deltaVsBonus == null ? <span className="muted">—</span> : <Money value={r.deltaVsBonus} signed />}</td>
@@ -76,8 +79,13 @@ export default function CityCompare({ result, scenario, onScenario, feeByCity, o
           Melhor: <b>{best.city}</b>. Da mais barata à mais cara há {fmt(spread)} de diferença no lote ({units} {units === 1 ? 'unidade' : 'unidades'} de produto).
         </p>
       )}
+      {anyExtras && (
+        <p className="hint">
+          Custo total = material + taxa da bancada + despesas extras. As despesas são as mesmas em todas as cidades, então não mudam qual é a mais barata.
+        </p>
+      )}
       <p className="hint">
-        Compara só o custo de produzir; não inclui transporte, peso nem risco da rota. A tabela ignora o interruptor de especialização e o RRR manual da tela: a especialização vem da regra do item e o RRR é o automático de cada cidade. Foco, bônus diário, refino, ordens de compra e nº de crafts valem para todas.
+        Compara só o custo de produzir; não inclui transporte, peso nem risco da rota. A tabela ignora o interruptor de especialização e o RRR manual da tela: a especialização vem da regra do item e o RRR é o automático de cada cidade. Foco, bônus diário, refino, ordens de compra e nº de crafts valem para todas. O interruptor “Sem imposto” só afeta a venda; não entra nesta comparação.
         {scenario === 'own'
           ? ' Cada cidade usa os preços de material da própria cidade; sem preço, a linha fica incompleta (nunca custo 0). Brecilien não tem preços consultados.'
           : ' Todas usam o material mais barato de cada item, de qualquer cidade; só o RRR e a taxa mudam.'}

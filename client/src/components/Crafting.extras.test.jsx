@@ -63,9 +63,42 @@ describe('Crafting: despesas extras (048)', () => {
     expect(document.body.textContent).toContain('1 valor corrigido');
     expect(totalRow()).toContain('3.524');
   });
+  it('estado salvo corrompido ({} na despesa, taxa e RRR; "-Infinity" em texto; JSON não guarda Infinity): avisos na tela sem lixo técnico (D3, 076)', () => {
+    mount({ feePer100: {}, customRRR: {}, extras: [{ name: '', value: {}, scope: 'craft' }, { name: '', value: '-Infinity', scope: 'craft' }] });
+    const t = document.body.textContent;
+    expect(t).toContain('Despesa 1: o valor não é um número: usando 0.');
+    expect(t).toContain('Despesa 2: o valor é negativo: usando 0.');
+    expect(t).not.toMatch(/\[object|Infinity|NaN|undefined/);
+  });
   it('lote ÷ unidades: 230 por lote em 10 crafts = 23 por craft (custo/un. 3.547)', () => {
     mount({ crafts: 10, extras: [{ name: '', value: '230', scope: 'lote' }] });
     expect(screen.getAllByText('Custo total', { selector: 'strong' })[0].closest('tr').textContent).toContain('3.547');
+  });
+});
+
+describe('Crafting: mutantes sobreviventes da 048 (D5, 076)', () => {
+  it('mutante 13: com 230 de despesas a margem do Melhor destino é +12.1% (o mutante mostraria +12.9%)', () => {
+    mount({ extras: L });
+    expect(bestBox()).toContain('+12.1%');
+    expect(bestBox()).not.toContain('12.9');
+  });
+  it('mutante 37: a linha Total do plano de compra soma as despesas (3.754; sem despesas 3.524) e a despesa aparece uma vez só', () => {
+    const planTotal = () => screen.getByText('Total', { selector: 'strong' }).closest('tr');
+    const { unmount } = mount({ extras: L });
+    expect(planTotal().textContent).toContain('3.754');
+    const rows = [...planTotal().closest('table').querySelectorAll('tr')].filter((tr) => tr.textContent.startsWith('Despesas extras'));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].textContent).toContain('230');
+    unmount();
+    mount();
+    expect(planTotal().textContent).toContain('3.524');
+  });
+  it('mutante 38: lote de 10 crafts: "(1.580 no lote de 10)" e custo por unidade 3.682', () => {
+    mount({ crafts: 10, extras: [{ name: '', value: '150', scope: 'craft' }, { name: '', value: '80', scope: 'lote' }] });
+    const t = document.body.textContent;
+    expect(t).toContain('Despesas: 150 por craft + 80 por lote (1.580 no lote de 10)');
+    expect(t).not.toContain('no lote de 1)');
+    expect(totalRow()).toContain('3.682'); // 3.524,27 + 1.580 ÷ 10
   });
 });
 

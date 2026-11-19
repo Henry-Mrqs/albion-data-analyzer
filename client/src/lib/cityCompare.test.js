@@ -231,3 +231,31 @@ describe('reuso de computeCraft', () => {
     expect(c).toEqual(snap);
   });
 });
+
+describe('compareCraftCities: despesas extras (D4, 076)', () => {
+  it('despesas 150 por craft + 80 por craft (1 craft): cada linha completa ganha extras 230 e totalCost = material + taxa + 230 (Fort Sterling 5.361,76 + 230 = 5.591,76)', () => {
+    const L = [{ name: '', value: '150', scope: 'craft' }, { name: '', value: '80', scope: 'craft' }];
+    const { rows, best, spread } = run({ cfg: cfg({ extras: L }) });
+    const r = by(rows);
+    expect(r['Fort Sterling'].extras).toBe(230);
+    expect(r['Fort Sterling'].totalCost).toBeCloseTo(5591.76, 2);
+    expect(r['Fort Sterling'].totalCost).toBeCloseTo(r['Fort Sterling'].matCost + r['Fort Sterling'].fee + r['Fort Sterling'].extras, 6);
+    expect(best.city).toBe('Fort Sterling');
+    expect(spread).toBeCloseTo(1396.61, 2); // ranking e diferença não mudam: a despesa é igual em todas
+  });
+  it('3 crafts, 120 por craft + 60 por lote: extras 420 (3 × 120 + 60) em todas as cidades', () => {
+    const L = [{ name: '', value: '120', scope: 'craft' }, { name: '', value: '60', scope: 'lote' }];
+    const { rows } = run({ cfg: cfg({ crafts: 3, extras: L }) });
+    expect(rows).toHaveLength(7);
+    for (const r of rows) expect(r.extras).toBe(420);
+  });
+  it('sem despesas: extras 0 em todas as linhas (inclusive incompletas)', () => {
+    const { rows } = run();
+    expect(rows.some((r) => !r.complete)).toBe(true);
+    for (const r of rows) expect(r.extras).toBe(0);
+  });
+  it('`fee` da linha é a taxa do LOTE inteiro, não por craft: com 3 crafts e taxa 500, `row.fee` = 648 (3 × 216); com 1 craft, 216 (D-056)', () => {
+    expect(by(run({ cfg: cfg({ crafts: 3 }) }).rows)['Fort Sterling'].fee).toBe(648);
+    expect(by(run().rows)['Fort Sterling'].fee).toBe(216);
+  });
+});

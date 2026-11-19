@@ -1,6 +1,7 @@
 // IDEIA-048: validação das despesas extras e do mapa de saídas sem imposto.
 import { describe, expect, it } from 'vitest';
 import { MAX_QTY, cleanCraftCfg, cleanRefineCfg, validateExtras } from './inputRules';
+import { cleanNoTax } from './inputRules';
 import { MAX_EXTRAS } from './extras';
 
 const row = (over = {}) => ({ name: 'Transporte', value: 150, scope: 'craft', ...over });
@@ -122,4 +123,33 @@ describe('cleanCraftCfg e cleanRefineCfg com extras e noTax (048)', () => {
     const r = cleanCraftCfg({ ...craftBase, extras: [row({ value: -1 })] }, {});
     expect(r.issues.filter((i) => i.level !== 'info' && i.field.startsWith('extras'))).toHaveLength(1);
   });
+});
+
+describe('cleanNoTax: só as chaves Cidade|order e Cidade|instant (D5, mutante 26, 076)', () => {
+  it('descarta Cidade|none, cidade vazia e chave com espaço; mantém order e instant', () => {
+    expect(cleanNoTax({ 'Caerleon|none': true, 'Caerleon|order': true, 'Martlock|instant': true, '|order': true, 'Caerleon|order ': true })).toEqual({ 'Caerleon|order': true, 'Martlock|instant': true });
+    expect(cleanNoTax({ 'Caerleon|none': true })).toEqual({});
+  });
+});
+
+describe('despesas sem eco de lixo (D3, 076)', () => {
+  const msg = (value) => ve([row({ value })]).issues[0].msg;
+  it('objeto, array de 2, booleano e NaN: "o valor não é um número", sem "[object Object]", "true" nem "NaN"', () => {
+    for (const v of [{}, [1, 2], true, NaN]) expect(msg(v)).toBe('Despesa 1: o valor não é um número: usando 0.');
+  });
+  it('texto digitado continua ecoado entre aspas: "abc" -> valor "abc" não é um número', () => {
+    expect(msg('abc')).toBe('Despesa 1: valor "abc" não é um número: usando 0.');
+  });
+  it('-Infinity (número) e "-Infinity" (texto): "o valor é negativo", sem "Infinity"; o valor usado é 0', () => {
+    for (const v of [-Infinity, '-Infinity']) {
+      const r = ve([row({ value: v })]);
+      expect(r.issues[0].msg).toBe('Despesa 1: o valor é negativo: usando 0.');
+      expect(r.values[0].value).toBe(0);
+    }
+  });
+  it('negativo finito mantém o texto antigo: -50 e -0,01', () => {
+    expect(msg(-50)).toBe('Despesa 1: valor -50 é negativo: usando 0.');
+    expect(msg(-0.01)).toBe('Despesa 1: valor -0,01 é negativo: usando 0.');
+  });
+  it('"acima do limite" continua com "infinito" para Infinity (não mudou)', () => expect(msg(Infinity)).toContain('infinito'));
 });
