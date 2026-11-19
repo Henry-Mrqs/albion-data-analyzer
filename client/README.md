@@ -46,4 +46,5 @@ vi.mock('../lib/history', async (orig) => ({ ...(await orig()), useHistory: hist
 ```
 
 - Componentes auxiliares do teste ficam fora dos `it`; helpers em `.js` (sem JSX).
+- Nunca escreva `usePersisted('chave'` literal num `*.test.jsx`: `persistSchemas.test.js` varre os `.jsx` de `src/components/` com essa expressão e exige exatamente as chaves do código. Use `seed('craft:cfg', ...)` ou um componente de teste que receba a chave por variável.
 - Todo teste novo deve cair quando a linha que ele protege é mutada (mutação manual com revert imediato).

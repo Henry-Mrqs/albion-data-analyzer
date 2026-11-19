@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { dismissNotice, migrationNotes, pendingNotices } from './migrationNotes';
+import { dismissNotice, migrationNotes, pendingNotices, noticeApplies, craftUsesRefine } from './migrationNotes';
+import { rrr } from './econ';
+import { loadFixtureCatalog } from '../test/helpers';
+import { resetCatalog } from './catalog';
 import { SAVED_STATES } from '../test/savedStates';
 
 const store = (initial = {}) => {
@@ -18,7 +21,7 @@ describe('migrationNotes: o que avisar sobre o estado salvo antigo (D-042)', () 
       expect(notes[0].id).toBe('craft-refine-city');
       expect(notes[0].message).toMatch(/configuração antiga foi atualizada/i);
       expect(notes[0].message).toMatch(/cidade especializada de cada recurso/);
-      expect(notes[0].message).toMatch(/RRR \+40/);
+      expect(notes[0].message).toMatch(/\(\+40\)/);
     }
   });
 
@@ -56,5 +59,52 @@ describe('pendingNotices / dismissNotice: aviso único e lembrado', () => {
     expect(pendingNotices(broken)).toEqual([]);
     expect(() => dismissNotice(broken, 'craft-refine-city')).not.toThrow();
     expect(pendingNotices(store())).toEqual([]);
+  });
+});
+
+describe('texto do aviso de migração (IDEIA-071, O2)', () => {
+  const msg = () => migrationNotes((k) => (k === 'craft:cfg' ? JSON.stringify(state('9e1e4a2')) : null))[0].message;
+
+  it('fala em bônus de produção +40 e em RRR de 15% para 37% (derivados de rrr()), e NÃO tem "RRR +40"', () => {
+    const m = msg();
+    const antes = Math.round(rrr({ kind: 'refine', specialty: false, focus: false }) * 100);
+    const depois = Math.round(rrr({ kind: 'refine', specialty: true, focus: false }) * 100);
+    expect(m).toMatch(/bônus de produção/);
+    expect(m).toMatch(/\(\+40\)/);
+    expect(m).toContain(`${antes}%`);
+    expect(m).toContain(`${depois}%`);
+    expect(m).not.toMatch(/RRR \+40/);
+    expect([antes, depois]).toEqual([15, 37]);
+  });
+
+  it('diz que o número de antes estava sem o bônus (O2)', () => {
+    expect(msg()).toMatch(/sem o bônus/);
+  });
+
+  it('a nota é marcada como dependente do item (when craft-uses-refine)', () => {
+    expect(migrationNotes((k) => (k === 'craft:cfg' ? JSON.stringify(state('9e1e4a2')) : null))[0].when).toBe('craft-uses-refine');
+  });
+});
+
+describe('noticeApplies / craftUsesRefine (IDEIA-071, O3)', () => {
+  it('noticeApplies: sem when sempre true; when craft-uses-refine só com ctx.craftUsesRefine', () => {
+    expect(noticeApplies({ id: 'x' }, {})).toBe(true);
+    expect(noticeApplies({ id: 'x', when: 'craft-uses-refine' }, { craftUsesRefine: true })).toBe(true);
+    expect(noticeApplies({ id: 'x', when: 'craft-uses-refine' }, { craftUsesRefine: false })).toBe(false);
+    expect(noticeApplies({ id: 'x', when: 'craft-uses-refine' }, {})).toBe(false);
+  });
+
+  it('craftUsesRefine: espada T6 true; poção T4 e artefato só com fragmentos false; item inexistente/null/id número false', () => {
+    loadFixtureCatalog();
+    expect(craftUsesRefine({ id: 'T6_MAIN_SWORD', ench: 0 })).toBe(true);
+    expect(craftUsesRefine({ id: 'T4_POTION_HEAL', ench: 0 })).toBe(false);
+    expect(craftUsesRefine({ id: 'T6_ARTEFACT_MAIN_SWORD_CRYSTAL', ench: 0 })).toBe(false);
+    expect(craftUsesRefine({ id: 'T9_NAO_EXISTE', ench: 0 })).toBe(false);
+    for (const v of [null, undefined, 5, 'x', {}, { id: 5 }, { id: null }]) expect(craftUsesRefine(v)).toBe(false);
+  });
+
+  it('craftUsesRefine: sem catálogo carregado false', () => {
+    resetCatalog();
+    expect(craftUsesRefine({ id: 'T6_MAIN_SWORD', ench: 0 })).toBe(false);
   });
 });
