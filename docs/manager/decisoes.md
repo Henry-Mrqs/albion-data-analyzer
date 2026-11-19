@@ -319,3 +319,6 @@ Preço do ouro vem do servidor escolhido no cabeçalho (cache por servidor), o T
 
 ## D-063 — 054 reprovada: retrabalho 1 (de no máximo 2)
 Reprovação por D1 (aba Premium cortada em telas estreitas), não por dado. Decisão: abas só ícone com aria-label/title em telas estreitas (para TODAS as abas; corrige também o RRR cortado a 375px na master) + rolar a aba ativa para a vista; D2 atribuição honesta; D3 três testes. Fica explícito que 3.750 ouro/30 dias, 10.000 foco/dia, +50% fama/coleta, 30 pontos de aprendizado e imposto 4% vs 8% vêm de fonte secundária (aorefinery.com) e NÃO foram verificados no wiki oficial (Cloudflare 403): entram na lista de conferências em jogo do usuário. Re-QA curta após o retrabalho.
+
+## D-064 — Respostas ao Executor da 005
+Quem adiciona linhas quando 059/065/012/054 entrarem: o plano de cada uma (o contrato já reprova campo salvo novo sem linha — desejado). Preço-alvo mostrando só "definidos no cartão" aceito por ora; o Tester avalia se engana; se sim, IDEIA-083 (valores vivos do Preço-alvo no auditor, exige mexer em TargetPrice.jsx). 375px: o Tester confere. O auditor é a peça que ataca a dor central (variáveis esquecidas): a QA audita a VERDADE de cada linha, não só a cobertura.
