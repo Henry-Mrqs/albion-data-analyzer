@@ -283,3 +283,6 @@ Tester aprovou a 069. Sobreviventes (M19, M54, M55, M41, M47, M48: ligação Cra
 
 ## D-051 — Respostas ao Planejador da 071
 Dois níveis de limite de erro; botão restaurar também no rodapé; restaurar apaga todas as `albion:*` (inclui Premium e servidor) com confirmação explícita; aviso de migração item-aware pelo item salvo; sem telemetria; aviso proativo de versão nova fora do escopo.
+
+## D-052 — Respostas ao Executor da 048
+Refino fica na mesma ideia; despesa negativa bloqueada (vira 0 com aviso); Preço-alvo ignorando "Sem imposto" é limitação conhecida: o Tester classifica a gravidade e a IDEIA-075 (Preço-alvo e demais cartões respeitarem noTax e despesas) fica aberta de qualquer forma. A branch precisa de rebase/merge na master atual (docs andaram); Deployer resolve conforme D-045.
