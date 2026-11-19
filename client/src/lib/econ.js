@@ -28,9 +28,12 @@ export const feeIsUnconfirmedDefault = (value, feeSet) => !feeSet && value !== '
 /** Único ponto de arredondamento da taxa: no total do lote (meio sobe). */
 export const roundFee = (x) => Math.round(x);
 
-/** Líquido ao vender: 'order' (cria ordem de venda) ou 'instant' (vende numa ordem de compra). */
+/**
+ * Líquido ao vender: 'order' (cria ordem de venda), 'instant' (vende numa ordem de compra) ou
+ * 'none' (IDEIA-048: venda fora do mercado, sem imposto e sem taxa de criação).
+ */
 export const netSale = (price, mode, premium) =>
-  mode === 'order' ? price * (1 - salesTax(premium) - SETUP_FEE) : price * (1 - salesTax(premium));
+  mode === 'none' ? price : mode === 'order' ? price * (1 - salesTax(premium) - SETUP_FEE) : price * (1 - salesTax(premium));
 
 export const fmt = (n) => {
   if (!Number.isFinite(n)) return 'valor enorme'; // nunca ∞/NaN na tela
