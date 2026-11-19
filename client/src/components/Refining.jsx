@@ -8,6 +8,8 @@ import { useSettings, usePersisted } from '../lib/settings';
 import { cleanRefineCfg } from '../lib/inputRules';
 import { focusValues, refineFocusSummary } from '../lib/focus';
 import { extrasPerUnit, REFINE_NO_TAX_KEY } from '../lib/extras';
+import { refineStressInput } from '../lib/stress';
+import StressTest from './StressTest';
 import ExtrasCard from './ExtrasCard';
 import FocusCard, { FocusFields } from './FocusCard';
 import FeeField from './FeeField';
@@ -305,6 +307,8 @@ export default function Refining() {
             </div>
           )}
         </div>
+
+        {cur && <StressTest input={refineStressInput(cur.unit, rrrValue, { price: cur.sell.price, mode: cur.mode, city: cur.sell.city }, premium, { extrasPerUnit: perUnitExtras, noTax })} />}
 
         <ExtrasCard list={cfg.extras} onChange={(v) => set({ extras: v })} issues={issues} crafts={vcfg.qty} kind="refine" />
 

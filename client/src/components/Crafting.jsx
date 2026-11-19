@@ -4,6 +4,8 @@ import { CRAFT_CITIES, REFINING, focusOf, getItem, recipeVariants, marketId, nam
 import { CITIES, SELL_CITIES, cityLabel, usePrices } from '../lib/market';
 import { fmt, pct, feeIsUnconfirmedDefault } from '../lib/econ';
 import { computeCraft, craftChainIds, keyOf, waitSavings } from '../lib/craftPlan';
+import { craftStressInput } from '../lib/stress';
+import StressTest from './StressTest';
 import { effectiveDaily, showDailyNote, DAILY_NOTE } from '../lib/dailyBonus';
 import { annotateOptions, illusoryHint, pickExit } from '../lib/exits';
 import { pickCheapest, resolveVariant, returnBadge } from '../lib/recipeAlt';
@@ -357,6 +359,8 @@ export default function Crafting() {
             {histError && <Banner kind="warn">Giro indisponível: {histError}</Banner>}
           </div>
         )}
+
+        {rec && options.length > 0 && <StressTest input={craftStressInput(c, premium)} />}
 
         {rec && options.length > 0 && giroRows.length > 0 && (
           <GiroCard rows={giroRows} units={units} sharePct={share.values.share} best={best && { city: best.city, price: best.price }} loading={histLoading}>
