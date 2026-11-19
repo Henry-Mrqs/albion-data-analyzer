@@ -7,6 +7,8 @@ import { compareRoutes, evaluateTier, lotFee, pickBestTier, routePath, usedCells
 import { useSettings, usePersisted } from '../lib/settings';
 import { cleanRefineCfg } from '../lib/inputRules';
 import { focusValues, refineFocusSummary } from '../lib/focus';
+import { extrasPerUnit, REFINE_NO_TAX_KEY } from '../lib/extras';
+import ExtrasCard from './ExtrasCard';
 import FocusCard, { FocusFields } from './FocusCard';
 import FeeField from './FeeField';
 import InputIssues, { CorrectedBadge } from './InputIssues';
@@ -55,8 +57,11 @@ export default function Refining() {
 
   const ctx = { prices, city: cfg.buyCity, useOrders: cfg.useOrders, rrr: rrrValue, feePer100: vcfg.feePer100, route };
 
+  // IDEIA-048: despesas por unidade refinada (lote ÷ quantidade) e interruptor único de venda sem imposto
+  const perUnitExtras = extrasPerUnit(vcfg.extras, vcfg.qty, vcfg.qty);
+  const noTax = vcfg.noTax[REFINE_NO_TAX_KEY] === true;
   const evaluate = (tier) =>
-    evaluateTier({ tier, uniq: uniqOf(tier), prices, ctx, sellCity: cfg.sellCity, sellMode: cfg.sellMode, premium });
+    evaluateTier({ tier, uniq: uniqOf(tier), prices, ctx, sellCity: cfg.sellCity, sellMode: cfg.sellMode, premium, extrasPerUnit: perUnitExtras, noTax });
 
   const cur = prices ? evaluate(cfg.tier) : null;
   const rows = prices ? TIERS.map(evaluate) : [];
@@ -193,6 +198,12 @@ export default function Refining() {
           <label>Venda do refinado</label>
           <Segmented value={cfg.sellMode} onChange={(v) => set({ sellMode: v })} options={[{ value: 'order', label: 'Ordem de venda' }, { value: 'instant', label: 'Ordem de compra (na hora)' }]} />
         </div>
+        <Switch
+          label="Venda sem imposto (fora do mercado)"
+          hint="Guilda, troca direta ou encomenda: sem imposto e sem taxa de criação. O preço continua sendo a referência do mercado."
+          checked={noTax}
+          onChange={(v) => set({ noTax: { [REFINE_NO_TAX_KEY]: v } })}
+        />
       </div>
 
       <div className="stack">
@@ -239,9 +250,15 @@ export default function Refining() {
                   <span>Taxa do lote (todas as etapas, {fmt(vcfg.qty)} un.)</span>
                   <Money value={lotFee(cur.unit, vcfg.qty, rrrValue)} />
                 </div>
+                {perUnitExtras > 0 && (
+                  <div className="kv">
+                    <span>Despesas extras (por unidade)</span>
+                    <Money value={perUnitExtras} />
+                  </div>
+                )}
                 <div className="kv">
                   <strong>Custo líquido</strong>
-                  <strong><Money value={cur.unit.cost} /></strong>
+                  <strong><Money value={cur.unit.cost + perUnitExtras} /></strong>
                 </div>
               </div>
               <div>
@@ -277,7 +294,7 @@ export default function Refining() {
             <div className={`result ${ready ? (cur.profit > 0 ? 'profit' : 'loss') : ''}`}>
               <div>
                 <div className="label">{ready ? (cur.profit > 0 ? 'Vale a pena' : 'Prejuízo') : 'Cálculo incompleto'}</div>
-                <div className="hint">Venda líquida {fmt(cur.net)} − custo {fmt(cur.unit.cost)}</div>
+                <div className="hint">Venda líquida {fmt(cur.net)} − custo {fmt(cur.unit.cost + perUnitExtras)}</div>
               </div>
               {ready && (
                 <div style={{ textAlign: 'right' }}>
@@ -289,7 +306,9 @@ export default function Refining() {
           )}
         </div>
 
-        {cur && <TargetPrice cost={cur.unit.cost} prices={prices} mid={cur.mid} missing={missing.length > 0} />}
+        <ExtrasCard list={cfg.extras} onChange={(v) => set({ extras: v })} issues={issues} crafts={vcfg.qty} kind="refine" />
+
+        {cur && <TargetPrice cost={cur.unit.cost + perUnitExtras} prices={prices} mid={cur.mid} missing={missing.length > 0} />}
 
         {cur && <FocusCard summary={fs} ench={ench} hasBase={fbase != null} unit="refino" />}
 
@@ -313,7 +332,7 @@ export default function Refining() {
                 </thead>
                 <tbody>
                   {routes.map((r) => {
-                    const profit = cur.net - r.unit.cost;
+                    const profit = cur.net - r.unit.cost - perUnitExtras;
                     const isBest = bestRoute?.value === r.value;
                     return (
                       <tr key={r.value} className={isBest ? 'best' : ''} style={{ cursor: 'pointer' }} onClick={() => set({ route: r.value })}>

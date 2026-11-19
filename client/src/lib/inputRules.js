@@ -2,6 +2,7 @@
 // Política: CORRIGE e AVISA (nunca bloqueia, nunca calcula calado com valor impossível).
 import { rrr, netSale, SETUP_FEE, DEFAULT_FEE } from './econ';
 import { DEFAULT_SHARE_PCT } from './liquidity';
+import { MAX_EXTRAS } from './extras';
 import { DAILY_FOCUS_PREMIUM, MAX_FOCUS_EFFICIENCY } from './focusConsts';
 
 export const MAX_QTY = 1e9; // teto técnico (não é regra do jogo): evita ∞/NaN
@@ -287,19 +288,82 @@ export function cleanCraftCfg(cfg, ctx = {}) {
     out.craftDaily = d.values.daily;
     all.push(...d.issues.map((i) => ({ ...i, field: 'craftDaily' })));
   }
+  const ex = validateExtras(cfg.extras);
+  out.extras = ex.values;
+  out.noTax = cleanNoTax(cfg.noTax);
+  all.push(...ex.issues);
   return { cfg: out, issues: all };
 }
 
 /** Limpa a configuração do Refino (feePer100, customRRR, daily, qty). Não muta a original. */
 export function cleanRefineCfg(cfg, ctx = {}) {
   const r = validateInputs({ feePer100: cfg.feePer100, customRRR: cfg.customRRR, daily: cfg.daily, crafts: cfg.qty }, { ...ctx, kind: 'refine' });
-  const issues = r.issues.map((i) => (i.field === 'crafts' ? { ...i, field: 'qty' } : i));
+  const ex = validateExtras(cfg.extras);
+  const issues = [...r.issues.map((i) => (i.field === 'crafts' ? { ...i, field: 'qty' } : i)), ...ex.issues];
   const out = {
     ...cfg,
     feePer100: r.values.feePer100,
     customRRR: rrrString(cfg.customRRR, r.issues, r.values.customRRR),
     daily: r.values.daily,
     qty: r.values.crafts,
+    extras: ex.values,
+    noTax: cleanNoTax(cfg.noTax),
   };
   return { cfg: out, issues };
+}
+
+// ----- IDEIA-048: despesas extras e saídas sem imposto -----
+const MAX_EXTRA_NAME = 60;
+
+/**
+ * Valida a lista de despesas extras: { name, value, scope: 'craft'|'lote' }[]. Corrige e avisa; idempotente.
+ * Linha em branco (valor vazio) vale 0 sem aviso. Não muta a entrada.
+ * issues[].field: 'extras' (lista) ou `extras[i].name|value|scope` (a tela mostra sob a linha).
+ */
+export function validateExtras(list) {
+  const issues = [];
+  if (!Array.isArray(list)) return { values: [], issues };
+  const add = (field, level, code, msg, raw, used) => issues.push({ field, level, code, msg, raw, used });
+  if (list.length > MAX_EXTRAS) {
+    add('extras', 'warn', 'extras-max', `Mais de ${MAX_EXTRAS} despesas: usando as ${MAX_EXTRAS} primeiras.`, list.length, MAX_EXTRAS);
+  }
+  const values = list.slice(0, MAX_EXTRAS).map((e, i) => {
+    const o = e !== null && typeof e === 'object' ? e : {};
+    const at = `extras[${i}]`;
+    const label = `Despesa ${i + 1}`;
+
+    let name = typeof o.name === 'string' ? o.name.trim() : '';
+    if (name.length > MAX_EXTRA_NAME) {
+      add(`${at}.name`, 'warn', 'extra-name-long', `${label}: nome com mais de ${MAX_EXTRA_NAME} caracteres foi cortado.`, o.name, MAX_EXTRA_NAME);
+      name = name.slice(0, MAX_EXTRA_NAME).trimEnd();
+    }
+
+    let value = 0;
+    if (!isEmpty(o.value)) {
+      const n = typeof o.value === 'number' ? o.value : toNum(o.value);
+      if (Number.isNaN(n)) {
+        add(`${at}.value`, 'error', 'extra-nan', `${label}: valor ${shown(o.value)} não é um número: usando 0.`, o.value, 0);
+      } else if (n < 0) {
+        add(`${at}.value`, 'error', 'extra-neg', `${label}: valor ${br(n)} é negativo: usando 0.`, o.value, 0);
+      } else if (n > MAX_QTY) {
+        value = MAX_QTY;
+        add(`${at}.value`, 'warn', 'extra-max', `${label}: valor ${Number.isFinite(n) ? br(n) : 'infinito'} acima do limite de ${br(MAX_QTY)}: usando ${br(MAX_QTY)}.`, o.value, MAX_QTY);
+      } else value = n;
+    }
+
+    let scope = 'craft';
+    if (o.scope === 'craft' || o.scope === 'lote') scope = o.scope;
+    else add(`${at}.scope`, 'error', 'extra-scope', `${label}: escolha "por craft" ou "por lote": usando por craft.`, o.scope, 'craft');
+
+    return { name, value, scope };
+  });
+  return { values, issues };
+}
+
+/** Mapa de saídas sem imposto: só chaves 'Cidade|order' ou 'Cidade|instant' com valor `true` sobrevivem (resto some em silêncio). */
+export function cleanNoTax(map) {
+  const out = {};
+  if (map === null || typeof map !== 'object' || Array.isArray(map)) return out;
+  for (const k of Object.keys(map)) if (map[k] === true && /^.+\|(order|instant)$/.test(k)) out[k] = true;
+  return out;
 }

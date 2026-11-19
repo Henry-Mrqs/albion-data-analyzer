@@ -99,6 +99,20 @@ describe('netSale (1000)', () => {
     expect(netSale(1000, 'order', false)).toBeCloseTo(895, 6); // 1 - 0,08 - 0,025
     expect(netSale(1000, 'instant', false)).toBeCloseTo(920, 6);
   });
+  it('IDEIA-048: modo none = preço cheio (sem imposto e sem taxa de criação), com ou sem premium', () => {
+    expect(netSale(4500, 'none', true)).toBe(4500);
+    expect(netSale(4500, 'none', false)).toBe(4500);
+    expect(netSale(0, 'none', true)).toBe(0);
+  });
+  it('IDEIA-048: order e instant inalterados; none > instant > order', () => {
+    expect(netSale(4500, 'order', true)).toBeCloseTo(4207.5, 6);
+    expect(netSale(4500, 'instant', true)).toBeCloseTo(4320, 6);
+    expect(netSale(4500, 'none', true)).toBeGreaterThan(netSale(4500, 'instant', true));
+    expect(netSale(4500, 'instant', true)).toBeGreaterThan(netSale(4500, 'order', true));
+  });
+  it('caracterização: modo desconhecido continua se comportando como instantâneo', () => {
+    expect(netSale(4500, 'foo', true)).toBeCloseTo(4320, 6);
+  });
 });
 
 describe('buyQuote', () => {
