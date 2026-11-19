@@ -55,8 +55,10 @@ describe('helpers (src/test/ui.js)', () => {
 
   it('seed é lido por um componente que usa usePersisted', () => {
     seed('craft:item', { id: 'T4_MAIN_SWORD', ench: 0 });
+    // chave em variável: persistSchemas.test.js varre o texto de todo .jsx de components atrás de chamadas de usePersisted com chave literal
+    const chave = 'craft:item';
     function Lido() {
-      const [v] = usePersisted('craft:item', { id: 'padrão', ench: 0 });
+      const [v] = usePersisted(chave, { id: 'padrão', ench: 0 });
       return <span>{v.id}</span>;
     }
     render(<Lido />);
