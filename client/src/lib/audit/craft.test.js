@@ -322,14 +322,20 @@ describe('estado antigo e corrompido', () => {
 });
 
 describe('seções Preço-alvo, Estresse e Comparar cidades', () => {
-  it('Preço-alvo: herda o custo por unidade; a venda sem imposto é "NÃO considerada" (sempre, até a 075)', () => {
+  it('Preço-alvo: herda o custo por unidade; desde a IDEIA-075 a venda sem imposto É considerada quando a melhor saída do modo está marcada', () => {
     const { a, out } = audit();
     expect(get(out, 'target-inherits').value).toBe(a.c.unitCost);
     expect(get(out, 'target-inherits').note).toContain('RRR, taxa de bancada e despesas');
-    expect(get(out, 'target-notax')).toMatchObject({ status: 'not-considered', section: 'Preço-alvo' });
-    expect(get(out, 'target-notax').note).not.toContain('Você marcou');
-    const marked = audit({ over: { noTax: { 'Caerleon|order': true } } }).out;
-    expect(get(marked, 'target-notax').note).toContain('Você marcou');
+    // nada marcado: informativa, nunca "NÃO considerada" (o alvo respeita a marca desde a 075)
+    expect(get(out, 'target-notax')).toMatchObject({ status: 'info-only', section: 'Preço-alvo' });
+    expect(get(out, 'target-notax').value).toContain('só se a melhor saída');
+    expect(get(out, 'target-notax').note).toContain('Nenhuma está marcada');
+    // marcada a melhor saída de ordem de venda: "considerada", com a cidade
+    const marked = get(audit({ over: { noTax: { 'Caerleon|order': true } } }).out, 'target-notax');
+    expect(marked).toMatchObject({ status: 'info-only', value: 'considerada' });
+    expect(marked.note).toContain('ordem de venda (Caerleon)');
+    expect(marked.note).toContain('não desconta imposto nem taxa de criação');
+    expect(JSON.stringify(out.rows.filter((r) => r.status === 'not-considered'))).not.toContain('target-notax');
   });
   it('Estresse: passos de ±5% a ±20% e margem fina 5% são do app; RRR, taxa, despesas e cidade de saída não variam', () => {
     const { out } = audit();

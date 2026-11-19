@@ -120,7 +120,12 @@ describe('Crafting: cartão Variáveis deste cálculo', () => {
 
   it('seções Preço-alvo, Estresse e Comparar cidades: venda sem imposto no alvo é NÃO considerada', () => {
     mount();
-    expect(rowEl('target-notax').textContent).toContain('NÃO considerada');
+    // desde a IDEIA-075 o alvo respeita "Sem imposto": informativa sem marca, "considerada" com a melhor saída marcada
+    expect(rowEl('target-notax').textContent).toContain('só se a melhor saída');
+    expect(rowEl('target-notax').textContent).not.toContain('NÃO considerada');
+    fireEvent.click(screen.getByLabelText('Sem imposto: Caerleon, Ordem de venda'));
+    expect(rowEl('target-notax').textContent).toContain('considerada');
+    expect(rowEl('target-notax').textContent).toContain('ordem de venda (Caerleon)');
     expect(rowEl('stress-steps').textContent).toContain('±5% a ±20%');
     expect(rowEl('compare-rrr')).toBeTruthy();
     expect(within(card()).getAllByText('Preço-alvo').length).toBeGreaterThan(0);

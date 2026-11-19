@@ -9,6 +9,7 @@ import { feeDecides, FEE_DEPENDENCE_WARNING, returnBadge, variantLabel } from '.
 import { DAILY_NOTE, RESET_UTC_HOUR } from '../dailyBonus';
 import { DEFAULT_MAX_AGE_H } from '../exits';
 import { focusValues } from '../focus';
+import { exitNoTaxByMode } from '../targetPrice';
 import { pbParts } from '../rrrCalc';
 import { SERVERS } from '../settings';
 import { apiRow, correctionNote, joinNote, notConsideredRows, plain, row, stressVars, targetVars, taxRows } from './core';
@@ -318,7 +319,7 @@ export const craftVars = [
   V('compare-rrr', 'Comparar cidades: o que não entra', [], 'not-considered', 'none', compareRrr, { section: 'Comparar cidades' }),
   V('server', 'Servidor', [], 'applied', 'none', server),
   V('not-considered', 'NÃO consideradas', [], 'not-considered', 'none', notConsidered, { section: 'NÃO consideradas' }),
-  ...targetVars((ctx) => ctx.result.unitCost),
+  ...targetVars((ctx) => ctx.result.unitCost, (ctx) => exitNoTaxByMode(ctx.result.options)),
   ...stressVars(),
 ];
 
@@ -341,6 +342,5 @@ export function auditCraft(input) {
     count, idx: i.idx, auto, label: variantLabel(i.variants[i.idx]?.swapped),
     feeDepends: count > 1 && auto && feeDecides(i.results).depends,
   }), { count, idx: i.idx, auto, label: 'Alternativa', feeDepends: false });
-  const noTaxOn = Object.values(isObj(cfg.noTax) ? cfg.noTax : {}).some((v) => v === true);
-  return auditScreen('craft', { ...i, cfg, cfgEff, used, variant, noTaxOn, issues: i.result?.issues ?? [], maxAgeH: DEFAULT_MAX_AGE_H });
+  return auditScreen('craft', { ...i, cfg, cfgEff, used, variant, issues: i.result?.issues ?? [], maxAgeH: DEFAULT_MAX_AGE_H });
 }

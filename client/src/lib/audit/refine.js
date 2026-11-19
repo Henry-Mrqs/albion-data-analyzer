@@ -164,7 +164,11 @@ export const refineVars = [
   V('extras', 'Despesas extras', ['extras'], 'applied', 'cost', extras, { probe: { cfg: { extras: [{ name: 'Transporte', value: '10', scope: 'craft' }] } } }),
   V('focus-points', 'Foco como custo em pontos', ['focusEff', 'focusPoints', 'focusBudget', 'focusRef'], 'info-only', 'none', focusPoints, { probe: { cfg: { focusEff: '10000' } } }),
   V('not-considered', 'NÃO consideradas', [], 'not-considered', 'none', notConsidered, { section: 'NÃO consideradas' }),
-  ...targetVars((ctx) => (ctx.cur ? ctx.cur.unit.cost + ctx.perUnitExtras : null)),
+  ...targetVars(
+    (ctx) => (ctx.cur ? ctx.cur.unit.cost + ctx.perUnitExtras : null),
+    // o Refino tem uma saída só: o interruptor vale para os dois modos (como a tela passa ao cartão)
+    (ctx) => ({ order: { on: ctx.noTax === true, city: ctx.cur?.sell.city ?? null }, instant: { on: ctx.noTax === true, city: ctx.cur?.sell.city ?? null } }),
+  ),
   ...stressVars(),
 ];
 
@@ -178,6 +182,5 @@ registerScreen('refine', { cfgKeys: ['refine:cfg', 'target:cfg'], ignoredFields:
 export function auditRefine(input) {
   const i = input ?? {};
   const cfg = isObj(i.cfg) ? i.cfg : {};
-  const noTaxOn = !!i.noTax;
-  return auditScreen('refine', { ...i, cfg, vcfg: isObj(i.vcfg) ? i.vcfg : cfg, issues: i.issues ?? [], noTaxOn, maxAgeH: DEFAULT_MAX_AGE_H });
+  return auditScreen('refine', { ...i, cfg, vcfg: isObj(i.vcfg) ? i.vcfg : cfg, issues: i.issues ?? [], maxAgeH: DEFAULT_MAX_AGE_H });
 }

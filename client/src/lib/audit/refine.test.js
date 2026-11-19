@@ -150,9 +150,12 @@ describe('NÃO consideradas do Refino', () => {
 });
 
 describe('seções Preço-alvo e Estresse', () => {
-  it('venda sem imposto no alvo é "NÃO considerada"; com a marca ligada a nota diz "Você marcou"', () => {
-    expect(get(audit().out, 'target-notax')).toMatchObject({ status: 'not-considered', section: 'Preço-alvo' });
-    expect(get(audit({ over: { noTax: { 'Refino|order': true } } }).out, 'target-notax').note).toContain('Você marcou');
+  it('venda sem imposto no alvo (IDEIA-075): informativa sem marca; "considerada" com o interruptor do Refino ligado', () => {
+    expect(get(audit().out, 'target-notax')).toMatchObject({ status: 'info-only', section: 'Preço-alvo' });
+    expect(get(audit().out, 'target-notax').note).toContain('Nenhuma está marcada');
+    const on = get(audit({ over: { noTax: { 'Refino|order': true } } }).out, 'target-notax');
+    expect(on).toMatchObject({ status: 'info-only', value: 'considerada' });
+    expect(on.note).toContain('Martlock');
   });
   it('estresse: passos e margem fina do app; RRR/taxa/despesas/cidade fixos', () => {
     const { out } = audit();
