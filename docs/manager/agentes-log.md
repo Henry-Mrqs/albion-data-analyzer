@@ -143,3 +143,6 @@ Uma linha por delegação. Prova de que o trabalho é feito por sub agentes dist
 | #100 | EXECUTOR (novo, sonnet, worktree) | Implementar IDEIA-075 (Preço-alvo respeita Sem imposto; inclui teste estresse×Preço-alvo) em feat/IDEIA-075 | em curso | docs/plans/IDEIA-075.md | 2026-11-19 |
 | #101 | PESQUISADOR (novo, sonnet) | Dossiês 005 (auditor de variáveis), 012 (confiança do preço), 068 (receitas alternativas do refino) | em curso | docs/research/ | 2026-11-19 |
 | #102 | PLANEJADOR (novo, sonnet) | Planos 065, 059, 054 (dossiês existentes) | em curso | docs/plans/ | 2026-11-19 |
+| #100 (resultado) | Executor | 075 entregue em feat/IDEIA-075 (1158 testes, +41; números do plano batem; smoke Craft 5.085↔4.755 e Refino 1.146↔1.072). Ponto para o Tester: estresse usa c.best (melhor saída geral), Preço-alvo usa a melhor do modo escolhido | 3 commits | 2026-11-19 |
+| #103 | TESTER (novo, sonnet) | QA da IDEIA-075 (oráculo, concordância com estresse, mutação, UI) | docs/qa/IDEIA-075.md | 2026-11-19 |
+| #101/#102 (nota) | Gerente | Pesquisador e Planejador cortados pelo limite de 5h; trabalho parcial salvo (dossiês 005, 012; plano 059); retomados por SendMessage (funcionou) | — | 2026-11-19 |
