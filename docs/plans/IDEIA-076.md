@@ -6,7 +6,7 @@
 
 ## O que cada defeito é, medido
 - **D2:** a 375 px o `<select>` de escopo tem 62 px de largura (28 px são o padding da seta) e mostra só "por". A linha é uma grade `2fr 1fr 1fr auto` em `ExtrasCard.jsx` (estilo inline).
-- **D3:** `validateExtras` ecoa o valor cru nas mensagens via `shown`/`br`: `'-Infinity'` gera "valor -Infinity é negativo"; `{}` gera "valor [object Object] não é um número"; `true` gera "valor true…". Só com `localStorage` editado à mão, mas é lixo na tela.
+- **D3 (estendido a todos os campos por D-056):** `validateExtras` e as demais validações da 060 ecoam o valor cru nas mensagens via `shown`/`br`: `'-Infinity'` gera "valor -Infinity é negativo"; `{}` gera "valor [object Object] não é um número"; `true` gera "valor true…". Só com `localStorage` editado à mão, mas é lixo na tela.
 - **D4:** em "Comparar cidades de craft" o "Custo total" inclui despesas sem coluna nem nota (exemplo do laudo: 4.511 de material + 432 de taxa ≠ 5.363, faltam 420 de despesas: 120 × 3 crafts + 60 por lote). A marca "Sem imposto" fica em `craft:cfg.noTax`, um mapa **global** `'Cidade|modo'` (vale para todos os itens), e o quadro "Melhor destino" não diz que a melhor saída está sem imposto.
 - **D5:** 7 mutantes sobreviventes (tabela abaixo).
 
@@ -30,49 +30,57 @@
 ## Interfaces
 ```js
 // inputRules.js (interno; não exportado)
-echoValue(raw): string | null   // número finito => br(raw); texto com <= 20 caracteres (após trim) => `"texto"`; qualquer outra coisa (objeto, array, booleano, NaN, ±Infinity, texto longo) => null
-// mensagens de validateExtras (códigos e campos NÃO mudam):
-//   extra-nan : echo ? `${label}: valor ${echo} não é um número: usando 0.`   : `${label}: o valor não é um número: usando 0.`
-//   extra-neg : n finito ? `${label}: valor ${br(n)} é negativo: usando 0.`    : `${label}: o valor é negativo: usando 0.`      (n = -Infinity)
-//   extra-max : como hoje (já usa 'infinito' para ∞)
+echo(raw, suffix = ''): string   // '' ou ' ' + eco + suffix. string => `"texto"` (como hoje); número finito => br(raw); resto (objeto, array, booleano, NaN, ±Infinity, função, undefined) => ''
+// mensagens (códigos e campos NÃO mudam; número finito e texto digitado idênticos aos de hoje). Despesa:
+//   sem eco: 'Despesa 1: o valor não é um número: usando 0.' | 'Despesa 1: o valor é negativo: usando 0.'   (n = -Infinity)
+//   com eco: 'Despesa 1: valor "abc" não é um número: usando 0.' | 'Despesa 1: valor -50 é negativo: usando 0.'
 // cityCompare.js: cada linha de rows ganha  extras: number   (= computeCraft(...).extras; igual em todas as cidades; 0 sem despesas)
 // CityCompare.jsx: coluna "Despesas" só quando rows.some(r => r.extras > 0)
 ```
 
 ## Tasks (1 commit cada; teste primeiro e visto falhar)
 
-### Task 1 (D3): aviso sem eco de lixo (`inputRules.js`, project `logic`)
-**Files:** Modify `inputRules.extras.test.js`, `inputRules.js`.
-- [ ] **Step 1: testes falhando** (acrescentar em `inputRules.extras.test.js`, usando o `ve`/`row` que o arquivo já define):
+### Task 1 (D3, estendido por D-056): nenhuma mensagem de validação ecoa lixo (`inputRules.js`, project `logic`)
+**Regra do gerente:** a correção vale para **todas** as mensagens com o mesmo vício (despesas, taxa, RRR, bônus diário, quantidade, relistagens, parte do mercado, foco, modo). **Mensagens com número finito ou texto digitado ficam IDÊNTICAS, e nenhum teste existente pode mudar.** Se algum teste existente precisar mudar para passar, **o Executor PARA e reporta** ao gerente (não altera o teste).
+**Files:** Modify `inputRules.extras.test.js`, `inputRules.test.js` (só acréscimo de um bloco novo no fim), `inputRules.js`.
+- **Mecanismo (sem fórmula):** `echo(raw, suffix = '')` devolve `''` quando não há o que ecoar e `' ' + texto + suffix` quando há: texto digitado (string) vira `"texto"` como o `shown` de hoje (inclusive texto longo: é comportamento atual, não é "lixo"); número **finito** vira `br(raw)` (+ `suffix`, ex.: `'%'`); qualquer outra coisa (objeto, array, booleano, `NaN`, `±Infinity`, `undefined`, função) vira `''`. Cada `${shown(x)}` e cada `${br(n)}` que ecoa o valor **do usuário** passa a `${echo(x)}`, com o espaço movido para dentro do `echo` (`Taxa${echo(raw)} não é um número`). Sites com `br(n)` de constante ou limite (`br(used)`, `br(max)`, `br(MAX_QTY)`) **não mudam**; sites já protegidos (`'infinito'`, `'infinita'`, `big(n)`) **não mudam**. Sites a trocar: `feePer100` (nan, neg, ceiling), `customRRR` (nan; impossible com `echo(n, '%')`), `daily`, `crafts` (invalid dos dois ramos), `relists`, `share`, `efficiency`, `focusPoints`, `focusBudget`, `focusRef`, `mode`, e as despesas (`extra-nan`, `extra-neg`).
+- [ ] **Step 0 (rede de segurança):** rodar `npm run test:logic` e `npm run test:ui` ANTES de mexer (tudo verde). Ao final, a mesma suíte passa com os testes existentes **sem nenhuma linha alterada** (`git diff` dos arquivos de teste só com linhas acrescentadas).
+- [ ] **Step 1: testes falhando** (despesas em `inputRules.extras.test.js`, com o `ve`/`row` do arquivo; os demais campos num `describe('sem eco de lixo (D3)')` novo no fim de `inputRules.test.js`):
 ```js
 const msg = (value) => ve([row({ value })]).issues[0].msg;
 it('objeto, array de 2, booleano e NaN: "o valor não é um número", sem "[object Object]", "true" nem "NaN"', () => {
   for (const v of [{}, [1, 2], true, NaN]) expect(msg(v)).toBe('Despesa 1: o valor não é um número: usando 0.');
 });
-it('texto curto continua ecoado entre aspas: "abc" → valor "abc" não é um número', () => expect(msg('abc')).toBe('Despesa 1: valor "abc" não é um número: usando 0.'));
-it('texto com 20 caracteres é ecoado; com 21 não (limite exato)', () => {
-  expect(msg('x'.repeat(20))).toBe(`Despesa 1: valor "${'x'.repeat(20)}" não é um número: usando 0.`);
-  expect(msg('x'.repeat(21))).toBe('Despesa 1: o valor não é um número: usando 0.');
-});
-it('-Infinity (número) e "-Infinity" (texto): "o valor é negativo", sem "Infinity" na mensagem; o valor usado é 0', () => {
+it('texto digitado continua ecoado entre aspas: "abc" -> valor "abc" não é um número', () => expect(msg('abc')).toBe('Despesa 1: valor "abc" não é um número: usando 0.'));
+it('-Infinity (número) e "-Infinity" (texto): "o valor é negativo", sem "Infinity"; o valor usado é 0', () => {
   for (const v of [-Infinity, '-Infinity']) { const r = ve([row({ value: v })]); expect(r.issues[0].msg).toBe('Despesa 1: o valor é negativo: usando 0.'); expect(r.values[0].value).toBe(0); }
 });
-it('negativo finito mantém o texto antigo: -50 → "valor -50 é negativo"; -0,01 → "valor -0,01 é negativo"', () => {
+it('negativo finito mantém o texto antigo: -50 e -0,01', () => {
   expect(msg(-50)).toBe('Despesa 1: valor -50 é negativo: usando 0.'); expect(msg(-0.01)).toBe('Despesa 1: valor -0,01 é negativo: usando 0.');
 });
-it('nenhuma mensagem de nenhuma entrada ruim contém "Infinity", "NaN", "undefined" nem "[object"', () => {
-  for (const v of [{}, [], [[1]], true, false, NaN, Infinity, -Infinity, '-Infinity', 'Infinity', '1e999', () => 1, Symbol.iterator.toString()]) {
-    for (const i of ve([row({ value: v })]).issues) expect(i.msg).not.toMatch(/Infinity|NaN|undefined|\[object/);
+it('"acima do limite" continua com "infinito" para Infinity (não mudou)', () => expect(msg(Infinity)).toContain('infinito'));
+
+// todos os campos: propriedade geral
+const JUNK = /Infinity|NaN|undefined|\[object|\btrue\b|\bfalse\b|\bnull\b/;
+const semAspas = (m) => m.replace(/"[^"]*"/g, ''); // texto digitado entre aspas é do usuário: fica
+const CAMPOS = ['feePer100', 'customRRR', 'daily', 'crafts', 'relists', 'share', 'efficiency', 'focusPoints', 'focusBudget', 'focusRef', 'mode'];
+it.each(CAMPOS)('%s: com {}, [], true, NaN, Infinity, -Infinity e () => 1 nenhuma mensagem contém lixo', (campo) => {
+  for (const v of [{}, [], [[1]], true, NaN, Infinity, -Infinity, () => 1]) {
+    for (const i of validateInputs({ [campo]: v, mode: 'order' }, ctxDe(campo)).issues) expect(semAspas(i.msg)).not.toMatch(JUNK);
   }
-});
-it('a mensagem de "acima do limite" continua com "infinito" (1e999 e Infinity), não mudou', () => expect(msg(Infinity)).toContain('infinito'));
+});   // ctxDe(campo) = o contexto (kind, premium, feeCeiling) que os testes existentes daquele campo já usam
+it('taxa -Infinity: "Taxa é negativa: usando 0."; taxa -400 continua "Taxa -400 é negativa: usando 0."', () => {});
+it('RRR manual -Infinity: "RRR manual é impossível (fora de 0 a 100%): usando o RRR automático."; -5 continua "RRR manual -5% é impossível..."', () => {});
+it('taxa {} -> "Taxa não é um número: usando o padrão 400."; "abc" continua com o eco entre aspas', () => {});
+it('quantidade {} -> "Quantidade é inválida: usando 1."; relistagens {} -> "Relistagens inválidas: usando 0."; diário {} -> "Bônus diário inválido (use 0, 10 ou 20): usando 0."', () => {});
+it('estado salvo com {} nos campos de despesa, taxa e RRR: o Crafting renderiza o aviso sem "[object Object]"', () => {});
 ```
-  (`Symbol.iterator.toString()` é só um texto de 21 caracteres; `() => 1` cai em `NaN` e usa a mensagem genérica. Se algum valor da lista não gerar aviso, o laço simplesmente não afirma nada para ele.)
-- [ ] **Step 2:** `npx vitest run src/lib/inputRules.extras.test.js` → FAIL (mensagens antigas com "[object Object]" e "-Infinity").
-- [ ] **Step 3:** implementar `echoValue(raw)` em `inputRules.js` (ao lado de `shown`; **não** alterar `shown`, que as outras mensagens da 060 usam: ver Pergunta 3) e usá-la nos casos `extra-nan` e `extra-neg` de `validateExtras`.
-- [ ] **Step 4:** PASS; `npm run test:logic`; os testes de tela que já esperam "valor -50 é negativo" (`Crafting.extras.test.jsx`, `Refining.extras.test.jsx`) continuam verdes.
-- [ ] **Step 5: Commit:** `fix: aviso de despesa sem eco de lixo (-Infinity, [object Object])`.
-- Mutações: `echoValue` devolvendo `String(raw)`; limite 20→21 e 20→19; `-Infinity` indo para o ramo de número finito; mensagem de negativo finito trocada pela genérica.
+  (Os `it` com corpo vazio acima são fixados pelo Executor com as mensagens exatas lidas do código **antes** de mexer; cada `it` precisa falhar antes e passar depois.)
+- [ ] **Step 2:** `npx vitest run src/lib/inputRules.extras.test.js src/lib/inputRules.test.js` -> FAIL só nos casos novos.
+- [ ] **Step 3:** implementar `echo` e trocar os sites listados; **não** alterar o texto de nenhuma mensagem com número finito ou texto digitado.
+- [ ] **Step 4:** PASS nos novos **e todos os existentes passam sem alteração**; `npm run check`. **Se qualquer teste existente falhar: PARAR e reportar ao gerente** (não editar o teste).
+- [ ] **Step 5: Commit:** `fix: avisos de validação sem eco de lixo (-Infinity, [object Object], NaN) em todos os campos`.
+- Mutações: `echo` devolvendo `String(raw)`; `-Infinity` indo para o ramo de número finito; mensagem de negativo finito trocada pela genérica; um dos sites (ex.: `focusRef`) sem a troca (o teste por campo derruba); espaço duplicado ou faltando em volta do eco.
 
 ### Task 2 (D4): `extras` na linha do Comparar cidades (project `logic`)
 **Files:** Modify `cityCompare.test.js`, `cityCompare.js`.
@@ -92,6 +100,10 @@ it('3 crafts, 120 por craft + 60 por lote: extras 420 (3 × 120 + 60) em todas a
   for (const r of run({ cfg: cfg({ crafts: 3, extras: L }) }).rows) expect(r.extras).toBe(420);
 });
 it('sem despesas: extras 0 em todas as linhas (inclusive incompletas)', () => { for (const r of run().rows) expect(r.extras).toBe(0); });
+it('CONFIRMADO NO CÓDIGO (D-056): `fee` da linha é a taxa do LOTE inteiro, não por craft: com 3 crafts e taxa 500, 216 por craft, `row.fee` = 648 (384 × 0,1125 × 3 × 5; `computeCraft` usa `stationFee(..., crafts)` e `roundFee`); com 1 craft, 216', () => {
+  expect(by(run({ cfg: cfg({ crafts: 3 }) }).rows)['Fort Sterling'].fee).toBe(648);
+  expect(by(run().rows)['Fort Sterling'].fee).toBe(216);
+});
 ```
   (Se algum teste existente comparar uma linha inteira com `toEqual`, acrescentar `extras: 0` nele; é a única alteração permitida em teste existente.)
 - [ ] **Step 2:** FAIL (`extras` é `undefined`). **Step 3:** em `cityCompare.js`, na linha construída (`row`), acrescentar `extras: c.extras` (já calculado por `computeCraft`; nenhuma conta nova). **Step 4:** PASS; `npm run test:logic`. **Step 5: Commit:** `feat: comparar cidades expõe as despesas extras por linha`.
@@ -108,9 +120,10 @@ it('sem despesas (extras 0 em todas): nenhuma coluna "Despesas" e nenhuma nota d
 it('linha incompleta (sem preço): a célula de despesas mostra 420 mesmo assim ou "—" como o custo total? (ver nota) ', () => {});
 it('a nota sobre o "Sem imposto": "O interruptor Sem imposto só afeta a venda; não entra nesta comparação"', () => {});
 it('texto antigo "Compara só o custo de produzir; não inclui transporte" continua presente', () => {});
+it('rótulo da taxa (D-056): linha com fee 648 (3 crafts × 216) mostra "648 no lote" e NÃO "por craft"; com fee 216 e 1 craft mostra "216 no lote"', () => {});
 ```
   (Na 4ª linha: decidir "—" para linha incompleta, igual ao custo total; escrever o teste com essa decisão: `—`.)
-- [ ] **Step 2:** FAIL. **Step 3:** em `CityCompare.jsx`: `const anyExtras = rows.some((r) => r.extras > 0)`; coluna `<th title="Despesas extras do lote (as mesmas em todas as cidades); entram no custo total">Despesas</th>` entre "Taxa" e "Custo total", célula `<Money value={r.extras} />` (ou `—` se `!r.complete`); `<p className="hint">` extra quando `anyExtras`: "Custo total = material + taxa da bancada + despesas extras. As despesas são as mesmas em todas as cidades, então não mudam qual é a mais barata." e, sempre, no parágrafo final: "O interruptor “Sem imposto” só afeta a venda; não entra nesta comparação." Nenhuma conta no componente.
+- [ ] **Step 2:** FAIL. **Step 3:** em `CityCompare.jsx`: trocar `<small>{fmt(r.fee)} por craft</small>` por `<small>{fmt(r.fee)} no lote</small>` (a taxa é do lote, confirmado na Task 2; erro de honestidade de dado corrigido aqui por decisão D-056); `const anyExtras = rows.some((r) => r.extras > 0)`; coluna `<th title="Despesas extras do lote (as mesmas em todas as cidades); entram no custo total">Despesas</th>` entre "Taxa" e "Custo total", célula `<Money value={r.extras} />` (ou `—` se `!r.complete`); `<p className="hint">` extra quando `anyExtras`: "Custo total = material + taxa da bancada + despesas extras. As despesas são as mesmas em todas as cidades, então não mudam qual é a mais barata." e, sempre, no parágrafo final: "O interruptor “Sem imposto” só afeta a venda; não entra nesta comparação." Nenhuma conta no componente.
 - [ ] **Step 4:** PASS; `npm run check`. **Step 5: Commit:** `feat: Comparar cidades mostra as despesas no custo total e explica o Sem imposto`.
 - Mutações: coluna sempre visível; coluna escondida com despesas; célula com o valor da taxa; nota ausente.
 
@@ -180,15 +193,16 @@ Cada subtarefa: escrever o teste, **ver falhar contra o mutante** (aplicar a mut
 
 ## Riscos
 1. **D2 em CSS:** não há teste de layout em jsdom; o teste lê o CSS como texto e a conferência real a 375 px é obrigatória (Task 4 e 7).
-2. **Marca "Sem imposto" é global por cidade e modo** (D4): esta ideia só **explica**; tornar a marca por item exige mudar o formato de `craft:cfg.noTax` e a migração (fora do escopo; Pergunta 1).
+2. **Marca "Sem imposto" é global por cidade e modo** (D4): esta ideia só **explica** (decisão D-056); tornar a marca por item exigiria mudar o formato de `craft:cfg.noTax` e migrar (fora do escopo).
 3. `Crafting.jsx` é arquivo quente: o diff aqui é pequeno (quadro e nota).
-4. Possível defeito vizinho **não confirmado**: `CityCompare` rotula `fmt(r.fee) por craft`, mas `r.fee` vem de `computeCraft().fee`, que é a taxa do lote inteiro (`stationFee(…, crafts)`). Com mais de 1 craft o rótulo estaria errado. A Task 3 inclui a conferência (render com `crafts: 3`); se confirmado, vira pergunta (Pergunta 2), não é corrigido em silêncio.
+4. **Rótulo da taxa (D4/D-056):** confirmado no código que `fee` é o total do lote; o rótulo "por craft" do `CityCompare` vira "no lote" (Task 3), com teste de crafts > 1 (648 = 3 × 216). Textos longos digitados continuam ecoados entre aspas (comportamento atual; só objeto, array, booleano, NaN e ±Infinity deixam de aparecer). Risco da Task 1: tocar ~20 mensagens da 060; mitigado pela regra de PARAR se qualquer teste existente precisar mudar.
 
 ## Critério de pronto
 `npm run check` verde; só testes **acrescentados** nos existentes (exceto o `toEqual` de linha inteira, se houver); os 7 mutantes e as mutações das Tasks derrubados; conferência de 375 px registrada pelo Tester; só os arquivos listados alterados.
 
-## PERGUNTAS PARA O GERENTE
-1. **Marca "Sem imposto" por item?** Hoje é global (`Cidade|modo`). Aceita só explicar (esta ideia), ou abrir ideia nova para guardar a marca por item (muda o formato salvo e exige migração)?
-2. **Rótulo "por craft" na taxa do Comparar cidades:** se a Task 3 confirmar que `fee` é do lote, corrigimos o texto nesta mesma ideia (uma linha) ou abrimos defeito à parte?
-3. **Eco de lixo fora das despesas:** `shown`/`br` da 060 têm o mesmo vício (taxa, RRR, diário, quantidade, parte do mercado, foco, modo). Estendemos a correção a todas as mensagens agora (mais testes, mexe em textos da 060) ou só às despesas (proposta)?
-4. **Seletor em 375 px:** aceita o layout em duas filas (nome em cima; valor, escopo e remover embaixo) ou prefere rótulos curtos "craft"/"lote" numa fila só?
+## DECISÕES DO GERENTE (D-056) e pontos ainda abertos
+1. Marca "Sem imposto" por item: **não**; só explicar na tela (Tasks 3 e 5). **Incorporado.**
+2. Rótulo da taxa: **confirmado** que `fee` é o total do lote (`stationFee(..., crafts)`); rótulo corrigido para "no lote" dentro da 076, com teste de crafts > 1 (Tasks 2 e 3). **Incorporado.**
+3. Eco de lixo: `echo` estendido a todas as mensagens com o mesmo vício; número finito e texto digitado idênticos; nenhum teste existente pode mudar, senão o Executor PARA e reporta (Task 1). **Incorporado.**
+4. Seletor em 375 px: duas filas (nome em cima; valor, escopo e remover embaixo), sem rótulos curtos (Task 4). **Incorporado.**
+Em aberto: nenhum.
