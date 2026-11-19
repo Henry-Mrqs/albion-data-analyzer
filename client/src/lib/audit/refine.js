@@ -98,9 +98,10 @@ const route = (ctx) =>
   row({ id: 'route', label: 'Rota de produção', value: ROUTE[ctx.route] ?? String(ctx.route), unit: '', origin: ctx.cfg.route === undefined ? 'app-default' : 'user', status: 'applied', note: ctx.cfg.route === undefined && ctx.cfg.deep ? 'Vem do campo antigo "deep" (produzir tudo).' : undefined });
 
 const matPrices = (ctx) =>
-  flat(ctx.cur.unit.lines).map((l) => apiRow({ id: `price-${l.mid}`, label: `Preço · ${l.name}`, price: l.unit, date: l.date, now: ctx.now, maxAgeH: ctx.maxAgeH, note: l.city ? cityLabel(l.city) : undefined }));
+  flat(ctx.cur?.unit.lines).map((l) => apiRow({ id: `price-${l.mid}`, label: `Preço · ${l.name}`, price: l.unit, date: l.date, now: ctx.now, maxAgeH: ctx.maxAgeH, note: l.city ? cityLabel(l.city) : undefined }));
 
 const sell = (ctx) => {
+  if (!ctx.cur) return row({ id: 'exit', label: 'Saída (onde vender)', value: null, unit: 'prata', origin: 'api', status: 'not-considered', note: 'sem preços carregados' });
   const s = ctx.cur.sell;
   const mode = ctx.cur.mode === 'instant' ? 'ordem de compra (na hora)' : 'ordem de venda';
   return [
@@ -111,7 +112,7 @@ const sell = (ctx) => {
 
 const tax = (ctx) => {
   const c = ctx.cur;
-  return taxRows({ premium: ctx.premium, sale: c.sell.price > 0 ? { mode: c.mode, noTax: ctx.noTax, factor: c.net / c.sell.price } : null });
+  return taxRows({ premium: ctx.premium, sale: c?.sell.price > 0 ? { mode: c.mode, noTax: ctx.noTax, factor: c.net / c.sell.price } : null });
 };
 
 const noTax = (ctx) =>
@@ -124,7 +125,7 @@ const qty = (ctx) => row({ id: 'qty', label: 'Quantidade a refinar', value: ctx.
 
 const extras = (ctx) =>
   row({
-    id: 'extras', label: 'Despesas extras (por unidade)', value: ctx.perUnitExtras, unit: 'prata', origin: 'user', status: 'applied',
+    id: 'extras', label: 'Despesas extras lançadas, por unidade', value: ctx.perUnitExtras, unit: 'prata', origin: 'user', status: 'applied',
     note: joinNote(Array.isArray(ctx.vcfg.extras) && ctx.vcfg.extras.length ? `${ctx.vcfg.extras.length} despesa(s) dividida(s) pelo lote` : 'Nenhuma despesa digitada', correctionNote(ctx.issues, 'extras')),
   });
 
@@ -163,7 +164,7 @@ export const refineVars = [
   V('extras', 'Despesas extras', ['extras'], 'applied', 'cost', extras, { probe: { cfg: { extras: [{ name: 'Transporte', value: '10', scope: 'craft' }] } } }),
   V('focus-points', 'Foco como custo em pontos', ['focusEff', 'focusPoints', 'focusBudget', 'focusRef'], 'info-only', 'none', focusPoints, { probe: { cfg: { focusEff: '10000' } } }),
   V('not-considered', 'NÃO consideradas', [], 'not-considered', 'none', notConsidered, { section: 'NÃO consideradas' }),
-  ...targetVars((ctx) => ctx.cur.unit.cost + ctx.perUnitExtras),
+  ...targetVars((ctx) => (ctx.cur ? ctx.cur.unit.cost + ctx.perUnitExtras : null)),
   ...stressVars(),
 ];
 

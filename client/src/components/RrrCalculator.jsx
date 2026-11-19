@@ -4,6 +4,8 @@ import { itemCraftInfo, recipeReturn, referenceTable, rrrFor } from '../lib/rrrC
 import { validateInputs } from '../lib/inputRules';
 import ItemSelector from './ItemSelector';
 import InputIssues from './InputIssues';
+import VarAuditCard from './VarAuditCard';
+import { auditRrr } from '../lib/audit/rrr';
 import { Banner, Field, NumberInput, Segmented, Switch } from './ui';
 
 const n2 = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -41,6 +43,9 @@ export default function RrrCalculator() {
     cfg.focus && `${n1(parts.focus)} foco`,
     dailyV.values.daily > 0 && `${n1(parts.daily)} bônus diário`,
   ].filter(Boolean);
+
+  // IDEIA-005: quadro das variáveis; só lê os objetos acima, não calcula nada
+  const audit = auditRrr({ cfg, category, res, dailyV, item: getItem(sel.id), info, rows, sel });
 
   return (
     <div className="grid-2">
@@ -180,6 +185,8 @@ export default function RrrCalculator() {
             </table>
           </div>
         </div>
+
+        <VarAuditCard audit={audit} />
       </div>
     </div>
   );
