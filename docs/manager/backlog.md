@@ -121,7 +121,7 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 
 | ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
 |---|---|---|---|---|---|---|---|
-| IDEIA-070 | **Estado salvo antigo ou incompleto**: `usePersisted` devolve o JSON salvo SEM mesclar com os padrões; cada ideia que acrescentou campo novo (bônus diário, cidade de refino, teto, rota...) depende de o código tolerar a falta. Quem tem configuração antiga salva no navegador (inclusive o usuário deste projeto) nunca foi testado por nenhum Tester. Mesclar com os padrões, validar tipos e versionar; testar com os formatos que as versões anteriores realmente salvaram (reconstruídos do histórico do git) | 4 | 5 | 4 | 2 | 15 | EM_QA (Tester #65) |
+| IDEIA-070 | **Estado salvo antigo ou incompleto**: `usePersisted` devolve o JSON salvo SEM mesclar com os padrões; cada ideia que acrescentou campo novo (bônus diário, cidade de refino, teto, rota...) depende de o código tolerar a falta. Quem tem configuração antiga salva no navegador (inclusive o usuário deste projeto) nunca foi testado por nenhum Tester. Mesclar com os padrões, validar tipos e versionar; testar com os formatos que as versões anteriores realmente salvaram (reconstruídos do histórico do git) | 4 | 5 | 4 | 2 | 15 | VERIFICADA (deploy 13) |
 
 ## Robustez acrescentada no Loop 7 (medição do re-teste da 010)
 
