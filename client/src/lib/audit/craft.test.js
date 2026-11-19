@@ -364,6 +364,13 @@ describe('seções Preço-alvo, Estresse e Comparar cidades', () => {
   });
 });
 
+describe('foco em pontos: só o que foi digitado', () => {
+  it('padrão (nada digitado): "não informado", sem o 10.000 de foco disponível que é só o padrão da tela', () => {
+    expect(get(audit().out, 'focus-points').value).toBe('não informado');
+    expect(get(audit({ over: { focusBudget: '5000', focusEff: '100' } }).out, 'focus-points').value).toBe('eficiência 100 · foco disponível 5000');
+  });
+});
+
 describe('cabeçalho: contagens', () => {
   it('cfg padrão com taxa 400: ao menos 1 não confirmada e as NÃO consideradas contadas', () => {
     const { out } = audit({ over: { feePer100: 400 } });
