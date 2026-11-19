@@ -16,6 +16,11 @@ const CONCURRENCY = 3;
 const cache = new Map(); // `${server}|${q}|${id}` -> { t, data }
 let blockedUntil = 0;
 
+/** Só para testes: limpa a pausa compartilhada por 429/503 (estado de módulo). Não é chamada em produção. */
+export function resetThrottleForTests() {
+  blockedUntil = 0;
+}
+
 export class MarketError extends Error {
   constructor(message, kind = 'network', retryAt = 0) {
     super(message);
