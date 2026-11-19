@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Route } from 'lucide-react';
 import { REFINING, focusOf, marketId, nameOf } from '../lib/catalog';
 import { CITIES, SELL_CITIES, cityLabel, usePrices } from '../lib/market';
@@ -16,6 +16,8 @@ import FeeField from './FeeField';
 import InputIssues, { CorrectedBadge } from './InputIssues';
 import PriceMatrix from './PriceMatrix';
 import TargetPrice from './TargetPrice';
+import VarAuditCard from './VarAuditCard';
+import { auditRefine } from '../lib/audit/refine';
 import { Age, Banner, Field, Money, NumberInput, PriceStatus, Segmented, Switch } from './ui';
 
 const TYPES = Object.keys(REFINING);
@@ -28,6 +30,7 @@ const ROUTES = [
 
 export default function Refining() {
   const { premium, feeCeiling } = useSettings();
+  const [now] = useState(Date.now);
   const [cfg, setCfg] = usePersisted('refine:cfg', {
     type: 'PLANKS', tier: 4, ench: 0,
     buyCity: 'best', refineCity: 'Fort Sterling', sellCity: 'best',
@@ -82,6 +85,8 @@ export default function Refining() {
   const routes = compared.routes.map((r) => ({ ...ROUTES.find((x) => x.value === r.value), ...r }));
   const bestRoute = routes.find((r) => r.value === compared.best?.value);
   const path = cur ? routePath(cur.unit, cfg.tier) : [];
+  // IDEIA-005: quadro das variáveis; só lê os objetos acima, não calcula nada
+  const audit = auditRefine({ cfg, vcfg, issues, cur, info, ench, specialty, autoRRR, rrrValue, perUnitExtras, noTax, route, premium, now, feeCeiling });
 
   // ----- tabela de preços por cidade dos itens usados nesta cadeia -----
   const chainMids = refineChainIds(curUniq, true);
@@ -419,6 +424,8 @@ export default function Refining() {
         </div>
 
         {prices && <PriceMatrix title={`Preços por cidade · itens desta cadeia (T${cfg.tier}.${ench})`} prices={prices} mids={chainMids} used={usedCellSet}useOrders={cfg.useOrders} targetMid={cur?.mid} />}
+
+        <VarAuditCard audit={audit} />
       </div>
     </div>
   );

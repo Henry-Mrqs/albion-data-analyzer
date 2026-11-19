@@ -27,6 +27,8 @@ import InputIssues, { CorrectedBadge } from './InputIssues';
 import PriceMatrix from './PriceMatrix';
 import TargetPrice from './TargetPrice';
 import { exitNoTaxByMode } from '../lib/targetPrice';
+import VarAuditCard from './VarAuditCard';
+import { auditCraft } from '../lib/audit/craft';
 import { Age, Banner, Field, Money, NumberInput, PriceStatus, Segmented, Switch } from './ui';
 
 export default function Crafting() {
@@ -72,6 +74,8 @@ export default function Crafting() {
 
   const opts = annotateOptions(options, prices, targetMid);
   const { best: shown, bestReal } = pickExit(opts);
+  // IDEIA-005: quadro das variáveis; só lê os objetos acima, não calcula nada
+  const audit = rec ? auditCraft({ cfg, cfgEff, daily, results, variants, idx, result: c, opts, compare, bonusCity, premium, server, now, feeCeiling, targetMid, item }) : null;
 
   // Giro (IDEIA-010): histórico só do item final, só depois de os preços chegarem, uma requisição por item (cache de 1 h).
   const { history, loading: histLoading, error: histError } = useHistory([targetMid], { cities: SELL_CITIES, enabled: !!rec && !!prices });
@@ -491,6 +495,8 @@ export default function Crafting() {
         {rec && prices && (
           <PriceMatrix title="Preços por cidade · itens desta cadeia" prices={prices} mids={ids} used={used} useOrders={cfg.useOrders} targetMid={targetMid} />
         )}
+
+        <VarAuditCard audit={audit} />
       </div>
     </div>
   );
