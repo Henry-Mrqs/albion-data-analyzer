@@ -301,3 +301,6 @@ Pendências do laudo (teste de `lazy` rejeitado no App, mutantes M17/M26/M27/M33
 
 ## D-057 — 031: retrabalho 1 antes do deploy; 078 com causa identificada
 Portão de qualidade: o cartão de estresse precisa dizer quais materiais variam (todos, inclusive artefatos) e qual saída de venda é variada (cidade/modo/noTax) — é a variável que o usuário esquece. Retrabalho 1 de no máximo 2: D1, D4, M29, M23 (D3 se simples); D2 (mutantes de ligação) fica na IDEIA-074. Depois do retrabalho, Tester faz re-QA curto só das mudanças. IDEIA-078 (teste instável) virou execução imediata: causa provável estado de módulo `blockedUntil` em market.js (marketRequest.test.js sob shuffle); correção em testes/reset documentado sem mudar comportamento de produção.
+
+## D-058 — 076 aprovada; defeitos baixos viram IDEIA-079
+D1 (texto digitado longo sem espaços estoura a página: `overflow-wrap: anywhere` em `.hint`/`.bad`), D2 (mode não finito ecoa), D3 (trim em sanitizeFeeCeiling), D4 (testes de CSS/etiqueta/trim) entram como IDEIA-079, baixa prioridade. Aprovada para deploy sem retrabalho.
