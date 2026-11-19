@@ -298,3 +298,6 @@ Pendências do laudo (teste de `lazy` rejeitado no App, mutantes M17/M26/M27/M33
 
 ## D-056 — Respostas ao Planejador (075/076)
 075: noTax vale por modo e pela mesma saída que o cartão usa (a melhor daquele modo), não "alguma saída"; aviso fixo + cidade usada; após o merge da 031, teste de que estresse e Preço-alvo concordam. 076: marca noTax só explicada na tela; confirmar se `fee` do CityCompare é total do lote e, se sim, corrigir o rótulo (honestidade de dado); `echoValue` em todas as mensagens com eco de lixo, sem mudar mensagens com número finito nem testes existentes (senão PARAR e reportar); layout 375px em duas filas.
+
+## D-057 — 031: retrabalho 1 antes do deploy; 078 com causa identificada
+Portão de qualidade: o cartão de estresse precisa dizer quais materiais variam (todos, inclusive artefatos) e qual saída de venda é variada (cidade/modo/noTax) — é a variável que o usuário esquece. Retrabalho 1 de no máximo 2: D1, D4, M29, M23 (D3 se simples); D2 (mutantes de ligação) fica na IDEIA-074. Depois do retrabalho, Tester faz re-QA curto só das mudanças. IDEIA-078 (teste instável) virou execução imediata: causa provável estado de módulo `blockedUntil` em market.js (marketRequest.test.js sob shuffle); correção em testes/reset documentado sem mudar comportamento de produção.
