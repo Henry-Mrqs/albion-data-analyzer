@@ -96,3 +96,4 @@ Uma linha por delegação. Prova de que o trabalho é feito por sub agentes dist
 | #75 (resultado) | Tester | IDEIA-069 APROVADO (867 testes; dist idêntico; 51/57 mutantes mortos; sem flakiness; erros de dados: nenhum). Sobreviventes = ligação Crafting↔seletor sem teste; restrição `usePersisted('chave'` em .test.jsx frágil | docs/qa/IDEIA-069.md | 2026-11-19 |
 | #77 | Deployer | Deploy 16 da IDEIA-069 delegado | SendMessage | 2026-11-19 |
 | #78 | PLANEJADOR (retomado, `a929d0f6fc94ed330`) | Plano da IDEIA-071 | SendMessage | 2026-11-19 |
+| #77 (resultado) | Deployer | Deploy 16 VERIFICADO (IDEIA-069): SHA 7c7b095, bundle inalterado index-BKLxn1eM.js, catálogo c0f66cb0bd, build Vercel ok com devDependencies novas, 892 testes, sem rollback | docs/deploy/deploy-16.md | 2026-11-19 |
