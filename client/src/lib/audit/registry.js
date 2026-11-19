@@ -57,10 +57,10 @@ export function auditScreen(id, ctx) {
       const out = v.build(ctx);
       made = (Array.isArray(out) ? out : out ? [out] : []).map((r) => {
         const valid = row(r);
-        return v.section && !valid.section ? { ...valid, section: v.section } : valid;
+        return { ...valid, varId: v.id, ...(v.section && !valid.section ? { section: v.section } : {}) };
       });
     } catch {
-      made = [row({ id: v.id, label: v.label, value: 'não foi possível ler', unit: '', origin: 'derived', status: 'unconfirmed', statusText: 'não lida', note: FAIL_NOTE, section: v.section })];
+      made = [row({ id: v.id, label: v.label, value: 'não foi possível ler', unit: '', origin: 'derived', status: 'unconfirmed', statusText: 'não lida', note: FAIL_NOTE, section: v.section, varId: v.id })];
     }
     rows.push(...made);
   }

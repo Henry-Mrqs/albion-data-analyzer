@@ -23,20 +23,25 @@ export function itemCraftInfo(item) {
   return { cc: item.cc, label: craftCategoryLabel(item.cc), city: cityOfCategory(item.cc) };
 }
 
+/** Decomposição do PB em partes (derivada de rrr(), por diferença): { base, specialty, focus, daily }. Usada também pelo auditor (IDEIA-005). */
+export function pbParts({ kind, specialty, focus, daily = 0 }) {
+  const pb0 = pbOf(rrr({ kind, specialty: false, focus: false }));
+  const pb1 = pbOf(rrr({ kind, specialty, focus: false }));
+  const pb2 = pbOf(rrr({ kind, specialty, focus: !!focus }));
+  const pb3 = pbOf(rrr({ kind, specialty, focus: !!focus, daily }));
+  return { base: pb0, specialty: pb1 - pb0, focus: pb2 - pb1, daily: pb3 - pb2 };
+}
+
 /** RRR, PB e decomposição do PB (derivada de rrr(), por diferença). */
 export function rrrFor({ kind, city, category, resource, focus, daily = 0 }) {
   const specialty = isSpecialty({ kind, city, category, resource });
   const d = validateInputs({ daily }).values.daily; // mesma validação das outras telas (0, 10 ou 20)
   const r = rrr({ kind, specialty, focus: !!focus, daily: d });
-  const pb0 = pbOf(rrr({ kind, specialty: false, focus: false }));
-  const pb1 = pbOf(rrr({ kind, specialty, focus: false }));
-  const pb2 = pbOf(rrr({ kind, specialty, focus: !!focus }));
-  const pb3 = pbOf(r);
   return {
     rrr: r,
-    pb: pb3,
+    pb: pbOf(r),
     specialty,
-    parts: { base: pb0, specialty: pb1 - pb0, focus: pb2 - pb1, daily: pb3 - pb2 },
+    parts: pbParts({ kind, specialty, focus, daily: d }),
   };
 }
 
