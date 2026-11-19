@@ -7,6 +7,7 @@ import { CITIES, SELL_CITIES } from './market';
 import { DEFAULT_MAX_AGE_H } from './exits';
 import { SERVERS } from './settings';
 import { CURRENT_DEFAULTS } from '../test/savedStates';
+import { setFields } from '../test/setFields';
 
 const COMP = join(import.meta.dirname, '..', 'components');
 const read = (f) => readFileSync(join(COMP, f), 'utf8');
@@ -55,30 +56,6 @@ function literalOf(src, key) {
     if (depth === 0 && src[i] === ')') break;
   }
   return src.slice(start, i).trim();
-}
-
-/** Campos de primeiro nível de cada `set({ ... })` do texto. */
-function setFields(src) {
-  const out = new Set();
-  for (const m of src.matchAll(/\bset\(\{/g)) {
-    let i = m.index + m[0].length;
-    let depth = 0;
-    let expectKey = true;
-    for (; i < src.length; i++) {
-      const ch = src[i];
-      if (depth === 0 && expectKey) {
-        const id = /^\s*([A-Za-z_]\w*)\s*:/.exec(src.slice(i, i + 80));
-        if (id) out.add(id[1]);
-        expectKey = false;
-      }
-      if ('{[('.includes(ch)) depth++;
-      else if ('}])'.includes(ch)) {
-        if (depth === 0) break;
-        depth--;
-      } else if (ch === ',' && depth === 0) expectKey = true;
-    }
-  }
-  return out;
 }
 
 describe('contrato: todo campo gravado por set({...}) existe no esquema ou nos padrões da chave', () => {
