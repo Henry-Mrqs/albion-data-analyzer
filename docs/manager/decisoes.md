@@ -277,3 +277,6 @@ Aviso forte da taxa 400 padrão basta (tabela não é escondida); Brecilien sem 
 
 ## D-049 — 058 aprovada; observações de UX viram IDEIA-073
 Observações O1–O6 do Tester (aviso 400 some ao digitar uma cidade mas as outras seguem com 400; "mesma taxa" com taxa geral vazia; coluna "Dif. p/ bônus" toda "—" sem explicação em bolsa/capa/poção; Royal "Melhor: Martlock, 0 de diferença"; custo total fora da 1ª vista em 375px; "-0") entram como IDEIA-073 (polimento do cartão de cidades), prioridade média. Teste de componente da 058 (L1) vem após merge da 069.
+
+## D-050 — 069 aprovada; sobreviventes viram IDEIA-074
+Tester aprovou a 069. Sobreviventes (M19, M54, M55, M41, M47, M48: ligação Crafting↔seletor/bônus sem teste), teste do select da ficha com valor que distinga auto de variante 0, `toEqual` craftCfg×CURRENT_DEFAULTS, filtrar `.test.jsx` na varredura do persistSchemas.test.js e documentar no README entram como IDEIA-074 (testes de ligação do Crafting). O plano errou em "última variante" (resolveVariant devolve 0): código está certo.

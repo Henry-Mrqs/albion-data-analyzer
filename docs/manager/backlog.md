@@ -115,7 +115,7 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 
 | ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
 |---|---|---|---|---|---|---|---|
-| IDEIA-069 | **Testes de componente (jsdom + Testing Library)**: o mesmo buraco apareceu em 4 ideias (060 `CeilingNotice`/botão "Aceitar", 039 selo "não verificado", 041 avisos e nota no JSX, 049 seletor): mutantes que só a UI revela sobrevivem porque não há teste de componente. Infra, não conta para os 50 (D-001) | — | — | — | — | GATE de qualidade | EM_QA (Tester #75) (plano aprovado, D-040; infra) |
+| IDEIA-069 | **Testes de componente (jsdom + Testing Library)**: o mesmo buraco apareceu em 4 ideias (060 `CeilingNotice`/botão "Aceitar", 039 selo "não verificado", 041 avisos e nota no JSX, 049 seletor): mutantes que só a UI revela sobrevivem porque não há teste de componente. Infra, não conta para os 50 (D-001) | — | — | — | — | GATE de qualidade | APROVADA (deploy 16) (plano aprovado, D-040; infra) |
 
 ## Correção acrescentada no Loop 7 (achado do Gerente ao rever o relato da 010)
 
@@ -127,6 +127,7 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 
 | ID | Título | Imp | Fid | Esf | Dif | Prio | Status |
 |---|---|---|---|---|---|---|---|
-| IDEIA-071 | **Limite de erro na tela (error boundary) + restaurar configurações**: hoje qualquer exceção derruba a página inteira em branco (o Tester provou com estado salvo parcial ou `null`) e o usuário não tem como se recuperar sozinho. Mostrar mensagem clara e um botão "restaurar configurações salvas" (apaga só as chaves `albion:*` do app, com confirmação) | 4 | 4 | 4 | 3 | 15 | NOVA (D-043; planejar depois da 070) |
+| IDEIA-071 | **Limite de erro na tela (error boundary) + restaurar configurações**: hoje qualquer exceção derruba a página inteira em branco (o Tester provou com estado salvo parcial ou `null`) e o usuário não tem como se recuperar sozinho. Mostrar mensagem clara e um botão "restaurar configurações salvas" (apaga só as chaves `albion:*` do app, com confirmação) | 4 | 4 | 4 | 3 | 15 | NOVA (Planejador #78 em curso) |
 | IDEIA-073 | **Polimento do cartão de cidades (058)**: aviso 400 em todas as cidades, texto "mesma taxa" com taxa vazia, explicar coluna "Dif. p/ bônus" vazia, Royal sem "melhor", custo total visível em 375px, evitar "-0" (D-049, observações O1–O6) | 3 | 3 | 4 | 2 | 12 | NOVA |
 | IDEIA-072 | **Foco: pendências da 002**: selo "N valores corrigidos" conta foco, `validateCatalog` valida `ef`, explicação com RRR manual (D-047) | 3 | 3 | 4 | 1 | 11 | NOVA |
+| IDEIA-074 | **Testes de ligação do Crafting (069)**: matar M19/M54/M55/M41/M47/M48, teste da ficha com valor que distingue auto, `craftCfg()` = CURRENT_DEFAULTS, filtrar `.test.jsx` na varredura de persistSchemas.test.js, README (D-050) | 3 | 3 | 4 | 1 | 11 | NOVA |

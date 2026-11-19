@@ -93,3 +93,6 @@ Uma linha por delegação. Prova de que o trabalho é feito por sub agentes dist
 | #74 (resultado) | Tester | IDEIA-058 APROVADO; erros de dados: nenhum (2.500 cenários, 48 mutantes, UI real 375px). Observações O1–O6 (UX) e lacunas L1/L2 | docs/qa/IDEIA-058.md | 2026-11-19 |
 | #76 | Deployer | Deploy 15 da IDEIA-058 delegado | SendMessage | 2026-11-19 |
 | #76 (resultado) | Deployer | Deploy 15 VERIFICADO (IDEIA-058): SHA 451f5b1, bundle index-BKLxn1eM.js, catálogo inalterado c0f66cb0bd, cartão de 7 cidades ok, 375px ok, estado antigo ok, sem rollback | docs/deploy/deploy-15.md | 2026-11-19 |
+| #75 (resultado) | Tester | IDEIA-069 APROVADO (867 testes; dist idêntico; 51/57 mutantes mortos; sem flakiness; erros de dados: nenhum). Sobreviventes = ligação Crafting↔seletor sem teste; restrição `usePersisted('chave'` em .test.jsx frágil | docs/qa/IDEIA-069.md | 2026-11-19 |
+| #77 | Deployer | Deploy 16 da IDEIA-069 delegado | SendMessage | 2026-11-19 |
+| #78 | PLANEJADOR (retomado, `a929d0f6fc94ed330`) | Plano da IDEIA-071 | SendMessage | 2026-11-19 |
