@@ -97,3 +97,6 @@ Uma linha por delegação. Prova de que o trabalho é feito por sub agentes dist
 | #77 | Deployer | Deploy 16 da IDEIA-069 delegado | SendMessage | 2026-11-19 |
 | #78 | PLANEJADOR (retomado, `a929d0f6fc94ed330`) | Plano da IDEIA-071 | SendMessage | 2026-11-19 |
 | #77 (resultado) | Deployer | Deploy 16 VERIFICADO (IDEIA-069): SHA 7c7b095, bundle inalterado index-BKLxn1eM.js, catálogo c0f66cb0bd, build Vercel ok com devDependencies novas, 892 testes, sem rollback | docs/deploy/deploy-16.md | 2026-11-19 |
+| #78 (resultado) | Planejador | Plano da 071 entregue (2 limites de erro, resetState, aviso item-aware) + 6 perguntas | docs/plans/IDEIA-071.md | 2026-11-19 |
+| #79 | EXECUTOR (`a9068070e7aac666e`, worktree) | Implementar IDEIA-071 em feat/IDEIA-071 | em curso | docs/plans/IDEIA-071.md | 2026-11-19 |
+| #80 | EXECUTOR (`a5dead3c75c703910`, worktree) | Implementar IDEIA-048 em feat/IDEIA-048 | em curso | docs/plans/IDEIA-048.md | 2026-11-19 |

@@ -280,3 +280,6 @@ Observações O1–O6 do Tester (aviso 400 some ao digitar uma cidade mas as out
 
 ## D-050 — 069 aprovada; sobreviventes viram IDEIA-074
 Tester aprovou a 069. Sobreviventes (M19, M54, M55, M41, M47, M48: ligação Crafting↔seletor/bônus sem teste), teste do select da ficha com valor que distinga auto de variante 0, `toEqual` craftCfg×CURRENT_DEFAULTS, filtrar `.test.jsx` na varredura do persistSchemas.test.js e documentar no README entram como IDEIA-074 (testes de ligação do Crafting). O plano errou em "última variante" (resolveVariant devolve 0): código está certo.
+
+## D-051 — Respostas ao Planejador da 071
+Dois níveis de limite de erro; botão restaurar também no rodapé; restaurar apaga todas as `albion:*` (inclui Premium e servidor) com confirmação explícita; aviso de migração item-aware pelo item salvo; sem telemetria; aviso proativo de versão nova fora do escopo.
