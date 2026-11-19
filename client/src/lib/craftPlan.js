@@ -2,6 +2,7 @@
 import { REFINING, recipeValue, nameOf, refinedTypeOf, tierOf } from './catalog';
 import { SELL_CITIES, quote } from './market';
 import { cleanCraftCfg } from './inputRules';
+import { extrasTotal } from './extras';
 import { rrr as calcRRR, resolveRRR, refineUnit, refineChainIds, buyQuote, materialPlan, netSale, stationFee, roundFee } from './econ';
 
 export const keyOf = (uniq) => uniq.replace(/^T\d_/, '').replace(/_LEVEL\d$/, '');
@@ -101,7 +102,10 @@ export function computeCraft({ rec, targetMid, prices, cfg: rawCfg, premium, bon
 
   const matCost = lines.reduce((s, l) => s + l.total, 0);
   const fee = rec ? roundFee(stationFee(recipeValue(rec), +cfg.feePer100 || 0, crafts)) : 0;
-  const totalCost = matCost + fee;
+  // IDEIA-048: despesas extras só somam ao custo (não mudam RRR, foco nem taxa de bancada: dossiê X4)
+  const extrasList = cfg.extras;
+  const extras = extrasTotal(extrasList, crafts);
+  const totalCost = matCost + fee + extras;
   const units = rec ? rec.amount * crafts : 0;
   const unitCost = units ? totalCost / units : 0;
   const missing = lines.filter((l) => !l.unit).map((l) => l.name);
@@ -116,7 +120,8 @@ export function computeCraft({ rec, targetMid, prices, cfg: rawCfg, premium, bon
     if (sell.price > 0 && city !== 'Black Market') options.push({ city, mode: 'order', label: 'Ordem de venda', price: sell.price, date: sell.date });
   }
   options.forEach((o) => {
-    o.net = netSale(o.price, o.mode, premium) * units;
+    o.noTax = cfg.noTax[`${o.city}|${o.mode}`] === true; // venda fora do mercado: sem imposto e sem taxa de criação (X3)
+    o.net = netSale(o.price, o.noTax ? 'none' : o.mode, premium) * units;
     o.profit = o.net - totalCost;
     o.margin = totalCost > 0 ? (o.profit / totalCost) * 100 : 0;
   });
@@ -141,7 +146,7 @@ export function computeCraft({ rec, targetMid, prices, cfg: rawCfg, premium, bon
   const refinable = lines.filter((l) => l.cmp);
   const allBest = refinable.length > 0 && refinable.every((l) => l.mode === 'best');
 
-  return { rates, lines, matCost, fee, totalCost, units, unitCost, missing, options, best, ready, plan, used, refinable, allBest, issues };
+  return { rates, lines, matCost, fee, extras, extrasList, totalCost, units, unitCost, missing, options, best, ready, plan, used, refinable, allBest, issues };
 }
 
 // Economia mínima (prata) para contar como ganho: decisão de produto sem fonte; o mesmo limiar do comparativo de refino da tela.
