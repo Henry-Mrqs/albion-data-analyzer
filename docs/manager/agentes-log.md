@@ -84,3 +84,5 @@ Uma linha por delegação. Prova de que o trabalho é feito por sub agentes dist
 | #68 (resultado) | Tester | IDEIA-002 APROVADO (660 testes; 1.240 itens/4.869 entradas ef sem divergência; 6.000 cenários; 17/20 mutantes mortos). Pendências: selo "N valores corrigidos" não conta foco; validateCatalog não valida ef; RRR manual zera economia do foco sem explicação | docs/qa/IDEIA-002.md | 2026-11-19 |
 | #71 | Deployer | Deploy 14 da IDEIA-002 delegado | SendMessage | 2026-11-19 |
 | #71 (resultado) | Deployer | Deploy 14 VERIFICADO (IDEIA-002): SHA 59ff149, bundle index-C_bJ9bGa.js, catálogo novo c0f66cb0bd (+54.809 B, 1.240 itens com ef), cartão de foco em Craft e Refino, estado antigo ok, sem rollback | docs/deploy/deploy-14.md | 2026-11-19 |
+| #72 | EXECUTOR (`a4815db7d7fbd071b`, worktree) | Implementar IDEIA-069 (jsdom + testes de componente) em feat/IDEIA-069 | Loop 3 | — | em curso | docs/plans/IDEIA-069.md | 2026-11-19 |
+| #73 | EXECUTOR (`a02800502b839d8f1`, worktree) | Implementar IDEIA-058 (comparar cidades de craft) em feat/IDEIA-058 | Loop 3 | — | em curso | docs/plans/IDEIA-058.md | 2026-11-19 |
