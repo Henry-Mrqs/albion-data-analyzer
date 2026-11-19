@@ -268,3 +268,6 @@ O Deployer fez o que a regra manda: ao conflitar, **abortou** e relatou (nada me
 
 ## D-046 — IDEIA-070 aprovada com pendências de baixa gravidade
 Tester aprovou sem perda de configuração do usuário. Texto do aviso ("RRR +40" deveria dizer bônus de produção +40, RRR sobe ~21 pp) e aviso mesmo sem refino ficam como ajuste de texto na 071; mutante M25 vai para a 069 (infra jsdom). Fonte: docs/qa/IDEIA-070.md.
+
+## D-047 — IDEIA-002 aprovada com 3 pendências menores
+Aprovada para produção. Pendências (selo de correções, validação de `ef` em validateCatalog, aviso com RRR manual) entram como IDEIA-072 no backlog (baixa prioridade). Refino usa a mesma eficiência em todas as etapas (aproximação declarada na tela); pedir ao usuário medição do foco no jogo. Fonte: docs/qa/IDEIA-002.md.

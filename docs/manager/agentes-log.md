@@ -81,3 +81,5 @@ Uma linha por delegação. Prova de que o trabalho é feito por sub agentes dist
 | #65 (resultado) | Tester | IDEIA-070 APROVADO (635 testes, 180k estados aleatórios, 23 perfis x 5 abas, 34 mutantes/30 mortos). Pendências baixas: texto do aviso diz "RRR +40" (é bônus de produção; RRR sobe ~21 pp); aviso aparece mesmo sem refino; M26 exige teste novo; M25 vai para a 069 | docs/qa/IDEIA-070.md | 2026-11-19 |
 | #70 | Deployer | Deploy 13 da IDEIA-070 delegado | SendMessage | 2026-11-19 |
 | #70 (resultado) | Deployer | Deploy 13 VERIFICADO (IDEIA-070): SHA 4252aa2, bundle index-DMd1HYW3.js, catálogo inalterado 3e1eabcf6d, aviso de migração ok, sem erro de console, sem rollback | docs/deploy/deploy-13.md | 2026-11-19 |
+| #68 (resultado) | Tester | IDEIA-002 APROVADO (660 testes; 1.240 itens/4.869 entradas ef sem divergência; 6.000 cenários; 17/20 mutantes mortos). Pendências: selo "N valores corrigidos" não conta foco; validateCatalog não valida ef; RRR manual zera economia do foco sem explicação | docs/qa/IDEIA-002.md | 2026-11-19 |
+| #71 | Deployer | Deploy 14 da IDEIA-002 delegado | SendMessage | 2026-11-19 |
