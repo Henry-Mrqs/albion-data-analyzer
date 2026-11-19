@@ -316,3 +316,6 @@ D1 (3 mutantes), D2 (aviso do Preço-alvo citar "melhor saída do modo escolhido
 
 ## D-062 — Respostas ao Executor da 054
 Preço do ouro vem do servidor escolhido no cabeçalho (cache por servidor), o Tester confirma que o endpoint existe por servidor; 375px: o Tester confere antes de qualquer mudança (se a 6ª aba cortar, aplica-se a D-060: só ícone, como retrabalho). Desvio aceito: `force`/`refresh` em gold.js (botão "Atualizar").
+
+## D-063 — 054 reprovada: retrabalho 1 (de no máximo 2)
+Reprovação por D1 (aba Premium cortada em telas estreitas), não por dado. Decisão: abas só ícone com aria-label/title em telas estreitas (para TODAS as abas; corrige também o RRR cortado a 375px na master) + rolar a aba ativa para a vista; D2 atribuição honesta; D3 três testes. Fica explícito que 3.750 ouro/30 dias, 10.000 foco/dia, +50% fama/coleta, 30 pontos de aprendizado e imposto 4% vs 8% vêm de fonte secundária (aorefinery.com) e NÃO foram verificados no wiki oficial (Cloudflare 403): entram na lista de conferências em jogo do usuário. Re-QA curta após o retrabalho.
