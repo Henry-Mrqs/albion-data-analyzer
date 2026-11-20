@@ -42,3 +42,9 @@ Patch aplicado. Teste existente `liquidity.test.js > "o dia de hoje (parcial) fi
 - `useHistory` subiu para logo depois de `usePrices` (enabled: `variants.length > 0 && !!prices`), porque o histórico agora alimenta o cálculo. A linha "Saída" do auditor mostra o preço LISTADO e cita o realista na nota.
 - Padrão ligado, só ordem de venda, mediana simples (D-071). Opções do Mercado Negro (instant) e `bmAlt` não são ancoradas. `compareCraftCities` e `waitSavings` não recebem `anchor` (só calculam custo).
 - Conferência manual 375 px (Task 4) NÃO feita; mutações não aplicadas em cópia (sugiro o Tester).
+
+## IDEIA-012 — feita; desvios
+- Nenhum teste existente alterado; `mkPrices` (helper) só inclui `sM` se informado; `median` exportado de `liquidity.js`.
+- Linha do auditor `confidence` (info-only, sem campos salvos) acrescentada ao Craft; nenhum campo novo em `persistSchemas.js` (limiares são constantes "regra do app").
+- Selo do `PriceMatrix` do Refino: sem histórico, só aparece com outra razão (idade) — dado fresco sem histórico não ganha selo. Texto "nunca 'uma única oferta'" respeitado.
+- Conferência manual com API real (Task 4) NÃO feita; mutações não aplicadas em cópia (sugiro o Tester).

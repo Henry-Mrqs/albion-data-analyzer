@@ -241,6 +241,16 @@ const anchorRow = (ctx) => {
   });
 };
 
+// IDEIA-012: o selo de confiança só marca (regra do app); a linha diz o que ele avaliou na melhor saída
+const confidenceRow = (ctx) => {
+  const b = ctx.result.best;
+  const loaded = ctx.result.options.some((o) => o.anchorState);
+  return row({
+    id: 'confidence', label: 'Confiança do preço (selo)', value: b ? 'selo por saída na tabela "Onde vender"' : 'sem saída', unit: '', origin: 'api', status: 'info-only',
+    note: join('Regra do app, não dado do jogo (24 h, 72 h, 7 dias, +20%, −50%, desvio 25%, z 3,5); só marca, não muda o lucro', loaded ? undefined : 'histórico não carregado: sem verificação de outlier'),
+  });
+};
+
 const noTax = (ctx) => {
   const b = ctx.result.best;
   const marked = Object.values(isObj(ctx.used.noTax) ? ctx.used.noTax : {}).filter((v) => v === true).length;
@@ -355,6 +365,7 @@ export const craftVars = [
   V('exit', 'Saída', [], 'applied', 'profit', exit),
   V('bm-readings', 'Mercado Negro: as duas leituras', [], 'applied', 'profit', bmRows),
   V('anchor', 'Preço de saída realista', ['anchorOn', 'anchorK', 'anchorDays'], 'applied', 'profit', anchorRow, { probe: { scenario: 'anchored', cfg: { anchorOn: false } } }),
+  V('confidence', 'Confiança do preço (selo)', [], 'info-only', 'none', confidenceRow),
   V('no-tax', 'Venda sem imposto', ['noTax'], 'applied', 'profit', noTax, { probe: { cfg: { noTax: { 'Caerleon|order': true } } } }),
   V('relist', 'Atualizações da ordem de venda', ['relists', 'relistStep', 'relistBase'], 'applied', 'profit', (ctx) => relistRow({ relist: ctx.result.relist, best: ctx.result.best, issues: ctx.issues }), { probe: { cfg: { relists: '3', relistStep: '10' } } }),
   V('extras', 'Despesas extras', ['extras'], 'applied', cost, extras, { probe: { cfg: { extras: [{ name: 'Transporte', value: '230', scope: 'craft' }] } } }),

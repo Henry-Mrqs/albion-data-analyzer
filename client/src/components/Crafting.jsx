@@ -21,6 +21,8 @@ import ExtrasCard from './ExtrasCard';
 import FocusCard, { FocusFields } from './FocusCard';
 import OrderLifeCard from './OrderLifeCard';
 import AnchorControls from './AnchorControls';
+import ConfidenceSeal from './ConfidenceSeal';
+import { priceConfidence, seriesStats } from '../lib/confidence';
 import RecipePicker from './RecipePicker';
 import { GiroCard, GiroCell } from './Giro';
 import { useSettings, usePersisted } from '../lib/settings';
@@ -336,6 +338,7 @@ export default function Crafting() {
                     <th>Margem</th>
                     <th>Comprador</th>
                     <th title="Vendas registradas por dia nos últimos 7 dias completos">Giro</th>
+                    <th title="Regra do app, não dado do jogo: junta idade do dado, comprador visível, nível de preço único e distância da mediana de 7 dias. Só marca: nenhum número muda.">Confiança</th>
                     <th title="Venda fora do mercado (guilda, troca direta, encomenda): sem imposto e sem taxa de criação">Sem imposto</th>
                   </tr>
                 </thead>
@@ -364,6 +367,16 @@ export default function Crafting() {
                         {o.stale && <small className="muted">dado velho</small>}
                       </td>
                       <td><GiroCell stats={statsOf(o.city)} loading={histLoading} /></td>
+                      <td>
+                        <ConfidenceSeal
+                          withReasons
+                          conf={priceConfidence(
+                            { price: o.listed ?? o.price, date: o.date, sellMax: o.mode === 'order' ? prices?.[targetMid]?.[o.city]?.[1]?.sM : null, buyer: o.buyer, side: 'exit' },
+                            seriesStats(history ? history[targetMid]?.[o.city] : undefined, { now }),
+                            { now },
+                          )}
+                        />
+                      </td>
                       <td>
                         <input
                           type="checkbox"
@@ -516,7 +529,7 @@ export default function Crafting() {
         {rec && <DailyWait savings={savings} crafts={c.rates.crafts} waitCost={cfg.waitCost} onWaitCost={(v) => set({ waitCost: v })} />}
 
         {rec && prices && (
-          <PriceMatrix title="Preços por cidade · itens desta cadeia" prices={prices} mids={ids} used={used} useOrders={cfg.useOrders} targetMid={targetMid} />
+          <PriceMatrix title="Preços por cidade · itens desta cadeia" prices={prices} mids={ids} used={used} useOrders={cfg.useOrders} targetMid={targetMid} history={history} now={now} />
         )}
 
         <VarAuditCard audit={audit} />

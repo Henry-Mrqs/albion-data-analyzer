@@ -1,12 +1,17 @@
+import { useState } from 'react';
 import { nameOf } from '../lib/catalog';
+import { priceConfidence, seriesStats } from '../lib/confidence';
 import { CITIES } from '../lib/market';
 import { fmt } from '../lib/econ';
+import ConfidenceSeal from './ConfidenceSeal';
 import { Age, Money } from './ui';
 
 const tierOf = (mid) => +(mid.match(/^T(\d)/)?.[1] ?? 0);
 
 /** Tabela item × cidade com os preços de todos os itens de uma cadeia (para conferir a rota). */
-export default function PriceMatrix({ title, prices, mids, used, useOrders, targetMid }) {
+export default function PriceMatrix({ title, prices, mids, used, useOrders, targetMid, history, now: nowProp }) {
+  const [mountedAt] = useState(Date.now);
+  const now = nowProp ?? mountedAt;
   const rows = [...new Set(mids)].sort((a, b) => tierOf(a) - tierOf(b) || (a === targetMid ? 1 : 0) - (b === targetMid ? 1 : 0) || a.localeCompare(b));
   return (
     <div className="card">
@@ -43,10 +48,13 @@ export default function PriceMatrix({ title, prices, mids, used, useOrders, targ
                     const main = useOrders ? q?.b : q?.s;
                     const other = useOrders ? q?.s : q?.b;
                     const isUsed = used.has(`${mid}|${c}`);
+                    // IDEIA-012: selo do preço que você paga (side 'cost'); sem histórico carregado ele só aparece se há outra razão
+                    const conf = main ? priceConfidence({ price: main, date: useOrders ? q?.bd : q?.sd, side: 'cost' }, seriesStats(history?.[mid]?.[c], { now }), { now }) : null;
                     return (
                       <td key={c} className={`${isUsed ? 'cell-used' : ''} ${main && main === min && !isTarget ? 'cell-best' : ''}`}>
                         {main ? <Money value={main} /> : <span className="muted">—</span>}
                         <Age ts={useOrders ? q?.bd : q?.sd} />
+                        <ConfidenceSeal conf={conf} />
                         {other ? (
                           <small>
                             {useOrders ? 'venda' : 'ordem'}: {fmt(other)}
@@ -63,6 +71,8 @@ export default function PriceMatrix({ title, prices, mids, used, useOrders, targ
       </div>
       <p className="hint" style={{ marginTop: 10 }}>
         Mostra {useOrders ? 'o maior preço de ordem de compra' : 'o menor preço de venda'} (o que você paga) em cada cidade. Verde = mais barato da linha; fundo roxo = compra usada na rota escolhida.
+        {' '}O selo (“confira” / “desconfie”) é regra do app, não dado do jogo, e só marca: nenhum número muda.
+        {history ? '' : ' Histórico não carregado: sem verificação de outlier.'}
       </p>
     </div>
   );

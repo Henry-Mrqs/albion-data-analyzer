@@ -39,6 +39,7 @@ function normalize(rows) {
     ((out[r.item_id] ??= {})[city] ??= {})[q] = {
       s: r.sell_price_min || 0,
       sd: parseDate(r.sell_price_min_date),
+      sM: r.sell_price_max || 0, // IDEIA-012: nível de preço único = sell_price_min igual a sell_price_max
       b: r.buy_price_max || 0,
       bd: parseDate(r.buy_price_max_date),
     };

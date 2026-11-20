@@ -20,8 +20,8 @@ export function mkPrices(spec) {
     const cities = typeof v === 'number' ? { 'Fort Sterling': { s: v } } : v;
     prices[mid] = {};
     for (const [city, q] of Object.entries(cities)) {
-      const { s = 0, b = 0, sd = null, bd = null } = q;
-      prices[mid][city] = { 1: { s, sd, b, bd } };
+      const { s = 0, b = 0, sd = null, bd = null, sM } = q;
+      prices[mid][city] = { 1: { s, sd, b, bd, ...(sM !== undefined ? { sM } : {}) } };
     }
   }
   return prices;
