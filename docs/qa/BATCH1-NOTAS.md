@@ -25,3 +25,7 @@ Patch aplicado. Teste existente `liquidity.test.js > "o dia de hoje (parcial) fi
 - `Refining.targetNoTax.test.jsx` (listado em "Altera"): esperava "(Mercado Negro, ordem de venda)"; o plano D3 manda que o Mercado Negro nunca diga "ordem de venda"; agora "(Mercado Negro, ordem de compra)". Nenhum outro teste existente mudou.
 - Desvio de texto: no aviso principal (modo da marca) o Mercado Negro usa o curto "(Mercado Negro, ordem de compra)" para não quebrar o teste existente de `TargetPrice.noTax.test.jsx`; o aviso novo do outro modo usa `exitLabel` completo ("ordem de compra do Mercado Negro").
 - Mutantes M19/M23/M30: testes escritos (passam); NÃO apliquei as mutações em cópia para vê-las falhar (sugiro o Tester).
+
+## IDEIA-083 — feita
+- Nenhum teste existente alterado. Compatibilidade: sem `targetLive` (ou `ok:false`) as linhas do auditor ficam como antes; com valores vivos, o texto de `target-notax` mantém as frases antigas ("só se a melhor saída…", "Nenhuma está marcada", "considerada", "ordem de venda (Caerleon)") para não quebrar os testes existentes. `target-notax` agora é `kind: 'applied'` no registro (status da linha: `applied` só quando o alvo é sem imposto, senão `info-only`).
+- Mutações do plano não aplicadas em cópia (testes escritos, verdes); sugiro o Tester.

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { fmt, netSale, SETUP_FEE } from '../lib/econ';
 import { cityLabel } from '../lib/market';
 import { bestBuyer } from '../lib/exits';
@@ -19,7 +20,7 @@ const MODES = [
 ];
 
 /** Cartão "Preço-alvo": por quanto listar para lucrar X, ter margem M ou empatar. cost = custo por unidade. */
-export default function TargetPrice({ cost, prices, mid, missing, noTax = { order: null, instant: null } }) {
+export default function TargetPrice({ cost, prices, mid, missing, noTax = { order: null, instant: null }, onLive }) {
   const { premium } = useSettings();
   const [cfg, setCfg] = usePersisted('target:cfg', { goal: 'profit', profit: 1000, margin: 20, mode: 'order', relists: 0 });
   const set = (patch) => setCfg((c) => ({ ...c, ...patch }));
@@ -36,6 +37,15 @@ export default function TargetPrice({ cost, prices, mid, missing, noTax = { orde
   const otherMode = mode === 'order' ? 'instant' : 'order';
   const other = noTax?.[otherMode]?.on === true && !off ? noTax[otherMode] : null;
   const target = ok ? targetPrice({ cost, premium, mode, relists, noTax: off, ...goalArg }) : null;
+
+  // IDEIA-083: avisa a tela do que o cartão usa (valores primitivos nas dependências: sem loop)
+  const goal = cfg.goal;
+  const profitV = +cfg.profit || 0;
+  const marginV = +cfg.margin || 0;
+  const city = off ? exit.city ?? null : null;
+  useEffect(() => {
+    onLive?.({ ok, goal, profit: profitV, margin: marginV, mode, relists, off, city, target });
+  }, [onLive, ok, goal, profitV, marginV, mode, relists, off, city, target]);
 
   const net = target ? netSale(target, off ? 'none' : mode, premium) - (mode === 'order' && !off ? relists * SETUP_FEE * target : 0) : 0;
   // Limitação: compara com o melhor comprador de TODAS as cidades (sem seletor de cidade).

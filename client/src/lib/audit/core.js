@@ -2,7 +2,8 @@
 // O auditor SÓ LÊ o que o cálculo usou (V1): nenhuma fórmula é copiada para cá.
 import { DEFAULT_MAX_AGE_H } from '../exits';
 import { STEPS, THIN_MARGIN } from '../stress';
-import { salesTax, SETUP_FEE } from '../econ';
+import { fmt, salesTax, SETUP_FEE } from '../econ';
+import { exitLabel } from '../exitLabel';
 
 export const ORIGINS = ['game', 'app-default', 'user', 'api', 'derived'];
 export const STATUSES = ['applied', 'unconfirmed', 'stale', 'not-considered', 'info-only'];
@@ -126,21 +127,58 @@ export function notConsideredRows(ids) {
  * { order, instant } = { on, city } da melhor saída de cada modo (o objeto que a tela passa ao cartão, IDEIA-075).
  * Os campos do cartão (target:cfg) são do cartão Preço-alvo, que guarda o próprio estado: aqui só se diz ONDE estão (o valor vivo está no cartão).
  */
-export const targetVars = (costOf, noTaxOf) => [
+export const targetVars = (costOf, noTaxOf, liveOf = (ctx) => ctx.targetLive) => [
   {
     id: 'target-card', label: 'Preço-alvo: objetivo, modo e relistagens', section: 'Preço-alvo', fields: ['goal', 'profit', 'margin', 'mode', 'relists'], kind: 'info-only', affects: 'none',
-    build: (ctx) => [
-      row({ id: 'target-card', label: 'Meta, modo de venda e relistagens do alvo', value: 'definidos no cartão Preço-alvo', unit: '', origin: 'user', status: 'info-only', note: 'Só mudam o preço-alvo, não o lucro desta tela. Cada relistagem soma 2,5% (estimativa digitada no cartão).' }),
-      row({ id: 'target-inherits', label: 'Custo que o alvo herda', value: costOf(ctx), unit: 'prata por unidade', origin: 'derived', status: 'info-only', note: 'O alvo herda o custo por unidade calculado nesta tela (com RRR, taxa de bancada e despesas); não tem variáveis próprias para isso.' }),
-    ],
+    build: (ctx) => {
+      const live = liveOf(ctx);
+      const inherits = row({ id: 'target-inherits', label: 'Custo que o alvo herda', value: costOf(ctx), unit: 'prata por unidade', origin: 'derived', status: 'info-only', note: 'O alvo herda o custo por unidade calculado nesta tela (com RRR, taxa de bancada e despesas); não tem variáveis próprias para isso.' });
+      if (!live?.ok) {
+        const note = 'Só mudam o preço-alvo, não o lucro desta tela. Cada relistagem soma 2,5% (estimativa digitada no cartão).';
+        return [
+          row({ id: 'target-card', label: 'Meta, modo de venda e relistagens do alvo', value: live ? 'cartão sem custo ou sem preço de material' : 'definidos no cartão Preço-alvo', unit: '', origin: 'user', status: 'info-only', note }),
+          inherits,
+        ];
+      }
+      const m = live.mode === 'instant' ? 'instant' : 'order';
+      const goal = live.goal === 'profit' ? `lucro de ${fmt(live.profit)} por unidade` : live.goal === 'margin' ? `margem de ${live.margin}% sobre o custo` : 'equilíbrio (lucro 0)';
+      const relistNote = m !== 'order' ? 'só conta no modo ordem de venda' : live.off ? 'relistagens não contam com Sem imposto' : 'cada atualização soma 2,5%; estimativa digitada no cartão';
+      return [
+        row({ id: 'target-goal', label: 'Meta do alvo', value: goal, unit: '', origin: 'user', status: 'info-only', note: 'Vale só para o preço-alvo, não muda o lucro desta tela.' }),
+        row({ id: 'target-mode', label: 'Modo de venda do alvo', value: m === 'order' ? 'ordem de venda' : 'ordem de compra (na hora)', unit: '', origin: 'user', status: 'info-only' }),
+        row({ id: 'target-relists', label: 'Relistagens do alvo', value: live.relists, unit: 'vezes', origin: 'user', status: 'info-only', note: relistNote }),
+        ...(live.target != null ? [row({ id: 'target-price', label: 'Preço-alvo mostrado', value: `${fmt(live.target)} (a ser listado)`, unit: '', origin: 'derived', status: 'info-only' })] : []),
+        inherits,
+      ];
+    },
   },
   {
-    id: 'target-notax', label: 'Preço-alvo: venda sem imposto', section: 'Preço-alvo', fields: [], kind: 'info-only', affects: 'none',
+    id: 'target-notax', label: 'Preço-alvo: venda sem imposto', section: 'Preço-alvo', fields: [], kind: 'applied', affects: 'none',
     build: (ctx) => {
       // IDEIA-075 (D-056): o alvo respeita "Sem imposto" quando a melhor saída DO MODO está marcada; lê o mesmo objeto que a tela passa ao cartão
       const by = noTaxOf(ctx) ?? {};
+      const live = liveOf(ctx);
       const MODE = { order: 'ordem de venda', instant: 'ordem de compra' };
       const on = ['order', 'instant'].filter((m) => by[m]?.on === true);
+      if (live?.ok) {
+        // IDEIA-083: com os valores vivos do cartão, o estado é o do modo que o cartão está usando
+        const m = live.mode === 'instant' ? 'instant' : 'order';
+        if (live.off) {
+          const city = live.city ?? by[m]?.city ?? '—';
+          return row({
+            id: 'target-notax', label: 'Venda sem imposto neste alvo', value: `aplicada: ${exitLabel(city, m)} (${city}) sem imposto e sem taxa de criação`, unit: '', origin: 'derived', status: 'applied',
+            note: `Considerada: ${MODE[m]} (${city}) marcada "sem imposto". O alvo não desconta imposto nem taxa de criação (relistagens não contam); venda sem imposto considerada neste alvo.`,
+          });
+        }
+        const other = m === 'order' ? 'instant' : 'order';
+        const base = 'O preço-alvo respeita "Sem imposto" só quando a melhor saída do modo de venda do cartão está marcada.';
+        return row({
+          id: 'target-notax', label: 'Venda sem imposto neste alvo', value: 'só se a melhor saída do modo estiver marcada', unit: '', origin: 'derived', status: 'info-only',
+          note: by[other]?.on === true
+            ? `${base} marcada só em ${MODE[other]}; o modo escolhido no cartão (${MODE[m]}) conta imposto.`
+            : `${base} Nenhuma está marcada: o alvo conta imposto e taxa de criação (nenhuma saída do modo ${MODE[m]} está marcada).`,
+        });
+      }
       if (!on.length) {
         return row({
           id: 'target-notax', label: 'Venda sem imposto neste alvo', value: 'só se a melhor saída do modo estiver marcada', unit: '', origin: 'derived', status: 'info-only',

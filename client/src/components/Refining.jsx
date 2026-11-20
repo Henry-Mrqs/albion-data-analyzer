@@ -31,6 +31,7 @@ const ROUTES = [
 export default function Refining() {
   const { premium, feeCeiling } = useSettings();
   const [now] = useState(Date.now);
+  const [targetLive, setTargetLive] = useState(null); // IDEIA-083: o que o cartão Preço-alvo está usando (só para o auditor)
   const [cfg, setCfg] = usePersisted('refine:cfg', {
     type: 'PLANKS', tier: 4, ench: 0,
     buyCity: 'best', refineCity: 'Fort Sterling', sellCity: 'best',
@@ -86,7 +87,7 @@ export default function Refining() {
   const bestRoute = routes.find((r) => r.value === compared.best?.value);
   const path = cur ? routePath(cur.unit, cfg.tier) : [];
   // IDEIA-005: quadro das variáveis; só lê os objetos acima, não calcula nada
-  const audit = auditRefine({ cfg, vcfg, issues, cur, info, ench, specialty, autoRRR, rrrValue, perUnitExtras, noTax, route, premium, now, feeCeiling });
+  const audit = auditRefine({ cfg, vcfg, issues, cur, info, ench, specialty, autoRRR, rrrValue, perUnitExtras, noTax, route, premium, now, feeCeiling, targetLive });
 
   // ----- tabela de preços por cidade dos itens usados nesta cadeia -----
   const chainMids = refineChainIds(curUniq, true);
@@ -317,7 +318,7 @@ export default function Refining() {
 
         <ExtrasCard list={cfg.extras} onChange={(v) => set({ extras: v })} issues={issues} crafts={vcfg.qty} kind="refine" />
 
-        {cur && <TargetPrice cost={cur.unit.cost + perUnitExtras} prices={prices} mid={cur.mid} missing={missing.length > 0} noTax={{ order: { on: noTax, city: cur.sell.city }, instant: { on: noTax, city: cur.sell.city } }} />}
+        {cur && <TargetPrice cost={cur.unit.cost + perUnitExtras} prices={prices} mid={cur.mid} missing={missing.length > 0} noTax={{ order: { on: noTax, city: cur.sell.city }, instant: { on: noTax, city: cur.sell.city } }} onLive={setTargetLive} />}
 
         {cur && <FocusCard summary={fs} ench={ench} hasBase={fbase != null} unit="refino" manualRRR={vcfg.customRRR !== ''} />}
 

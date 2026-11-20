@@ -36,6 +36,7 @@ import { Age, Banner, Field, Money, NumberInput, PriceStatus, Segmented, Switch 
 export default function Crafting() {
   const { premium, feeCeiling, server } = useSettings();
   const [now] = useState(Date.now);
+  const [targetLive, setTargetLive] = useState(null); // IDEIA-083: o que o cartão Preço-alvo está usando (só para o auditor)
   const [sel, setSel] = usePersisted('craft:item', { id: 'T6_MAIN_SWORD', ench: 0 });
   const [cfg, setCfg] = usePersisted('craft:cfg', {
     craftCity: 'Lymhurst', specialty: null, focus: false, feePer100: 400, customRRR: '',
@@ -77,7 +78,7 @@ export default function Crafting() {
   const opts = annotateOptions(options, prices, targetMid);
   const { best: shown, bestReal } = pickExit(opts);
   // IDEIA-005: quadro das variáveis; só lê os objetos acima, não calcula nada
-  const audit = rec ? auditCraft({ cfg, cfgEff, daily, results, variants, idx, result: c, opts, compare, bonusCity, premium, server, now, feeCeiling, targetMid, item }) : null;
+  const audit = rec ? auditCraft({ cfg, cfgEff, daily, results, variants, idx, result: c, opts, compare, bonusCity, premium, server, now, feeCeiling, targetMid, item, targetLive }) : null;
 
   // Giro (IDEIA-010): histórico só do item final, só depois de os preços chegarem, uma requisição por item (cache de 1 h).
   const { history, loading: histLoading, error: histError } = useHistory([targetMid], { cities: SELL_CITIES, enabled: !!rec && !!prices });
@@ -380,7 +381,7 @@ export default function Crafting() {
           </GiroCard>
         )}
 
-        {rec && <TargetPrice cost={unitCost} prices={prices} mid={targetMid} missing={missing.length > 0} noTax={exitNoTaxByMode(options)} />}
+        {rec && <TargetPrice cost={unitCost} prices={prices} mid={targetMid} missing={missing.length > 0} noTax={exitNoTaxByMode(options)} onLive={setTargetLive} />}
 
         {rec && prices && plan.length > 0 && (
           <div className="card stack">
