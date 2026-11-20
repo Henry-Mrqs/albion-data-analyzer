@@ -328,3 +328,6 @@ Observações viram IDEIA-084 (baixa): atribuição exata de cada item da lista 
 
 ## D-066 — 005 aprovada; pendências
 D1 (flake de tempo de App.errors.test.jsx, teste da 071 perto do limite de 4 s) vira IDEIA-085 de prioridade alta (qualidade do portão de testes: reduzir custo ou fixar timeout explícito; provar com ≥30 execuções sob carga). D6/premium: IDEIA-086 "Registrar a aba Premium no auditor" (a 054 tem variáveis de cálculo — ouro, volume, prata por foco, foco/dia — que o auditor ainda não lista; e o contrato deve reprovar aba com chave persistida sem registerScreen). D3/D4: IDEIA-083 (Preço-alvo "aplicada" + valores vivos no auditor). D2/D5: testes dos 4 mutantes e renderização preguiçosa do cartão recolhido, na IDEIA-087 (acabamento do auditor). D7: Deployer confere o noTax do Preço-alvo após o merge.
+
+## D-067 — Pausa de execução por pedido do usuário (2026-11-20)
+Usuário pediu menos uso de API: relatórios curtos, só Pesquisador + Planejador trabalhando (modelo haiku) para achar/validar ideias; quando todas estiverem documentadas, o usuário libera Executor/Tester/Deployer. Estado: 23/50; 005 aprovada (deploy 24 pendente); 12 dossiês sem plano → planos em curso.
