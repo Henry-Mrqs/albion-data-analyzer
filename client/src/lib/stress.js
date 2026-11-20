@@ -4,6 +4,7 @@
 //   lucro(dp, dm) = price*(1+dp)*k - custo(dm)
 // k vem de netSale (mesma função de líquido das telas, inclusive noTax): nenhuma taxa é recalculada aqui.
 import { netSale, materialPlan } from './econ';
+import { relistParts } from './relist';
 
 export const STEPS = [-0.2, -0.15, -0.1, -0.05, 0, 0.05, 0.1, 0.15, 0.2];
 
@@ -37,11 +38,12 @@ export function craftStressInput(c, premium) {
   if (!c || !c.ready || !(c.units > 0) || !(c.best?.price > 0)) return null;
   const makeFees = c.plan.filter((p) => p.kind === 'make').reduce((s, p) => s + p.total, 0);
   const mode = c.best.noTax ? 'none' : c.best.mode;
+  const rp = mode === 'order' ? relistParts(c.relist) : { perPrice: 0, flat: 0 }; // IDEIA-059: atualizações da ordem
   return {
     variable: (c.matCost - makeFees) / c.units,
-    fixed: (c.fee + makeFees + (c.extras || 0)) / c.units,
+    fixed: (c.fee + makeFees + (c.extras || 0)) / c.units + rp.flat,
     price: c.best.price,
-    k: netSale(1, mode, premium),
+    k: netSale(1, mode, premium) - rp.perPrice,
     mode,
     units: c.units,
     ...exitInfo(c.best.city, c.best.label, c.best.noTax),
@@ -49,15 +51,16 @@ export function craftStressInput(c, premium) {
 }
 
 /** Adaptador do Refino: `unit` de refineUnit; extrasPerUnit e noTax como no evaluateTier. */
-export function refineStressInput(unit, rrr, sell, premium, { extrasPerUnit = 0, noTax = false } = {}) {
+export function refineStressInput(unit, rrr, sell, premium, { extrasPerUnit = 0, noTax = false, relist } = {}) {
   if (!unit || unit.missing.length || !(sell?.price > 0)) return null;
   const makeFees = materialPlan(unit, 1, rrr).makes.reduce((s, m) => s + m.fee, 0);
   const mode = noTax ? 'none' : sell.mode;
+  const rp = mode === 'order' ? relistParts(relist) : { perPrice: 0, flat: 0 };
   return {
     variable: unit.cost - makeFees,
-    fixed: makeFees + extrasPerUnit,
+    fixed: makeFees + extrasPerUnit + rp.flat,
     price: sell.price,
-    k: netSale(1, mode, premium),
+    k: netSale(1, mode, premium) - rp.perPrice,
     mode,
     units: 1,
     ...exitInfo(sell.city, EXIT_LABEL[sell.mode], noTax),

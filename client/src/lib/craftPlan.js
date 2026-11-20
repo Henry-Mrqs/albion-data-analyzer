@@ -3,8 +3,9 @@ import { REFINING, recipeValue, nameOf, refinedTypeOf, tierOf } from './catalog'
 import { SELL_CITIES, quote } from './market';
 import { BM_CITY, BM_READING_VERIFIED, bmHeadline, bmLabel, bmReadings } from './blackMarket';
 import { cleanCraftCfg } from './inputRules';
+import { cleanRelist, netSaleWithRelists } from './relist';
 import { extrasTotal } from './extras';
-import { rrr as calcRRR, resolveRRR, refineUnit, refineChainIds, buyQuote, materialPlan, netSale, stationFee, roundFee } from './econ';
+import { rrr as calcRRR, resolveRRR, refineUnit, refineChainIds, buyQuote, materialPlan, stationFee, roundFee } from './econ';
 
 export const keyOf = (uniq) => uniq.replace(/^T\d_/, '').replace(/_LEVEL\d$/, '');
 export const canRefineUniq = (uniq) => !!refinedTypeOf(uniq) && tierOf(uniq) >= 2;
@@ -50,6 +51,9 @@ export function computeCraft({ rec, targetMid, prices, cfg: rawCfg, premium, bon
   // IDEIA-060: entradas fora da faixa são corrigidas aqui (a lib se defende sozinha) e devolvidas como `issues`
   const refineTypes = rec ? [...new Set(rec.res.filter((r) => canRefineUniq(r.uniq)).map((r) => refinedTypeOf(r.uniq)))] : [];
   const { cfg, issues } = cleanCraftCfg(rawCfg, { premium, feeCeiling, refineTypes });
+  // IDEIA-059: atualizações da ordem de venda (lidas da cfg BRUTA para os avisos de relists/relistStep/relistBase)
+  const rl = cleanRelist(rawCfg, { premium });
+  issues.push(...rl.issues);
   const rates = craftRates(cfg, bonusCity);
   const { crafts, craftRRR, refineRRRFor } = rates;
 
@@ -143,15 +147,19 @@ export function computeCraft({ rec, targetMid, prices, cfg: rawCfg, premium, bon
       bmAlt.push(buyOpt);
     }
   }
+  const relistNet = (o) => {
+    const r = netSaleWithRelists({ price: o.price, qty: units, mode: o.noTax ? 'none' : o.mode, premium, ...rl.values });
+    return { net: r.net, relistCost: r.relistCost, setupTotal: r.setupTotal };
+  };
   options.forEach((o) => {
     o.noTax = cfg.noTax[noTaxKey(o)] === true; // venda fora do mercado: sem imposto e sem taxa de criação (X3)
-    o.net = netSale(o.price, o.noTax ? 'none' : o.mode, premium) * units;
+    Object.assign(o, relistNet(o));
     o.profit = o.net - totalCost;
     o.margin = totalCost > 0 ? (o.profit / totalCost) * 100 : 0;
   });
   bmAlt.forEach((o) => {
     o.noTax = cfg.noTax[noTaxKey(o)] === true;
-    o.net = netSale(o.price, o.noTax ? 'none' : o.mode, premium) * units;
+    Object.assign(o, relistNet(o));
     o.profit = o.net - totalCost;
     o.margin = totalCost > 0 ? (o.profit / totalCost) * 100 : 0;
   });
@@ -176,7 +184,7 @@ export function computeCraft({ rec, targetMid, prices, cfg: rawCfg, premium, bon
   const refinable = lines.filter((l) => l.cmp);
   const allBest = refinable.length > 0 && refinable.every((l) => l.mode === 'best');
 
-  return { rates, lines, matCost, fee, extras, extrasList, totalCost, units, unitCost, missing, options, bmAlt, bm, best, ready, plan, used, refinable, allBest, issues };
+  return { rates, lines, matCost, fee, extras, extrasList, totalCost, units, unitCost, missing, options, bmAlt, bm, best, ready, plan, used, refinable, allBest, issues, relist: rl.values };
 }
 
 /** Chave do interruptor "Sem imposto" de uma saída: cidade|modo; a leitura de lista do Mercado Negro tem a própria (IDEIA-088). */
