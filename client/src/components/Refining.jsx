@@ -14,6 +14,8 @@ import ExtrasCard from './ExtrasCard';
 import FocusCard, { FocusFields } from './FocusCard';
 import FeeField from './FeeField';
 import InputIssues, { CorrectedBadge } from './InputIssues';
+import OrderLifeCard from './OrderLifeCard';
+import { cleanRelist } from '../lib/relist';
 import PriceMatrix from './PriceMatrix';
 import TargetPrice from './TargetPrice';
 import VarAuditCard from './VarAuditCard';
@@ -47,7 +49,9 @@ export default function Refining() {
 
   const specialty = info.city === cfg.refineCity;
   // IDEIA-060: o cálculo usa os valores corrigidos (vcfg); os campos continuam mostrando o que foi digitado
-  const { cfg: vcfg, issues } = cleanRefineCfg(cfg, { premium, feeCeiling });
+  const { cfg: vcfg, issues: baseIssues } = cleanRefineCfg(cfg, { premium, feeCeiling });
+  const rl = cleanRelist(cfg, { premium }); // IDEIA-059: atualizações da ordem de venda
+  const issues = [...baseIssues, ...rl.issues];
   const autoRRR = calcRRR({ kind: 'refine', specialty, focus: cfg.focus, daily: vcfg.daily });
   const rrrValue = resolveRRR(autoRRR, vcfg.customRRR);
 
@@ -67,7 +71,7 @@ export default function Refining() {
   const perUnitExtras = extrasPerUnit(vcfg.extras, vcfg.qty, vcfg.qty);
   const noTax = vcfg.noTax[REFINE_NO_TAX_KEY] === true;
   const evaluate = (tier) =>
-    evaluateTier({ tier, uniq: uniqOf(tier), prices, ctx, sellCity: cfg.sellCity, sellMode: cfg.sellMode, premium, extrasPerUnit: perUnitExtras, noTax });
+    evaluateTier({ tier, uniq: uniqOf(tier), prices, ctx, sellCity: cfg.sellCity, sellMode: cfg.sellMode, premium, extrasPerUnit: perUnitExtras, noTax, relist: rl.values });
 
   const cur = prices ? evaluate(cfg.tier) : null;
   const rows = prices ? TIERS.map(evaluate) : [];
@@ -87,7 +91,7 @@ export default function Refining() {
   const bestRoute = routes.find((r) => r.value === compared.best?.value);
   const path = cur ? routePath(cur.unit, cfg.tier) : [];
   // IDEIA-005: quadro das variáveis; só lê os objetos acima, não calcula nada
-  const audit = auditRefine({ cfg, vcfg, issues, cur, info, ench, specialty, autoRRR, rrrValue, perUnitExtras, noTax, route, premium, now, feeCeiling, targetLive });
+  const audit = auditRefine({ cfg, vcfg, issues, cur, info, ench, specialty, autoRRR, rrrValue, perUnitExtras, noTax, route, premium, now, feeCeiling, targetLive, relist: rl.values });
 
   // ----- tabela de preços por cidade dos itens usados nesta cadeia -----
   const chainMids = refineChainIds(curUniq, true);
@@ -278,7 +282,7 @@ export default function Refining() {
                   <Money value={cur.sell.price} />
                 </div>
                 <div className="kv">
-                  <span>Líquido após impostos</span>
+                  <span>Líquido após impostos{rl.values.updates > 0 && cur.mode === 'order' && !noTax ? ` (já desconta ${rl.values.updates} atualização(ões) da ordem)` : ''}</span>
                   <Money value={cur.net} />
                 </div>
                 <div className="kv">
@@ -314,9 +318,16 @@ export default function Refining() {
           )}
         </div>
 
-        {cur && <StressTest input={refineStressInput(cur.unit, rrrValue, { price: cur.sell.price, mode: cur.mode, city: cur.sell.city }, premium, { extrasPerUnit: perUnitExtras, noTax })} />}
+        {cur && <StressTest input={refineStressInput(cur.unit, rrrValue, { price: cur.sell.price, mode: cur.mode, city: cur.sell.city }, premium, { extrasPerUnit: perUnitExtras, noTax, relist: rl.values })} />}
 
         <ExtrasCard list={cfg.extras} onChange={(v) => set({ extras: v })} issues={issues} crafts={vcfg.qty} kind="refine" />
+
+        {cur && (
+          <OrderLifeCard
+            cfg={cfg} set={set} issues={rl.issues}
+            applies={cur.mode === 'order' && !noTax} listings={rl.values.updates + 1} setupTotal={(cur.setupTotal ?? 0) * vcfg.qty} relistCost={(cur.relistCost ?? 0) * vcfg.qty}
+          />
+        )}
 
         {cur && <TargetPrice cost={cur.unit.cost + perUnitExtras} prices={prices} mid={cur.mid} missing={missing.length > 0} noTax={{ order: { on: noTax, city: cur.sell.city }, instant: { on: noTax, city: cur.sell.city } }} onLive={setTargetLive} />}
 

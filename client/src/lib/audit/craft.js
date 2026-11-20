@@ -13,7 +13,7 @@ import { focusValues } from '../focus';
 import { exitNoTaxByMode } from '../targetPrice';
 import { pbParts } from '../rrrCalc';
 import { SERVERS } from '../settings';
-import { apiRow, correctionNote, joinNote, notConsideredRows, plain, row, stressVars, targetVars, taxRows } from './core';
+import { apiRow, correctionNote, joinNote, notConsideredRows, plain, relistRow, row, stressVars, targetVars, taxRows } from './core';
 import { auditScreen, registerScreen } from './registry';
 
 const SRC = {
@@ -336,6 +336,7 @@ export const craftVars = [
   V('exit', 'Saída', [], 'applied', 'profit', exit),
   V('bm-readings', 'Mercado Negro: as duas leituras', [], 'applied', 'profit', bmRows),
   V('no-tax', 'Venda sem imposto', ['noTax'], 'applied', 'profit', noTax, { probe: { cfg: { noTax: { 'Caerleon|order': true } } } }),
+  V('relist', 'Atualizações da ordem de venda', ['relists', 'relistStep', 'relistBase'], 'applied', 'profit', (ctx) => relistRow({ relist: ctx.result.relist, best: ctx.result.best, issues: ctx.issues }), { probe: { cfg: { relists: '3', relistStep: '10' } } }),
   V('extras', 'Despesas extras', ['extras'], 'applied', cost, extras, { probe: { cfg: { extras: [{ name: 'Transporte', value: '230', scope: 'craft' }] } } }),
   V('focus-points', 'Foco como custo em pontos', ['focusEff', 'focusPoints', 'focusBudget', 'focusRef'], 'info-only', 'none', focusPoints, { probe: { cfg: { focusEff: '10000' } } }),
   V('share', 'Giro e parte do mercado', ['share'], 'info-only', 'none', share, { probe: { cfg: { share: '5' } } }),

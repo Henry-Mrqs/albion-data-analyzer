@@ -8,6 +8,7 @@ import { pickCheapest, resolveVariant } from '../lib/recipeAlt';
 import { compareCraftCities } from '../lib/cityCompare';
 import { cleanRefineCfg, validateInputs } from '../lib/inputRules';
 import { evaluateTier } from '../lib/refinePlan';
+import { cleanRelist } from '../lib/relist';
 import { extrasPerUnit, REFINE_NO_TAX_KEY } from '../lib/extras';
 import { rrr as calcRRR, resolveRRR } from '../lib/econ';
 import { itemCraftInfo, recipeReturn, rrrFor } from '../lib/rrrCalc';
@@ -111,7 +112,9 @@ export function assembleRefine({ over = {}, prices, premium = true, feeCeiling =
   const ench = cfg.type === 'STONEBLOCK' ? 0 : cfg.ench;
   const uniqOf = (tier) => `T${tier}_${cfg.type}${ench ? `_LEVEL${ench}` : ''}`;
   const specialty = info.city === cfg.refineCity;
-  const { cfg: vcfg, issues } = cleanRefineCfg(cfg, { premium, feeCeiling });
+  const { cfg: vcfg, issues: baseIssues } = cleanRefineCfg(cfg, { premium, feeCeiling });
+  const rl = cleanRelist(cfg, { premium }); // IDEIA-059 (espelha a tela do Refino)
+  const issues = [...baseIssues, ...rl.issues];
   const autoRRR = calcRRR({ kind: 'refine', specialty, focus: cfg.focus, daily: vcfg.daily });
   const rrrValue = resolveRRR(autoRRR, vcfg.customRRR);
   const px = prices === undefined ? refinePrices(now) : prices;
@@ -119,8 +122,8 @@ export function assembleRefine({ over = {}, prices, premium = true, feeCeiling =
   const ctx = { prices: px, city: cfg.buyCity, useOrders: cfg.useOrders, rrr: rrrValue, feePer100: vcfg.feePer100, route };
   const perUnitExtras = extrasPerUnit(vcfg.extras, vcfg.qty, vcfg.qty);
   const noTax = vcfg.noTax[REFINE_NO_TAX_KEY] === true;
-  const cur = px ? evaluateTier({ tier: cfg.tier, uniq: uniqOf(cfg.tier), prices: px, ctx, sellCity: cfg.sellCity, sellMode: cfg.sellMode, premium, extrasPerUnit: perUnitExtras, noTax }) : null;
-  const input = { cfg, vcfg, issues, cur, info, ench, specialty, autoRRR, rrrValue, perUnitExtras, noTax, route, premium, now, feeCeiling, prices: px };
+  const cur = px ? evaluateTier({ tier: cfg.tier, uniq: uniqOf(cfg.tier), prices: px, ctx, sellCity: cfg.sellCity, sellMode: cfg.sellMode, premium, extrasPerUnit: perUnitExtras, noTax, relist: rl.values }) : null;
+  const input = { cfg, vcfg, issues, cur, info, ench, specialty, autoRRR, rrrValue, perUnitExtras, noTax, route, premium, now, feeCeiling, prices: px, relist: rl.values };
   return { input, cur };
 }
 

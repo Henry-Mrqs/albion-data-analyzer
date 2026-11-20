@@ -19,6 +19,7 @@ import { compareCraftCities } from '../lib/cityCompare';
 import CityCompare from './CityCompare';
 import ExtrasCard from './ExtrasCard';
 import FocusCard, { FocusFields } from './FocusCard';
+import OrderLifeCard from './OrderLifeCard';
 import RecipePicker from './RecipePicker';
 import { GiroCard, GiroCell } from './Giro';
 import { useSettings, usePersisted } from '../lib/settings';
@@ -307,11 +308,19 @@ export default function Crafting() {
 
         {rec && <ExtrasCard list={cfg.extras} onChange={(v) => set({ extras: v })} issues={issues} crafts={c.rates.crafts} />}
 
+        {rec && (
+          <OrderLifeCard
+            cfg={cfg} set={set} issues={issues.filter((i) => ['relists', 'relistStep', 'relistBase'].includes(i.field))}
+            applies={!!best && best.mode === 'order' && !best.noTax} listings={c.relist.updates + 1} setupTotal={best?.setupTotal ?? 0} relistCost={best?.relistCost ?? 0}
+          />
+        )}
+
         {rec && <FocusCard summary={fs} ench={sel.ench} hasBase={fbase != null} manualRRR={validateInputs({ customRRR: cfgEff.customRRR }, { kind: 'craft' }).values.customRRR != null} />}
 
         {rec && (options.length > 0 || c.bmAlt?.length > 0) && (
           <div className="card">
             <h2>Onde vender</h2>
+            {c.relist.updates > 0 && <div className="hint">O líquido das ordens de venda já desconta {c.relist.updates} atualização(ões) da ordem.</div>}
             <div className="table-wrap">
               <table>
                 <thead>

@@ -29,3 +29,10 @@ Patch aplicado. Teste existente `liquidity.test.js > "o dia de hoje (parcial) fi
 ## IDEIA-083 — feita
 - Nenhum teste existente alterado. Compatibilidade: sem `targetLive` (ou `ok:false`) as linhas do auditor ficam como antes; com valores vivos, o texto de `target-notax` mantém as frases antigas ("só se a melhor saída…", "Nenhuma está marcada", "considerada", "ordem de venda (Caerleon)") para não quebrar os testes existentes. `target-notax` agora é `kind: 'applied'` no registro (status da linha: `applied` só quando o alvo é sem imposto, senão `info-only`).
 - Mutações do plano não aplicadas em cópia (testes escritos, verdes); sugiro o Tester.
+
+## IDEIA-059 — feita; desvios do plano
+- Nenhum teste existente alterado. `src/test/auditKit.js` (helper, não teste) passou a espelhar a tela do Refino (relist no `evaluateTier`), como o plano da 005 exige que o kit acompanhe a tela.
+- `nc-relists` (NÃO consideradas) foi MANTIDA, com texto trocado para "Duração e vendas parciais da ordem de venda": o adendo pedia remover, mas `craft.test.js`, `refine.test.js` e `Refining.audit.test.jsx` exigem `nc-relists` com status `not-considered`; mantê-la é honesto porque expiração e vendas parciais continuam NÃO modeladas.
+- `relists: Infinity` e `[3]` na lib: seguem a regra existente da 060 (Infinity vira o teto 37 com aviso; `[3]` vira "3"), não "0" como o plano supunha; testes escritos conforme o comportamento real.
+- Linha do auditor `relist`: `unconfirmed` quando há atualizações (base da taxa é suposição do app, sem fonte), `applied` com 0.
+- Conferência manual a 375 px (Task 5) NÃO feita. Mutações não aplicadas em cópia (sugiro o Tester).

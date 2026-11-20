@@ -5,7 +5,7 @@ import { DAILY_NOTE } from '../dailyBonus';
 import { DEFAULT_MAX_AGE_H } from '../exits';
 import { focusValues } from '../focus';
 import { pbParts } from '../rrrCalc';
-import { apiRow, correctionNote, joinNote, notConsideredRows, plain, row, stressVars, targetVars, taxRows } from './core';
+import { apiRow, correctionNote, joinNote, notConsideredRows, plain, relistRow, row, stressVars, targetVars, taxRows } from './core';
 import { auditScreen, registerScreen } from './registry';
 
 const SRC = {
@@ -161,6 +161,7 @@ export const refineVars = [
   V('tax', 'Premium, imposto e taxa de criação', [], 'applied', 'profit', tax, { probe: { settings: { premium: false }, cfg: {} } }),
   V('no-tax', 'Venda sem imposto', ['noTax'], 'applied', 'profit', noTax, { probe: { cfg: { noTax: { 'Refino|order': true } } } }),
   V('qty', 'Quantidade do lote', ['qty'], 'applied', 'cost', qty, { probe: { base: { extras: [{ name: 'Lote', value: '1000', scope: 'lote' }] }, cfg: { qty: 200 } } }),
+  V('relist', 'Atualizações da ordem de venda', ['relists', 'relistStep', 'relistBase'], 'applied', 'profit', (ctx) => relistRow({ relist: ctx.relist, best: ctx.cur ? { mode: ctx.cur.mode, noTax: ctx.noTax === true } : null, issues: ctx.issues }), { probe: { base: { sellCity: 'Martlock' }, cfg: { relists: '3', relistStep: '10' } } }),
   V('extras', 'Despesas extras', ['extras'], 'applied', 'cost', extras, { probe: { cfg: { extras: [{ name: 'Transporte', value: '10', scope: 'craft' }] } } }),
   V('focus-points', 'Foco como custo em pontos', ['focusEff', 'focusPoints', 'focusBudget', 'focusRef'], 'info-only', 'none', focusPoints, { probe: { cfg: { focusEff: '10000' } } }),
   V('not-considered', 'NÃO consideradas', [], 'not-considered', 'none', notConsidered, { section: 'NÃO consideradas' }),

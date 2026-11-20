@@ -100,7 +100,7 @@ export function correctionNote(issues, field) {
 
 // Variáveis do jogo que o app NÃO modela (V3): sempre listadas, mesmo sem aviso.
 const NOT_CONSIDERED = {
-  relists: ['Relistagens da ordem de venda', 'Cada atualização da ordem cobra 2,5% de novo; o cálculo principal não cobra. Só o cartão Preço-alvo tem uma estimativa digitada.'],
+  relists: ['Duração e vendas parciais da ordem de venda', 'A expiração da ordem e a venda em partes não são modeladas (sem fonte). As atualizações de preço (taxa de criação de novo) entram só pelo campo "Atualizações da ordem"; o cartão Preço-alvo tem a sua própria estimativa.'],
   transport: ['Transporte entre cidades', 'Custo e risco de levar material ou produto entre cidades só entram se você os digitar como despesa extra.'],
   quality: ['Qualidade do item e do material', 'Os preços usados são sempre de qualidade 1.'],
   journal: ['Diário de ofício (journal)', 'Não é o "bônus diário" (+10/+20) da tela: o ganho do diário de ofício não é modelado.'],
@@ -193,6 +193,28 @@ export const targetVars = (costOf, noTaxOf, liveOf = (ctx) => ctx.targetLive) =>
     },
   },
 ];
+
+/**
+ * IDEIA-059: linha das atualizações da ordem de venda (Craft e Refino). relist = { updates, step, base } já limpo; best = melhor saída
+ * ({ mode, noTax }). A base da taxa na atualização é suposição do app (sem fonte): enquanto houver atualizações, o estado é "não confirmado".
+ */
+export function relistRow({ relist, best, issues }) {
+  const r = relist ?? { updates: 0, step: 0, base: 'price' };
+  const applies = !!best && best.mode === 'order' && !best.noTax;
+  const BASE = { price: 'sobre o preço novo', diff: 'sobre a diferença de preço' };
+  const parts = [];
+  if (r.updates > 0) {
+    parts.push(`queda de ${fmt(r.step)} por atualização; base da taxa ${BASE[r.base] ?? BASE.price}: NÃO confirmada em fonte, suposição do app`);
+    if (!applies) parts.push('não se aplica à melhor saída (só vale em ordem de venda com imposto)');
+  } else parts.push('nenhuma atualização informada');
+  parts.push('não considera expiração da ordem nem vendas parciais');
+  const corr = correctionNote(issues, 'relists');
+  if (corr) parts.push(corr);
+  return row({
+    id: 'relist', label: 'Atualizações da ordem de venda', value: r.updates, unit: 'vezes', origin: 'user',
+    status: r.updates > 0 ? 'unconfirmed' : 'applied', note: parts.join('; '),
+  });
+}
 
 /** Seção "Estresse": passos e limiar são do app; RRR, taxa, despesas e cidade de saída não variam. */
 export const stressVars = () => [

@@ -118,6 +118,9 @@ export const PERSISTED = {
       feeByCity: { map: 'numText' }, // IDEIA-058: taxa de bancada por cidade (vazio = taxa geral)
       extras: 'passthrough', // IDEIA-048: lista { name, value, scope }; a 060 (validateExtras) valida e avisa
       noTax: { map: 'bool' }, // IDEIA-048: { 'Cidade|modo': true } saídas vendidas fora do mercado
+      relists: 'numText', // IDEIA-059: atualizações da ordem de venda
+      relistStep: 'numText',
+      relistBase: { enum: ['price', 'diff'] },
     },
   },
   'refine:cfg': {
@@ -141,6 +144,9 @@ export const PERSISTED = {
       feeSet: 'bool',
       extras: 'passthrough', // IDEIA-048: lista { name, value, scope } (a 060 valida)
       noTax: { map: 'bool' }, // IDEIA-048: interruptor único do Refino: { 'Refino|order': true }
+      relists: 'numText', // IDEIA-059: atualizações da ordem de venda
+      relistStep: 'numText',
+      relistBase: { enum: ['price', 'diff'] },
     },
   },
   'flip:cfg': {
