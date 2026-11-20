@@ -30,6 +30,15 @@ export function flipRows(prices, cfg, premium, now = Date.now()) {
         }
       }
     }
+    // IDEIA-088: destino Mercado Negro: a 2ª leitura (sell_price_min) vai à parte; NÃO VERIFICADO em jogo qual das duas o jogador recebe
+    if (best && best.sell === 'Black Market') {
+      const lq = cities['Black Market']?.[1];
+      if (lq?.s > 0) {
+        best.altPrice = lq.s;
+        best.altProfit = netSale(lq.s, 'instant', premium) - best.cost;
+        best.altStale = !fresh(lq.sd);
+      }
+    }
     if (best && best.profit >= (+cfg.minProfit || 0) && best.margin >= (+cfg.minMargin || 0)) out.push(best);
   }
   return out;

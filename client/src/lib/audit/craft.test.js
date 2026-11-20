@@ -4,6 +4,7 @@ import { loadFixtureCatalog, mkPrices } from '../../test/helpers';
 import { assembleCraft, H, NOW } from '../../test/auditKit';
 import { stationFee } from '../econ';
 import { auditCraft } from './craft';
+import { auditScreen } from './registry';
 
 beforeEach(loadFixtureCatalog);
 
@@ -386,5 +387,30 @@ describe('cabeçalho: contagens', () => {
       expect(r.status, r.id).toBeTruthy();
     }
     expect(new Set(ids(out)).size).toBe(ids(out).length);
+  });
+});
+
+describe('IDEIA-088: as duas leituras do Mercado Negro no auditor', () => {
+  const mkBm = (b, s) => ({
+    buy: b ? { price: b, date: NOW - 3600000, stale: false } : null,
+    list: s ? { price: s, date: NOW - 3600000, stale: false } : null,
+    ratio: b && s ? s / b : null,
+    diverges: !!(b && s && s / b >= 1.5),
+  });
+  const run = (bm) => auditScreen('craft', { cfg: {}, cfgEff: {}, used: {}, result: { bm, options: [], lines: [], issues: [] }, now: NOW, maxAgeH: 24, premium: true, variant: { count: 1 }, issues: [] }).rows.filter((r) => r.varId === 'bm-readings');
+  it('com as duas e divergência: bm-buy e bm-list "NÃO VERIFICADO em jogo" (api, unconfirmed) e bm-diverge informativa', () => {
+    const rows = run(mkBm(2607, 10854));
+    expect(rows.map((r) => r.id)).toEqual(['bm-buy', 'bm-list', 'bm-diverge']);
+    expect(rows[0]).toMatchObject({ origin: 'api', status: 'unconfirmed', statusText: 'NÃO VERIFICADO em jogo', value: 2607 });
+    expect(rows[1]).toMatchObject({ origin: 'api', status: 'unconfirmed', value: 10854 });
+    expect(rows[2].status).toBe('info-only');
+  });
+  it('sem divergência não há bm-diverge; sem preço no Mercado Negro: não considerada', () => {
+    expect(run(mkBm(10000, 14000)).map((r) => r.id)).toEqual(['bm-buy', 'bm-list']);
+    expect(run(mkBm(0, 0))).toEqual([expect.objectContaining({ id: 'bm-none', status: 'not-considered' })]);
+  });
+  it('a qualidade aceita pelo Mercado Negro é uma variável NÃO considerada', () => {
+    const rows = auditScreen('craft', { cfg: {}, cfgEff: {}, used: {}, result: { bm: mkBm(0, 0), options: [], lines: [], issues: [] }, now: NOW, maxAgeH: 24, premium: true, variant: { count: 1 }, issues: [] }).rows;
+    expect(rows.find((r) => r.id === 'nc-bmQuality')).toMatchObject({ status: 'not-considered' });
   });
 });

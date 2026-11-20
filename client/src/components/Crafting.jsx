@@ -3,11 +3,13 @@ import { Route } from 'lucide-react';
 import { CRAFT_CITIES, REFINING, focusOf, getItem, recipeVariants, marketId, nameOf, refinedTypeOf, craftBonusCity, categoryLabel } from '../lib/catalog';
 import { CITIES, SELL_CITIES, cityLabel, usePrices } from '../lib/market';
 import { fmt, pct, feeIsUnconfirmedDefault } from '../lib/econ';
-import { computeCraft, craftChainIds, keyOf, waitSavings } from '../lib/craftPlan';
+import { computeCraft, craftChainIds, keyOf, noTaxKey, waitSavings } from '../lib/craftPlan';
+import { BM_CITY } from '../lib/blackMarket';
+import BmReadings from './BmReadings';
 import { craftStressInput } from '../lib/stress';
 import StressTest from './StressTest';
 import { effectiveDaily, showDailyNote, DAILY_NOTE } from '../lib/dailyBonus';
-import { annotateOptions, illusoryHint, pickExit } from '../lib/exits';
+import { DEFAULT_MAX_AGE_H, annotateOptions, illusoryHint, pickExit } from '../lib/exits';
 import { pickCheapest, resolveVariant, returnBadge } from '../lib/recipeAlt';
 import { useHistory } from '../lib/history';
 import { loadedStats } from '../lib/liquidity';
@@ -306,7 +308,7 @@ export default function Crafting() {
 
         {rec && <FocusCard summary={fs} ench={sel.ench} hasBase={fbase != null} />}
 
-        {rec && options.length > 0 && (
+        {rec && (options.length > 0 || c.bmAlt?.length > 0) && (
           <div className="card">
             <h2>Onde vender</h2>
             <div className="table-wrap">
@@ -324,11 +326,12 @@ export default function Crafting() {
                   </tr>
                 </thead>
                 <tbody>
-                  {opts.slice(0, 8).map((o, i) => (
-                    <tr key={o.city + o.mode} className={i === 0 ? 'best' : ''} style={o.illusory ? { opacity: 0.6 } : undefined}>
+                  {[...opts.slice(0, 8).map((o, i) => ({ o, i })), ...(c.bmAlt ?? []).map((o) => ({ o: { ...o, buyer: true, illusory: false, stale: !o.date || now - o.date > DEFAULT_MAX_AGE_H * 3600000 }, i: -1 }))].map(({ o, i }) => (
+                    <tr key={o.city + o.mode + (o.reading ?? '')} className={i === 0 ? 'best' : ''} style={o.illusory || i < 0 ? { opacity: 0.6 } : undefined}>
                       <td>
                         {cityLabel(o.city)}
                         <small>{o.label}</small>
+                        {i < 0 && <small className="warn">não entra no melhor destino</small>}
                       </td>
                       <td>
                         <Money value={o.price} />
@@ -348,7 +351,7 @@ export default function Crafting() {
                           type="checkbox"
                           aria-label={`Sem imposto: ${cityLabel(o.city)}, ${o.label}`}
                           checked={o.noTax}
-                          onChange={(e) => set({ noTax: { ...noTaxMap, [`${o.city}|${o.mode}`]: e.target.checked } })}
+                          onChange={(e) => set({ noTax: { ...noTaxMap, [noTaxKey(o)]: e.target.checked } })}
                         />
                         {o.noTax && <small>venda fora do mercado</small>}
                       </td>
@@ -361,6 +364,7 @@ export default function Crafting() {
               Ordem de venda: você lista o item (imposto {premium ? '4%' : '8%'} + 2,5% de taxa). Ordem de compra: vende na hora a um comprador (imposto {premium ? '4%' : '8%'}).
               {illusoryHint()} Sem imposto: venda fora do mercado (guilda, troca direta, encomenda), sem imposto nem taxa de criação; o preço continua sendo a referência do mercado e não garante comprador. A marca vale para todos os itens: fica salva por cidade e modo de venda, não por item. Giro: vendas registradas por dia nos últimos 7 dias completos (veja o cartão “Giro do item”).
             </p>
+            <BmReadings readings={c.bm} cost={missing.length === 0 ? unitCost : null} premium={premium} median7d={statsOf(BM_CITY)?.medianPrice} />
             {histError && <Banner kind="warn">Giro indisponível: {histError}</Banner>}
           </div>
         )}

@@ -132,10 +132,12 @@ export default function Market() {
                     <td>
                       {r.sell ? <Money value={r.sell} /> : <span className="muted">—</span>}
                       <Age ts={r.sellDate} />
+                      {r.city === 'Black Market' && r.sell > 0 && <small className="warn">preço de lista (sell_price_min) · NÃO VERIFICADO em jogo</small>}
                     </td>
                     <td>
                       {r.buy ? <Money value={r.buy} /> : <span className="muted">—</span>}
                       <Age ts={r.buyDate} />
+                      {r.city === 'Black Market' && r.buy > 0 && <small className="warn">ordem de compra (buy_price_max) · NÃO VERIFICADO em jogo</small>}
                     </td>
                   </tr>
                 ))}
@@ -143,7 +145,7 @@ export default function Market() {
             </table>
           </div>
           <p className="hint" style={{ marginTop: 10 }}>
-            Linha verde = onde comprar mais barato. “Compra (máx.)” é o que os compradores pagam na hora; no Mercado Negro só existe esse tipo de ordem. Dados com mais de 24 h aparecem em amarelo.
+            Linha verde = onde comprar mais barato. “Compra (máx.)” é o que os compradores pagam na hora. No Mercado Negro a API traz as duas colunas e o app não sabe qual delas o jogador recebe (NÃO VERIFICADO em jogo). Dados com mais de 24 h aparecem em amarelo.
           </p>
         </div>
       </div>

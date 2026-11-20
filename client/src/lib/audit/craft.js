@@ -8,6 +8,7 @@ import { keyOf } from '../craftPlan';
 import { feeDecides, FEE_DEPENDENCE_WARNING, returnBadge, variantLabel } from '../recipeAlt';
 import { DAILY_NOTE, RESET_UTC_HOUR } from '../dailyBonus';
 import { DEFAULT_MAX_AGE_H } from '../exits';
+import { BM_READING_VERIFIED, bmLabel } from '../blackMarket';
 import { focusValues } from '../focus';
 import { exitNoTaxByMode } from '../targetPrice';
 import { pbParts } from '../rrrCalc';
@@ -287,7 +288,30 @@ const server = (ctx) =>
     note: `Define de onde vêm os preços (AODP) e o reset do bônus diário (${RESET_UTC_HOUR[ctx.server] ?? '?'}:00 UTC).`,
   });
 
-const notConsidered = () => notConsideredRows(['relists', 'transport', 'quality', 'journal', 'focusSilver', 'stock', 'drift', 'faction']);
+const notConsidered = () => notConsideredRows(['relists', 'transport', 'quality', 'journal', 'focusSilver', 'stock', 'drift', 'faction', 'bmQuality']);
+
+// IDEIA-088: as duas leituras do Mercado Negro. NENHUMA está verificada em jogo (BM_READING_VERIFIED); o cálculo usa a do cabeçalho (a menor).
+const bmRows = (ctx) => {
+  const bm = ctx.result?.bm ?? {};
+  if (!bm.buy && !bm.list) {
+    return row({ id: 'bm-none', label: 'Mercado Negro: as duas leituras', value: 'sem preço no Mercado Negro', unit: '', origin: 'api', status: 'not-considered', note: 'Sem preço de venda neste item no Mercado Negro.' });
+  }
+  const one = (id, kind, key, r) => {
+    const verified = BM_READING_VERIFIED === kind;
+    return apiRow({ id, label: bmLabel(kind, BM_READING_VERIFIED), price: r.price, date: r.date, now: ctx.now, maxAgeH: ctx.maxAgeH, source: key, note: verified ? 'Confirmada em jogo.' : 'O app não sabe qual das duas o jogador recebe.' });
+  };
+  const mark = (r) => (BM_READING_VERIFIED || r.status === 'stale' ? r : { ...r, status: 'unconfirmed', statusText: 'NÃO VERIFICADO em jogo' });
+  const out = [];
+  if (bm.buy) out.push(mark(one('bm-buy', 'buy', 'buy_price_max', bm.buy)));
+  if (bm.list) out.push(mark(one('bm-list', 'list', 'sell_price_min', bm.list)));
+  if (bm.diverges) {
+    out.push(row({
+      id: 'bm-diverge', label: 'Mercado Negro: as leituras divergem', value: bm.ratio, unit: '×', origin: 'derived', status: 'info-only',
+      note: BM_READING_VERIFIED ? 'Preço de lista ÷ ordem de compra; o cálculo usa a leitura confirmada.' : 'Preço de lista ÷ ordem de compra; o cálculo usa a menor (lado seguro).',
+    }));
+  }
+  return out;
+};
 
 // ---------- declaração (contrato) ----------
 const cost = 'cost';
@@ -310,6 +334,7 @@ export const craftVars = [
   V('mat-prices', 'Preço e idade de cada material', [], 'applied', cost, matPrices),
   V('premium', 'Premium, imposto e taxa de criação', [], 'applied', 'profit', premium, { probe: { settings: { premium: false }, cfg: {} } }),
   V('exit', 'Saída', [], 'applied', 'profit', exit),
+  V('bm-readings', 'Mercado Negro: as duas leituras', [], 'applied', 'profit', bmRows),
   V('no-tax', 'Venda sem imposto', ['noTax'], 'applied', 'profit', noTax, { probe: { cfg: { noTax: { 'Caerleon|order': true } } } }),
   V('extras', 'Despesas extras', ['extras'], 'applied', cost, extras, { probe: { cfg: { extras: [{ name: 'Transporte', value: '230', scope: 'craft' }] } } }),
   V('focus-points', 'Foco como custo em pontos', ['focusEff', 'focusPoints', 'focusBudget', 'focusRef'], 'info-only', 'none', focusPoints, { probe: { cfg: { focusEff: '10000' } } }),

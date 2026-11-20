@@ -109,6 +109,7 @@ const NOT_CONSIDERED = {
   faction: ['Moeda e ficha de facção', 'Receitas que usam coração ou moeda de facção (IDEIA-068) não são modeladas.'],
   factionRecipe: ['Receita alternativa com coração de facção', 'A receita alternativa de refino com coração de facção (IDEIA-068) não é modelada.'],
   transportBuy: ['Transporte da cidade de compra até a de refino', 'O custo de levar o material até a cidade de refino não está incluído.'],
+  bmQuality: ['Qualidade aceita pelo Mercado Negro', 'Se a ordem do Mercado Negro aceita qualidade igual ou superior não foi verificado em jogo; os preços usados são de qualidade 1.'],
   stoneBatch: ['Receitas em lote do bloco de pedra com rocha encantada', 'Não modeladas (IDEIA-068).'],
 };
 

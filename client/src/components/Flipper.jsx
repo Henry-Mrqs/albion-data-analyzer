@@ -225,6 +225,11 @@ export default function Flipper() {
                         <td>
                           {cityLabel(r.sell)} · {fmt(r.price)}
                           <small className={ageClass(r.sdate)}>{r.mode === 'instant' ? 'ordem de compra' : 'listar'} · {ageLabel(r.sdate)}</small>
+                          {r.altPrice > 0 && (
+                            <small className="warn" data-testid="bm-alt">
+                              Mercado Negro: 2ª leitura (preço de lista, sell_price_min) {fmt(r.altPrice)}, lucro {r.altProfit > 0 ? '+' : ''}{fmt(r.altProfit)}{r.altStale ? ' (dado velho)' : ''} · NÃO VERIFICADO em jogo
+                            </small>
+                          )}
                         </td>
                         <td className="num">{fmt(r.cost)}</td>
                         <td className="num good">+{fmt(r.profit)}</td>
