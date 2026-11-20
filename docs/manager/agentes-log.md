@@ -176,3 +176,5 @@ Uma linha por delegação. Prova de que o trabalho é feito por sub agentes dist
 | #116 (resultado) | Planejador | 18 planos novos + docs/plans/ORDEM.md (28 ideias em ordem). 5 perguntas respondidas (D-071) | docs/plans/ | 2026-11-20 |
 | #117 | EXECUTOR (`a53fabc1e0a8ed459`) | Lote 1 em release/batch-1: merge da 005 + 085, 089, 086, 074, 088, 072, 073 (um commit por ideia) | em curso | docs/plans/ORDEM.md | 2026-11-20 |
 | #117 (resultado) | Executor | Lote 1 entregue em release/batch-1 (1.545 testes, check verde): 085, 086, 074, 088, 072, 073 feitas; 089 pulada (teste existente conflita; patch pronto em docs/qa/IDEIA-089.pending.patch). 088: sonda real 52 linhas BM (lista bate 18, compra 4, ambas 13, nenhuma 17), regra R-C, leitura menor + duas rotuladas | release/batch-1 | 2026-11-20 |
+| #118 (resultado) | Executor | Lote 2 entregue em release/batch-1 (1.711 testes, check verde): 089, 082, 083, 059, 065, 012 feitas; desvios em BATCH1-NOTAS.md; pendente: mutações dos planos, 375px e API real da 012 (para o Tester) | até 6d90aec | 2026-11-20 |
+| #119 | EXECUTOR (novo) | Lote 3: 062, 053, 051, 064, 003, 009, 061 | em curso | docs/plans/ORDEM.md | 2026-11-20 |
