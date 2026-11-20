@@ -9,3 +9,11 @@ Implementação e 8 testes novos prontos e verdes (exceto esse): `docs/qa/IDEIA-
 - `cleanNoTax` (inputRules.js) passou a aceitar a chave `Cidade|list` (necessária para `Black Market|list`); nenhum teste existente mudou.
 - Sonda real (2026-11-20): Mercado Negro 52 linhas (lista bate 18, compra bate 4, ambas 13, nenhuma 17) -> regra R-C; `BM_READING_VERIFIED` segue `null`. Relatório: `docs/research/IDEIA-088-probe.md`.
 - Não rodei as mutações da lista do plano para 088 (só testes novos verdes); sugiro o Tester rodá-las.
+
+## IDEIA-073 — feita; 1 teste existente ajustado
+- `CityCompare.extras.test.jsx` (arquivo que o plano lista em "Altera"): a asserção `Despesas === Custo total - 1` deixou de valer porque a Task 2 move "Custo total" para antes do "Material" (ordem pedida pelo plano). Troquei por "Despesas logo depois de Taxa" e "Custo total antes de Material". Nenhum outro teste existente mudou.
+
+## IDEIA-085 — feita; prova reduzida
+- Medição: 0/12 falhas do arquivo sob 3 suítes `ui` em paralelo (antes não medido); não repeti 30x nem 10x `npm run check`. Sem retry/skip/aumento de timeout global.
+
+## IDEIA-089 — PULADA (ver acima); IDEIA-086 — feita (contrato + tela Premium + cartão); IDEIA-074 — feita (só testes).

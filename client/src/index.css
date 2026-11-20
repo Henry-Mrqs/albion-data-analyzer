@@ -147,3 +147,6 @@ details > summary { cursor: pointer; color: var(--text-2); }
 @media (max-width: 700px) { .tabs { order: 3; flex-basis: 100%; } .header { gap: 8px; } }
 /* 6 abas com rótulo pedem ~567 px: abaixo de 960 px (na linha única o rótulo pede ~567 px de barra, que só há a partir de ~940 px) ficam só ícone (6x44 + 5x4 = 284 px; aria-label/title dão o nome) */
 @media (max-width: 960px) { .tab-label { display: none; } }
+
+/* IDEIA-073: primeira coluna da tabela fixa ao rolar na horizontal (Comparar cidades) */
+.sticky-col { position: sticky; left: 0; background: var(--panel); z-index: 1; }

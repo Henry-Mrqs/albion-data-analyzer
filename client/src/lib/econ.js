@@ -37,7 +37,7 @@ export const netSale = (price, mode, premium) =>
 
 export const fmt = (n) => {
   if (!Number.isFinite(n)) return 'valor enorme'; // nunca ∞/NaN na tela
-  const r = Math.round(n);
+  const r = Math.round(n) || 0; // normaliza -0 (IDEIA-073)
   return Math.abs(r) >= 1e15 ? Number(r.toPrecision(3)).toExponential().replace('e+', 'e').replace('.', ',') : r.toLocaleString('pt-BR');
 };
 export const pct = (n) => `${n >= 0 ? '+' : ''}${n.toFixed(1)}%`;

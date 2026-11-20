@@ -26,8 +26,8 @@ describe('CityCompare: despesas extras (076)', () => {
   it('com despesas > 0: cabeçalho "Despesas" e a célula mostra 420; a linha soma 4.511 + 432 + 420 = 5.363', () => {
     mount([row()]);
     const h = headers();
-    expect(h.indexOf('Despesas')).toBe(h.indexOf('Custo total') - 1);
-    expect(h.indexOf('Despesas')).toBe(h.indexOf('Taxa (por 100)') + 1);
+    expect(h.indexOf('Despesas')).toBe(h.indexOf('Taxa (por 100)') + 1); // IDEIA-073: Custo total passou para antes do Material
+    expect(h.indexOf('Custo total')).toBeLessThan(h.indexOf('Material'));
     const c = cells(rowOf('Fort Sterling'));
     expect(c[h.indexOf('Despesas')]).toBe('420');
     expect(c[h.indexOf('Material')]).toBe('4.511');

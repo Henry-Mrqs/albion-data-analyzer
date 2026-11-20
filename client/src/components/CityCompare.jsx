@@ -1,5 +1,5 @@
 import { CITIES } from '../lib/market';
-import { fmt } from '../lib/econ';
+import { DEFAULT_FEE, fmt } from '../lib/econ';
 import InputIssues from './InputIssues';
 import { Money, NumberInput, Segmented } from './ui';
 
@@ -12,6 +12,18 @@ export default function CityCompare({ result, scenario, onScenario, feeByCity, o
   const anyCityFee = rows.some((r) => r.feeSource === 'city');
   const anyExtras = rows.some((r) => r.extras > 0);
   const fees = feeByCity ?? {};
+  // IDEIA-073: textos honestos derivados do resultado
+  const ownFee = rows.filter((r) => r.feeSource === 'city');
+  const partialFee = ownFee.length > 0 && ownFee.length < rows.length;
+  const generalEmpty = general.value === '' || general.value == null;
+  const done = rows.filter((r) => r.complete);
+  const bonusRow = rows.find((r) => r.isBonus);
+  const noBonus = rows.length > 0 && !bonusRow;
+  const allSame = done.length > 1 && done.every((r) => r.totalCost === done[0].totalCost && r.rrr === done[0].rrr);
+  const bestRow = allSame ? null : best;
+  const names = ownFee.map((r) => r.city);
+  const nameList = names.length > 1 ? `${names.slice(0, -1).join(', ')} e ${names.at(-1)}` : names[0];
+  const deltaWhy = noBonus ? 'Este item não tem cidade de bônus: não há diferença a mostrar.' : bonusRow && !bonusRow.complete ? `${bonusRow.city} (cidade de bônus) está sem preço: não há coluna de diferença.` : undefined;
   const why = (r) => {
     if (scenario === 'own' && !CITIES.includes(r.city)) return 'sem preços (cidade não consultada)';
     return r.missing.length ? `sem preço de ${r.missing.join(', ')}` : 'sem preço';
@@ -25,34 +37,46 @@ export default function CityCompare({ result, scenario, onScenario, feeByCity, o
         onChange={onScenario}
         options={[{ value: 'own', label: 'Comprar na própria cidade' }, { value: 'best', label: 'Comprar na mais barata' }]}
       />
-      {!anyCityFee && !general.touched && (
+      {partialFee && (
+        <div className="hint" data-testid="city-fee-partial">
+          Só {nameList} {names.length === 1 ? 'tem' : 'têm'} taxa própria; as outras {rows.length - ownFee.length} usam {generalEmpty ? DEFAULT_FEE : fmt(general.value)} (da tela ou padrão do app).
+        </div>
+      )}
+      {!anyCityFee && generalEmpty && (
+        <div className="hint warn" data-testid="city-fee-empty">
+          Taxa geral vazia: o cálculo usa o padrão {DEFAULT_FEE} do app (não confirmado) em todas as cidades.
+        </div>
+      )}
+      {!anyCityFee && !generalEmpty && !general.touched && (
         <div className="hint warn" data-testid="city-fee-default">
           Usando {fmt(general.value)} do app em todas as cidades: informe a taxa de cada bancada; sem isso a comparação não vale.
         </div>
       )}
-      {!anyCityFee && general.touched && <div className="hint" data-testid="city-fee-same">Mesma taxa em todas as cidades.</div>}
+      {!anyCityFee && !generalEmpty && general.touched && <div className="hint" data-testid="city-fee-same">Mesma taxa em todas as cidades (a da tela).</div>}
       <div className="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Cidade</th>
+              <th className="sticky-col">Cidade</th>
               <th>RRR</th>
+              <th>Custo total</th>
+              <th>Por unidade</th>
               <th>Material</th>
               <th title="Prata por 100 de nutrição; vazio = taxa geral da tela">Taxa (por 100)</th>
               {anyExtras && <th title="Despesas extras do lote (as mesmas em todas as cidades); entram no custo total">Despesas</th>}
-              <th>Custo total</th>
-              <th>Por unidade</th>
               <th title="Quanto a mais (+) ou a menos (−) que a cidade de bônus do item">Dif. p/ cidade de bônus</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.city} className={r === best ? 'best' : ''} style={r.complete ? undefined : { opacity: 0.6 }}>
-                <td>
+              <tr key={r.city} className={r === bestRow ? 'best' : ''} style={r.complete ? undefined : { opacity: 0.6 }}>
+                <td className="sticky-col">
                   {r.city}
                   {r.isBonus && <small className="good">bônus</small>}
                 </td>
                 <td className="num">{(r.rrr * 100).toFixed(1)}%</td>
+                <td>{r.complete ? <strong><Money value={r.totalCost} /></strong> : <span className="muted">—</span>}</td>
+                <td>{r.complete ? <Money value={r.unitCost} /> : <span className="muted">—</span>}</td>
                 <td>{r.complete ? <Money value={r.matCost} /> : <span className="muted">{why(r)}</span>}</td>
                 <td>
                   <NumberInput
@@ -66,17 +90,21 @@ export default function CityCompare({ result, scenario, onScenario, feeByCity, o
                   <small>{fmt(r.fee)} no lote</small>
                 </td>
                 {anyExtras && <td>{r.complete ? <Money value={r.extras} /> : <span className="muted">—</span>}</td>}
-                <td>{r.complete ? <strong><Money value={r.totalCost} /></strong> : <span className="muted">—</span>}</td>
-                <td>{r.complete ? <Money value={r.unitCost} /> : <span className="muted">—</span>}</td>
-                <td>{r.deltaVsBonus == null ? <span className="muted">—</span> : <Money value={r.deltaVsBonus} signed />}</td>
+                <td>{r.deltaVsBonus == null ? <span className="muted" title={deltaWhy}>—</span> : <Money value={r.deltaVsBonus} signed />}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      {spread != null && best && (
+      {bonusRow && !bonusRow.complete && <p className="hint" data-testid="city-bonus-missing">{bonusRow.city} (cidade de bônus) está sem preço: não há coluna de diferença.</p>}
+      {noBonus && done.length > 0 && (
+        <p className="hint" data-testid="city-no-bonus">
+          Este item não tem cidade de bônus: as {rows.length} cidades dão o mesmo RRR ({(rows[0].rrr * 100).toFixed(1).replace('.', ',')}%) e a diferença vem só da taxa e do material.
+        </p>
+      )}
+      {spread != null && bestRow && (
         <p className="hint">
-          Melhor: <b>{best.city}</b>. Da mais barata à mais cara há {fmt(spread)} de diferença no lote ({units} {units === 1 ? 'unidade' : 'unidades'} de produto).
+          Melhor: <b>{bestRow.city}</b>. Da mais barata à mais cara há {fmt(spread)} de diferença no lote ({units} {units === 1 ? 'unidade' : 'unidades'} de produto).
         </p>
       )}
       {anyExtras && (

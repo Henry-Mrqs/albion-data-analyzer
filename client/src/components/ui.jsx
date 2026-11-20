@@ -94,7 +94,7 @@ export function Age({ ts }) {
 }
 
 export function Money({ value, signed }) {
-  const v = Number.isFinite(value) ? Math.round(value) : NaN;
+  const v = Number.isFinite(value) ? Math.round(value) || 0 : NaN; // zero (inclusive -0) não é lucro nem prejuízo
   const cls = signed ? (v > 0 ? 'good' : v < 0 ? 'bad' : '') : '';
   return <span className={`num ${cls}`}>{(signed && v > 0 ? '+' : '') + fmt(value)}</span>;
 }
