@@ -39,7 +39,7 @@ describe('Refining: Preço-alvo e "Venda sem imposto" (075)', () => {
     mount();
     fireEvent.click(sw());
     expect(big()).toBe('1.072');
-    expect(document.body.textContent).toContain('Venda sem imposto marcada (Mercado Negro, ordem de venda)');
+    expect(document.body.textContent).toContain('Venda sem imposto marcada (Mercado Negro, ordem de compra)');
     fireEvent.click(sw());
     expect(big()).toBe('1.146');
     expect(document.body.textContent).not.toMatch(AVISO);

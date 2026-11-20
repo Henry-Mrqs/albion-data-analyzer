@@ -4,6 +4,7 @@ import { bestBuyer } from '../lib/exits';
 import { marketGap, targetPrice } from '../lib/targetPrice';
 import { useSettings, usePersisted } from '../lib/settings';
 import { validateInputs } from '../lib/inputRules';
+import { exitLabel } from '../lib/exitLabel';
 import InputIssues from './InputIssues';
 import { Age, Banner, Field, NumberInput, Segmented } from './ui';
 
@@ -32,6 +33,8 @@ export default function TargetPrice({ cost, prices, mid, missing, noTax = { orde
   // IDEIA-075 (D-056): vale "sem imposto" se a melhor saída DESTE modo está marcada (a cidade vem junto para o aviso)
   const exit = noTax?.[mode];
   const off = exit?.on === true;
+  const otherMode = mode === 'order' ? 'instant' : 'order';
+  const other = noTax?.[otherMode]?.on === true && !off ? noTax[otherMode] : null;
   const target = ok ? targetPrice({ cost, premium, mode, relists, noTax: off, ...goalArg }) : null;
 
   const net = target ? netSale(target, off ? 'none' : mode, premium) - (mode === 'order' && !off ? relists * SETUP_FEE * target : 0) : 0;
@@ -84,7 +87,13 @@ export default function TargetPrice({ cost, prices, mid, missing, noTax = { orde
           </div>
           {off && (
             <div className="hint">
-              Venda sem imposto marcada ({cityLabel(exit.city)}, {mode === 'order' ? 'ordem de venda' : 'ordem de compra'}): o preço-alvo não desconta imposto nem taxa de criação (relistagens não contam).
+              Venda sem imposto marcada ({cityLabel(exit.city)}, {exit.city === 'Black Market' ? 'ordem de compra' : exitLabel(exit.city, mode)}): o preço-alvo não desconta imposto nem taxa de criação (relistagens não contam).
+            </div>
+          )}
+          {other && (
+            <div className="hint" data-testid="target-notax-other-mode">
+              A saída marcada como 'sem imposto' ({cityLabel(other.city)}, {exitLabel(other.city, otherMode)}) é de outro modo: este alvo, em {exitLabel(exit?.city, mode)}
+              {exit?.city ? ` (${cityLabel(exit.city)})` : ''}, conta imposto.
             </div>
           )}
           {market ? (

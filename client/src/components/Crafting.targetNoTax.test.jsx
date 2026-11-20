@@ -75,6 +75,21 @@ describe('Crafting: Preço-alvo e "Sem imposto" (075)', () => {
   });
 });
 
+describe('Crafting: o noTax repassado é o da melhor saída de cada modo (M30, 082)', () => {
+  it('modo instantâneo com a melhor saída no Mercado Negro marcada: aviso cita Mercado Negro; marca em ordem de venda não vale', () => {
+    seed('target:cfg', { goal: 'profit', profit: 1000, margin: 20, mode: 'instant', relists: 0 });
+    mount({ noTax: { 'Black Market|instant': true } }, { Caerleon: { s: 4500 }, 'Black Market': { b: 5000 } });
+    expect(document.body.textContent).toContain('Venda sem imposto marcada (Mercado Negro, ordem de compra)');
+    expect(big()).toBe('4.755');
+  });
+  it('modo instantâneo com marca só em Caerleon|order: aviso do outro modo e alvo com imposto', () => {
+    seed('target:cfg', { goal: 'profit', profit: 1000, margin: 20, mode: 'instant', relists: 0 });
+    mount({ noTax: { 'Caerleon|order': true } }, { Caerleon: { s: 4500, b: 4000 } });
+    expect(screen.getByTestId('target-notax-other-mode').textContent).toContain('(Caerleon, ordem de venda)');
+    expect(big()).toBe('4.953');
+  });
+});
+
 describe('Crafting: a grade do estresse (031) e o Preço-alvo concordam no mesmo noTax (D-056)', () => {
   // k do cartão = líquido ÷ preço listado; k do estresse = (lucro central + custo) ÷ preço de venda (4.500). Ambos vêm de netSale.
   const kCard = () => num(card().match(/líquido (\d[\d.]*,\d{2})/)[1]) / num(big());

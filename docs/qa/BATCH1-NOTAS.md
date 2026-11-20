@@ -20,3 +20,8 @@ Implementação e 8 testes novos prontos e verdes (exceto esse): `docs/qa/IDEIA-
 
 ## IDEIA-089 — FEITA (D-072)
 Patch aplicado. Teste existente `liquidity.test.js > "o dia de hoje (parcial) fica fora"` atualizado de 3 para 7: série de 23 a 25/10 (3 dias), `now`=26/10, janela de 7 dias, soma 21; cobertura = (26/10 00:00 − 23/10 00:00)/1 dia = 3 dias; 21/3 = 7. Condição da D-072 (série cobre menos que a janela) atendida. Task 2: dica no `GiroCard` (usa a linha do melhor destino, ou a 1ª linha se não houver).
+
+## IDEIA-082 — feita; 1 asserção existente ajustada (autorizada pelo plano, D3)
+- `Refining.targetNoTax.test.jsx` (listado em "Altera"): esperava "(Mercado Negro, ordem de venda)"; o plano D3 manda que o Mercado Negro nunca diga "ordem de venda"; agora "(Mercado Negro, ordem de compra)". Nenhum outro teste existente mudou.
+- Desvio de texto: no aviso principal (modo da marca) o Mercado Negro usa o curto "(Mercado Negro, ordem de compra)" para não quebrar o teste existente de `TargetPrice.noTax.test.jsx`; o aviso novo do outro modo usa `exitLabel` completo ("ordem de compra do Mercado Negro").
+- Mutantes M19/M23/M30: testes escritos (passam); NÃO apliquei as mutações em cópia para vê-las falhar (sugiro o Tester).
