@@ -340,3 +340,6 @@ Usuário pediu menos uso de API: relatórios curtos, só Pesquisador + Planejado
 
 ## D-070 — Pipeline em lote (pedido do usuário 2026-11-20)
 Usuário liberou os agentes e pediu fases em lote: (1) planos de TODAS as ideias; (2) Executor codifica tudo em sequência (uma branch de integração, um commit por ideia); (3) Tester testa tudo, com o Executor à mão para corrigir e devolver; (4) Deployer sobe tudo no fim. O portão de qualidade continua: nada vai para produção sem Tester APROVADO; cada ideia só conta depois de verificada em produção. Relatórios curtos ao usuário.
+
+## D-071 — Respostas ao Planejador final
+088: o cabeçalho usa a leitura MENOR do Mercado Negro (lado seguro) até haver conferência em jogo, dito na tela, mostrando as duas leituras rotuladas "NÃO VERIFICADO em jogo"; 089: aceito (volume/dia maior em itens novos); 013: varredura só em recorte (categoria + tier + encanto), nunca o catálogo inteiro; 086: `flip:cfg` e chaves do Mercado ficam "fora da v1 do auditor" com motivo declarado; 073: `fmt(-0.5)` fica '0'. Ordem em docs/plans/ORDEM.md (085, 089, 086, 074, 088, 072, 073, 082, 083, 059, 065, 012, 062, 053, 051, 064, 003, 009, 061, 007, 011, 036, 013, 080, 079, 077, 084, 087), com a 005 mesclada primeiro.

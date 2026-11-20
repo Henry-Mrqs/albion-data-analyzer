@@ -1,0 +1,24 @@
+# IDEIA-080 — Polimento da grade de estresse (031): rótulos fixos, não recentralizar, testes de ligação: plano compacto
+
+> **Para o Executor:** `superpowers:executing-plans`. Branch de integração (D-070); `npm` em `client/`. Teste visto falhar antes; nenhum `*.test.jsx` com `usePersisted('chave'` literal (use `seed()`). Origem: `docs/qa/IDEIA-031.md` R10 (O7, O8) e os sobreviventes N07/N08/N09/N13 (D-057, D-055). Os mutantes M42–M50 de ligação Craft/Refino já estão na **074** (Task 2/3); esta cobre só o que sobra no `StressTest`.
+
+**Arquivos.** Altera: `client/src/components/StressTest.jsx`, `client/src/index.css` (classe da coluna fixa), `client/src/components/StressTest.test.jsx`, `StressTest.honest.test.jsx`. Cria: `client/src/components/StressTest.scroll.test.jsx`. **Conflitos:** `StressTest.jsx` com **059** (muda `craftStressInput`, não o componente) e **088** (a saída do estresse pode ser a leitura do Mercado Negro: o componente só mostra o texto que recebe); `index.css` com 073/079 (acrescentam regras; merge trivial); `fmt` (073 antes: sem "-0" na grade, O3 da 031).
+
+## Task 1: coluna de rótulos fixa (O8)
+- [ ] **Step 1: teste falhando** (estrutural, jsdom não mede layout): `th` de cada linha e o `th` de canto têm a classe `sticky-col` (a mesma criada na 073: **reusar**, não duplicar; se a 073 ainda não entrou, criar `.sticky-col { position: sticky; left: 0; background: <variável de fundo do card>; z-index: 1 }` aqui e a 073 reusa) e um teste de CSS lê `index.css` e exige a regra com `position: sticky` e `left: 0`. **Step 2:** FAIL. **Step 3:** aplicar a classe nos `th` da primeira coluna. **Step 4:** PASS; o Tester confere a 500 e 375 px (grade centralizada: o rótulo "Materiais +20% / 0% / −20%" fica visível ao rolar). **Step 5: Commit** `fix: grade de estresse com coluna de rótulos fixa (IDEIA-080)`.
+
+## Task 2: não recentralizar a cada render do pai (O7)
+- [ ] **Step 1: teste falhando** (`StressTest.scroll.test.jsx`, project `ui`; jsdom não faz layout: stubar `scrollWidth`/`clientWidth`/`offsetLeft`/`offsetWidth` no wrapper e na célula central com `Object.defineProperty`; contar escritas em `scrollLeft` com um setter espião): (a) na montagem centraliza (`scrollLeft` = `offsetLeft − (clientWidth − offsetWidth)/2`, com os stubs: ex.: `offsetLeft 400`, `offsetWidth 60`, `clientWidth 300` → **280**); (b) `rerender` com um `input` **novo objeto de conteúdo igual** (o pai recria o objeto a cada render) **não** escreve `scrollLeft` de novo (0 escritas adicionais); (c) `rerender` com `input` de **conteúdo diferente** (outro item/preço) recentraliza (1 escrita); (d) depois de o usuário rolar (`scrollLeft = 10` simulado + evento `scroll`), um `rerender` de mesmo conteúdo não puxa de volta. **Step 2:** FAIL em (b) e (d) (hoje o efeito depende de `[input]`, objeto novo a cada render do pai). **Step 3:** chave estável: `const key = JSON.stringify([input.cost, input.price, input.mode, …campos primitivos do input])` (ou `useMemo` por campos) e `useEffect(..., [key])`; sem rastrear o scroll manual (basta não reexecutar). **Step 4:** PASS. **Step 5: Commit** `fix: grade de estresse só recentraliza quando o conteúdo muda (IDEIA-080)`.
+- Mutações: dependência `[input]` de volta; chave que ignora o preço (não recentraliza ao trocar o item); chave com campo instável (`Date.now()`).
+
+## Task 3: testes de UI do estresse (N07, N08, N09, N13)
+- [ ] **Step 1: testes** (passam hoje; prova por mutação) em `StressTest.test.jsx`/`.honest.test.jsx`: (N07/N08) **2+ opções de venda no Craft**: o resumo do estresse nomeia a saída variada (a de maior lucro) e a classe de cada célula bate com o semáforo de margem fina (`THIN_MARGIN` importada de `stress.js`, 5% do custo); (N09/N13) o Refino mostra o nome da venda variada (cidade/modo). Valores de lucro por célula: usar os do dossiê 031 §4 (893,60; 683,23; 472,85; 262,48; 52,10; 352,40; −68,35; cantos −158,27 e −819,92; recalculados pelo Tester) **somente** como fixture do teste de `stress.js` (já existentes): aqui os testes de UI **leem** `stressGrid()` e comparam com o texto da célula (sem número solto). **Step 2–4:** passam; as mutações (célula com o sinal trocado; semáforo com limiar errado; nome da saída fixo) devem **falhar** nos testes. **Step 5: Commit** `test: ligação do estresse na UI (IDEIA-080)`.
+
+## Auditor (005)
+Nenhum campo salvo; as linhas `stress-params`/`stress-fixed` do auditor continuam corretas (a grade não ganha variável). Nenhuma variável não modelada nova.
+
+## Como o Tester valida
+Navegador real a 500 e 375 px: rolar a grade e digitar em outro campo **não** devolve a grade ao centro (medido no laudo: 0 → 212); rótulos da linha visíveis com a grade centralizada; mutações das 3 tasks.
+
+## PERGUNTAS PARA O GERENTE
+1. Se o usuário muda o preço **dentro** da tela, a grade recentraliza (conteúdo mudou). Aceita, ou prefere centralizar só ao trocar de item?
