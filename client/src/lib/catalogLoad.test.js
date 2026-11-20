@@ -139,3 +139,20 @@ describe('DT-006: versionamento do catálogo em produção', () => {
     resetCatalog();
   });
 });
+
+describe('validateCatalog: confere ef (IDEIA-072)', () => {
+  const withEf = (ef) => ({ ...GOOD, items: [...GOOD.items, { i: 'T4_TESTE_EF', ef }] });
+  it('o ef real de T4_OFF_TOWERSHIELD_UNDEAD é válido; item sem ef continua válido', () => {
+    const real = GOOD.items.find((x) => x.i === 'T4_OFF_TOWERSHIELD_UNDEAD');
+    expect(real.ef).toEqual({ 1: 750, 2: 1313, 3: 2298, 4: 4021 });
+    expect(validateCatalog(GOOD).ok).toBe(true);
+    expect(validateCatalog({ ...GOOD, items: [...GOOD.items, { i: 'T4_SEM_EF' }] }).ok).toBe(true);
+  });
+  it.each([[[750]], [{ 1: -5 }], [{ 1: 'x' }], [{ 9: 100 }], [{ 1: 0 }], [null], [7]])('ef %j vira um problema com o id do item', (ef) => {
+    const r = validateCatalog(withEf(ef));
+    expect(r.ok).toBe(false);
+    expect(r.problems).toHaveLength(1);
+    expect(r.problems[0]).toContain('T4_TESTE_EF');
+    expect(r.problems[0]).toContain('ef inválido (esperado {1..4: número > 0})');
+  });
+});

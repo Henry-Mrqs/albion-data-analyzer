@@ -25,7 +25,7 @@ import { useSettings, usePersisted } from '../lib/settings';
 import ItemSelector from './ItemSelector';
 import FeeField from './FeeField';
 import DailyWait from './DailyWait';
-import InputIssues, { CorrectedBadge } from './InputIssues';
+import InputIssues, { CorrectedBadge, mergeIssues } from './InputIssues';
 import PriceMatrix from './PriceMatrix';
 import TargetPrice from './TargetPrice';
 import { exitNoTaxByMode } from '../lib/targetPrice';
@@ -179,7 +179,7 @@ export default function Crafting() {
               {nameOf(targetMid)} <span className="muted">T{item?.t}.{sel.ench}</span>
             </h2>
             <span className="num">
-              <CorrectedBadge issues={issues} />{' '}
+              <CorrectedBadge issues={mergeIssues(issues, fv.issues)} />{' '}
               RRR <b className="good">{(craftRRR * 100).toFixed(1)}%</b>
             </span>
           </div>
@@ -306,7 +306,7 @@ export default function Crafting() {
 
         {rec && <ExtrasCard list={cfg.extras} onChange={(v) => set({ extras: v })} issues={issues} crafts={c.rates.crafts} />}
 
-        {rec && <FocusCard summary={fs} ench={sel.ench} hasBase={fbase != null} />}
+        {rec && <FocusCard summary={fs} ench={sel.ench} hasBase={fbase != null} manualRRR={validateInputs({ customRRR: cfgEff.customRRR }, { kind: 'craft' }).values.customRRR != null} />}
 
         {rec && (options.length > 0 || c.bmAlt?.length > 0) && (
           <div className="card">

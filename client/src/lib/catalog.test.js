@@ -240,3 +240,14 @@ describe('IDEIA-002: focusOf', () => {
   });
   it('item com f 0 no nível 0 = null (sem dado), não 0', () => expect(focusOf('T4_ARMOR_PLATE_ROYAL', 0)).toBeNull());
 });
+
+describe('IDEIA-072: foco por encanto no catálogo real (item com receita alternativa por ficha)', () => {
+  it('focusOf("T4_OFF_TOWERSHIELD_UNDEAD", 2) = 1313 e nível 0 = 429 (o ef não muda com a variante)', async () => {
+    const { readFileSync } = await import('node:fs');
+    const real = JSON.parse(readFileSync(new URL('../../public/data/catalog.json', import.meta.url)));
+    setCatalog(structuredClone(real));
+    expect(focusOf('T4_OFF_TOWERSHIELD_UNDEAD', 2)).toBe(1313);
+    expect(focusOf('T4_OFF_TOWERSHIELD_UNDEAD', 0)).toBe(429);
+    expect(focusOf('T4_OFF_TOWERSHIELD_UNDEAD', 4)).toBe(4021);
+  });
+});

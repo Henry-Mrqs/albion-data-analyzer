@@ -13,7 +13,7 @@ import StressTest from './StressTest';
 import ExtrasCard from './ExtrasCard';
 import FocusCard, { FocusFields } from './FocusCard';
 import FeeField from './FeeField';
-import InputIssues, { CorrectedBadge } from './InputIssues';
+import InputIssues, { CorrectedBadge, mergeIssues } from './InputIssues';
 import PriceMatrix from './PriceMatrix';
 import TargetPrice from './TargetPrice';
 import VarAuditCard from './VarAuditCard';
@@ -220,7 +220,7 @@ export default function Refining() {
               {nameOf(marketId(uniqOf(cfg.tier)))} <span className="muted">T{cfg.tier}.{ench}</span>
             </h2>
             <span className="num">
-              <CorrectedBadge issues={issues} />{' '}
+              <CorrectedBadge issues={mergeIssues(issues, fv.issues)} />{' '}
               RRR <b className="good">{(rrrValue * 100).toFixed(1)}%</b>
             </span>
           </div>
@@ -319,7 +319,7 @@ export default function Refining() {
 
         {cur && <TargetPrice cost={cur.unit.cost + perUnitExtras} prices={prices} mid={cur.mid} missing={missing.length > 0} noTax={{ order: { on: noTax, city: cur.sell.city }, instant: { on: noTax, city: cur.sell.city } }} />}
 
-        {cur && <FocusCard summary={fs} ench={ench} hasBase={fbase != null} unit="refino" />}
+        {cur && <FocusCard summary={fs} ench={ench} hasBase={fbase != null} unit="refino" manualRRR={vcfg.customRRR !== ''} />}
 
         {routes.length > 0 && (
           <div className="card stack">

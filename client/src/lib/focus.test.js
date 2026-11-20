@@ -218,3 +218,14 @@ describe('IDEIA-002: refineFocusSummary', () => {
     expect(Number.isFinite(s.silverPerPoint)).toBe(true);
   });
 });
+
+describe('IDEIA-072: mutantes da 002', () => {
+  it('craftsWithBudget arredonda para BAIXO: 9000 / 148,5 = 60,6 -> 60 (Math.round daria 61)', () => {
+    expect(craftsWithBudget(9000, 148.5)).toBe(60);
+  });
+  it('prata por ponto IGUAL à referência vale ("worth", >=); só abaixo é "notworth"', () => {
+    const spp = S({ efficiency: 31000 }).silverPerPoint;
+    expect(S({ efficiency: 31000, reference: spp }).verdict).toBe('worth');
+    expect(S({ efficiency: 31000, reference: spp * 1.0001 }).verdict).toBe('notworth');
+  });
+});

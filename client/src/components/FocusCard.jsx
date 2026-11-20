@@ -57,7 +57,7 @@ function Row({ label, tag, children }) {
  * Cartão "Foco". summary = craftFocusSummary(...) | refineFocusSummary(...) | null; ench = encanto (texto do "sem dado");
  * unit = 'craft' | 'refino' (rótulos). Itens de summary: pointsPerCraft|pointsPerUnit, savings..., silverPerPoint, verdict.
  */
-export default function FocusCard({ summary, ench = 0, unit = 'craft', hasBase = true }) {
+export default function FocusCard({ summary, ench = 0, unit = 'craft', hasBase = true, manualRRR = false }) {
   const s = summary;
   const perUnit = unit === 'refino';
   return (
@@ -78,6 +78,11 @@ export default function FocusCard({ summary, ench = 0, unit = 'craft', hasBase =
           {s.verdict === 'notworth' && <Banner kind="warn" title="Não vale usar foco neste item">{dec(s.silverPerPoint)} &lt; {dec(s.reference)} prata por ponto (a sua referência).</Banner>}
           {s.verdict === 'info' && (
             <div className="hint">Sem referência: use o foco no item com a maior prata por ponto. Digite “Quanto vale 1 ponto para você” para ter o veredito “vale usar foco?”.</div>
+          )}
+          {manualRRR && (
+            <div className="hint warn" data-testid="focus-manual-rrr">
+              RRR manual digitado: ele vale no lugar do automático, por isso o foco não muda o custo aqui. Apague o RRR manual para ver a economia do foco.
+            </div>
           )}
           <div className="table-wrap">
             <table>

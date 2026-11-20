@@ -26,20 +26,28 @@ const isAlt = (a) =>
   a.v.every((x) => Array.isArray(x) && typeof x[0] === 'string' && x[0] !== '' && typeof x[1] === 'number');
 
 // DT-007: item null, sem id ou com alt malformado; aponta o índice (no máximo 3 por tipo, para a mensagem não crescer)
+const EF_KEYS = ['1', '2', '3', '4'];
+// ef = foco por encanto { 1..4: número > 0 } (IDEIA-072); ausente = catálogo antigo, válido
+const isEf = (ef) => isObj(ef) && Object.keys(ef).every((k) => EF_KEYS.includes(k) && Number.isFinite(ef[k]) && ef[k] > 0);
+
 function itemProblems(items) {
   const bad = [];
   const badAlt = [];
   const badAt = [];
+  const badEf = [];
   items.forEach((it, k) => {
     if (!isObj(it) || typeof it.i !== 'string' || it.i === '') bad.push(k);
     else if (it.alt !== undefined && !isAlt(it.alt)) badAlt.push(k);
     else if (it.alt !== undefined && !(Array.isArray(it.r) && it.alt.at < it.r.length)) badAt.push(k);
+    else if ('ef' in it && !isEf(it.ef)) badEf.push(it.i);
   });
   const fmt = (arr) => arr.slice(0, 3).map((k) => `items[${k}]`).join(', ') + (arr.length > 3 ? ` e mais ${arr.length - 3}` : '');
   const out = [];
   if (bad.length) out.push(`item inválido (esperado objeto com id "i" em texto): ${fmt(bad)}`);
   if (badAlt.length) out.push(`alt malformado (esperado {at, v}): ${fmt(badAlt)}`);
   if (badAt.length) out.push(`alt.at fora da receita (índice maior que a lista r): ${fmt(badAt)}`);
+  badEf.slice(0, 3).forEach((id) => out.push(`item ${id}: ef inválido (esperado {1..4: número > 0})`));
+  if (badEf.length > 3) out.push(`ef inválido em mais ${badEf.length - 3} item(ns)`);
   return out;
 }
 
