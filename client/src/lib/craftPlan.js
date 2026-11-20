@@ -4,6 +4,8 @@ import { SELL_CITIES, quote } from './market';
 import { BM_CITY, BM_READING_VERIFIED, bmHeadline, bmLabel, bmReadings } from './blackMarket';
 import { cleanCraftCfg } from './inputRules';
 import { cleanRelist, netSaleWithRelists } from './relist';
+import { cleanAnchor, realisticPrice } from './anchor';
+import { loadedStats } from './liquidity';
 import { extrasTotal } from './extras';
 import { rrr as calcRRR, resolveRRR, refineUnit, refineChainIds, buyQuote, materialPlan, stationFee, roundFee } from './econ';
 
@@ -47,13 +49,17 @@ function sub0(lines) {
   return out;
 }
 
-export function computeCraft({ rec, targetMid, prices, cfg: rawCfg, premium, bonusCity, feeCeiling, bmVerified = BM_READING_VERIFIED }) {
+export function computeCraft({ rec, targetMid, prices, cfg: rawCfg, premium, bonusCity, feeCeiling, bmVerified = BM_READING_VERIFIED, anchor }) {
   // IDEIA-060: entradas fora da faixa são corrigidas aqui (a lib se defende sozinha) e devolvidas como `issues`
   const refineTypes = rec ? [...new Set(rec.res.filter((r) => canRefineUniq(r.uniq)).map((r) => refinedTypeOf(r.uniq)))] : [];
   const { cfg, issues } = cleanCraftCfg(rawCfg, { premium, feeCeiling, refineTypes });
   // IDEIA-059: atualizações da ordem de venda (lidas da cfg BRUTA para os avisos de relists/relistStep/relistBase)
   const rl = cleanRelist(rawCfg, { premium });
   issues.push(...rl.issues);
+  // IDEIA-065: preço de saída realista (regra do app). Sem `anchor` (histórico ainda não carregado) nada muda.
+  const an = cleanAnchor(rawCfg);
+  issues.push(...an.issues);
+  let anchoredCount = 0;
   const rates = craftRates(cfg, bonusCity);
   const { crafts, craftRRR, refineRRRFor } = rates;
 
@@ -152,6 +158,14 @@ export function computeCraft({ rec, targetMid, prices, cfg: rawCfg, premium, bon
     return { net: r.net, relistCost: r.relistCost, setupTotal: r.setupTotal };
   };
   options.forEach((o) => {
+    if (anchor && o.mode === 'order') {
+      const r = realisticPrice({ listed: o.price, stats: loadedStats(anchor.history, targetMid, o.city, { now: anchor.now, days: an.values.days }), k: an.values.k });
+      Object.assign(o, { listed: r.listed, anchorState: r.state, ceiling: r.ceiling, median: r.median, points: r.points });
+      if (an.values.on && r.state === 'anchored') {
+        o.price = r.price;
+        anchoredCount++;
+      }
+    }
     o.noTax = cfg.noTax[noTaxKey(o)] === true; // venda fora do mercado: sem imposto e sem taxa de criação (X3)
     Object.assign(o, relistNet(o));
     o.profit = o.net - totalCost;
@@ -184,7 +198,7 @@ export function computeCraft({ rec, targetMid, prices, cfg: rawCfg, premium, bon
   const refinable = lines.filter((l) => l.cmp);
   const allBest = refinable.length > 0 && refinable.every((l) => l.mode === 'best');
 
-  return { rates, lines, matCost, fee, extras, extrasList, totalCost, units, unitCost, missing, options, bmAlt, bm, best, ready, plan, used, refinable, allBest, issues, relist: rl.values };
+  return { rates, lines, matCost, fee, extras, extrasList, totalCost, units, unitCost, missing, options, bmAlt, bm, best, ready, plan, used, refinable, allBest, issues, relist: rl.values, anchor: { ...an.values, anchoredCount } };
 }
 
 /** Chave do interruptor "Sem imposto" de uma saída: cidade|modo; a leitura de lista do Mercado Negro tem a própria (IDEIA-088). */

@@ -2,7 +2,7 @@
 // Inclui as seções Preço-alvo, Estresse e Comparar cidades, que vivem na tela do Craft.
 import { REFINING, refinedTypeOf } from '../catalog';
 import { cityLabel } from '../market';
-import { feeIsUnconfirmedDefault, rrr as calcRRR } from '../econ';
+import { feeIsUnconfirmedDefault, fmt, rrr as calcRRR } from '../econ';
 import { cleanCraftCfg } from '../inputRules';
 import { keyOf } from '../craftPlan';
 import { feeDecides, FEE_DEPENDENCE_WARNING, returnBadge, variantLabel } from '../recipeAlt';
@@ -214,12 +214,31 @@ const exit = (ctx) => {
   const b = ctx.result.best;
   if (!b) return row({ id: 'exit', label: 'Saída (onde vender)', value: null, unit: 'prata', origin: 'api', status: 'not-considered', note: 'sem preço de venda deste item em nenhuma cidade' });
   const o = bestOpt(ctx);
-  const r = apiRow({ id: 'exit', label: `Saída: ${cityLabel(b.city)} · ${b.label}`, price: b.price, date: b.date, now: ctx.now, maxAgeH: ctx.maxAgeH });
+  const r = apiRow({ id: 'exit', label: `Saída: ${cityLabel(b.city)} · ${b.label}`, price: b.listed ?? b.price, date: b.date, now: ctx.now, maxAgeH: ctx.maxAgeH });
+  const anchored = b.anchorState === 'anchored' && ctx.result.anchor?.on ? `Preço listado; o lucro usa o preço realista ${fmt(b.price)} (teto k × mediana)` : undefined;
   const illusory = o.illusory ? 'Ilusória: ordem de venda sem ordem de compra visível na cidade' : undefined;
   // a idade manda no estado ("velha"); "ilusória" fica na nota quando as duas valem
-  if (o.stale || r.status === 'stale') return { ...r, status: 'stale', note: join(r.note, o.stale && r.status !== 'stale' ? 'dado velho' : undefined, illusory) };
-  if (o.illusory) return { ...r, status: 'unconfirmed', statusText: 'ilusória', note: join(r.note, illusory) };
-  return r;
+  if (o.stale || r.status === 'stale') return { ...r, status: 'stale', note: join(r.note, o.stale && r.status !== 'stale' ? 'dado velho' : undefined, illusory, anchored) };
+  if (o.illusory) return { ...r, status: 'unconfirmed', statusText: 'ilusória', note: join(r.note, illusory, anchored) };
+  return anchored ? { ...r, note: join(r.note, anchored) } : r;
+};
+
+// IDEIA-065: preço de saída realista (regra do app, sem fonte); k e N padrão = escolhas do app, não confirmadas
+const anchorRow = (ctx) => {
+  const a = ctx.result.anchor ?? { on: true, k: 1.25, days: 7, anchoredCount: 0 };
+  const loaded = ctx.result.options.some((o) => o.anchorState);
+  const defaults = ctx.cfg.anchorK == null || ctx.cfg.anchorK === '' ? ctx.cfg.anchorDays == null || ctx.cfg.anchorDays === '' : false;
+  const parts = [];
+  if (!a.on) parts.push('desligado: o lucro usa o preço listado');
+  else if (!loaded) parts.push('histórico não carregado: usando o listado');
+  else parts.push(`${a.anchoredCount} saída(s) com preço ancorado`);
+  parts.push('só ordem de venda; mediana simples dos preços médios diários');
+  if (a.on && defaults) parts.push('k = 1,25 e N = 7 são escolhas do app, sem fonte');
+  const corr = [correctionNote(ctx.issues, 'anchorK'), correctionNote(ctx.issues, 'anchorDays'), correctionNote(ctx.issues, 'anchorOn')].filter(Boolean);
+  return row({
+    id: 'anchor', label: 'Preço de saída realista', value: a.on ? `ligado (k ${a.k}, N ${a.days})` : 'desligado', unit: '', origin: a.on && defaults ? 'app-default' : 'user',
+    status: a.on && defaults ? 'unconfirmed' : 'applied', note: join(...parts, ...corr),
+  });
 };
 
 const noTax = (ctx) => {
@@ -335,6 +354,7 @@ export const craftVars = [
   V('premium', 'Premium, imposto e taxa de criação', [], 'applied', 'profit', premium, { probe: { settings: { premium: false }, cfg: {} } }),
   V('exit', 'Saída', [], 'applied', 'profit', exit),
   V('bm-readings', 'Mercado Negro: as duas leituras', [], 'applied', 'profit', bmRows),
+  V('anchor', 'Preço de saída realista', ['anchorOn', 'anchorK', 'anchorDays'], 'applied', 'profit', anchorRow, { probe: { scenario: 'anchored', cfg: { anchorOn: false } } }),
   V('no-tax', 'Venda sem imposto', ['noTax'], 'applied', 'profit', noTax, { probe: { cfg: { noTax: { 'Caerleon|order': true } } } }),
   V('relist', 'Atualizações da ordem de venda', ['relists', 'relistStep', 'relistBase'], 'applied', 'profit', (ctx) => relistRow({ relist: ctx.result.relist, best: ctx.result.best, issues: ctx.issues }), { probe: { cfg: { relists: '3', relistStep: '10' } } }),
   V('extras', 'Despesas extras', ['extras'], 'applied', cost, extras, { probe: { cfg: { extras: [{ name: 'Transporte', value: '230', scope: 'craft' }] } } }),

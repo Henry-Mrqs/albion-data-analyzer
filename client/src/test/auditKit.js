@@ -34,6 +34,24 @@ export const CRAFT_SCENARIOS = {
         T4_MAIN_SWORD: { Caerleon: { s: 4500, b: 4300, sd: now - 2 * H, bd: now - 2 * H } },
       }),
   },
+  // IDEIA-065: espada com oferta isolada (Caerleon 12.000) e histórico de 7 dias (mediana 6.309): o preço realista ancora em 7.886,25
+  anchored: {
+    item: { id: 'T4_MAIN_SWORD', ench: 0 },
+    cfg: () => ({
+      craftCity: 'Lymhurst', specialty: true, focus: false, feePer100: 500, customRRR: '', matCity: 'best', useOrders: false, crafts: 1,
+      refine: { ...BUY }, refineFocus: false, refineFee: 400, refineCity: 'auto', refineDaily: {},
+    }),
+    prices: (now = NOW) =>
+      mkPrices({
+        T4_METALBAR: { 'Fort Sterling': { s: 200, b: 180, sd: now - 3 * H, bd: now - 3 * H } },
+        T4_LEATHER: { 'Fort Sterling': { s: 150, b: 130, sd: now - 3 * H, bd: now - 3 * H } },
+        T4_MAIN_SWORD: { Caerleon: { s: 12000, sd: now - 2 * H } },
+      }),
+    history: (now = NOW) => {
+      const day = Math.floor(now / 86400000) * 86400000;
+      return { T4_MAIN_SWORD: { Caerleon: [8431, 5381, 2009, 5498, 8316, 10999, 6309].map((p, i) => ({ t: day - (7 - i) * 86400000, n: 10, p })) } };
+    },
+  },
   staff: {
     item: { id: 'T4_2H_ARCANESTAFF_HELL', ench: 0 },
     cfg: () => ({
@@ -68,7 +86,8 @@ export function assembleCraft({ scenario = 'sword', over = {}, prices, premium =
   const px = prices === undefined ? sc.prices(now) : prices;
   const daily = effectiveDaily({ value: cfg.craftDaily ?? 0, setAt: cfg.craftDailyAt, now, server });
   const cfgEff = { ...cfg, craftDaily: daily.value };
-  const run = (rec) => computeCraft({ rec, targetMid, prices: px, cfg: cfgEff, premium, bonusCity, feeCeiling });
+  const anchor = sc.history ? { history: sc.history(now), now } : undefined;
+  const run = (rec) => computeCraft({ rec, targetMid, prices: px, cfg: cfgEff, premium, bonusCity, feeCeiling, anchor });
   const results = variants.map((v) => run(v.rec));
   const auto = pickCheapest(results);
   const idx = resolveVariant(cfg.recipeVariant, variants.length, auto);

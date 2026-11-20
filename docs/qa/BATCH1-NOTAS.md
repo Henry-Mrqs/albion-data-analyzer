@@ -36,3 +36,9 @@ Patch aplicado. Teste existente `liquidity.test.js > "o dia de hoje (parcial) fi
 - `relists: Infinity` e `[3]` na lib: seguem a regra existente da 060 (Infinity vira o teto 37 com aviso; `[3]` vira "3"), não "0" como o plano supunha; testes escritos conforme o comportamento real.
 - Linha do auditor `relist`: `unconfirmed` quando há atualizações (base da taxa é suposição do app, sem fonte), `applied` com 0.
 - Conferência manual a 375 px (Task 5) NÃO feita. Mutações não aplicadas em cópia (sugiro o Tester).
+
+## IDEIA-065 — feita; desvios
+- Nenhum teste existente alterado. `src/test/auditKit.js` ganhou o cenário `anchored` (histórico opcional por cenário) para o teste de sensibilidade da linha `anchor`.
+- `useHistory` subiu para logo depois de `usePrices` (enabled: `variants.length > 0 && !!prices`), porque o histórico agora alimenta o cálculo. A linha "Saída" do auditor mostra o preço LISTADO e cita o realista na nota.
+- Padrão ligado, só ordem de venda, mediana simples (D-071). Opções do Mercado Negro (instant) e `bmAlt` não são ancoradas. `compareCraftCities` e `waitSavings` não recebem `anchor` (só calculam custo).
+- Conferência manual 375 px (Task 4) NÃO feita; mutações não aplicadas em cópia (sugiro o Tester).

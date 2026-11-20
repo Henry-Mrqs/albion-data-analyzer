@@ -121,6 +121,9 @@ export const PERSISTED = {
       relists: 'numText', // IDEIA-059: atualizações da ordem de venda
       relistStep: 'numText',
       relistBase: { enum: ['price', 'diff'] },
+      anchorOn: 'bool', // IDEIA-065: preço de saída realista (regra do app)
+      anchorK: 'numText',
+      anchorDays: 'numText',
     },
   },
   'refine:cfg': {

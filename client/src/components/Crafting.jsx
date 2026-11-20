@@ -20,6 +20,7 @@ import CityCompare from './CityCompare';
 import ExtrasCard from './ExtrasCard';
 import FocusCard, { FocusFields } from './FocusCard';
 import OrderLifeCard from './OrderLifeCard';
+import AnchorControls from './AnchorControls';
 import RecipePicker from './RecipePicker';
 import { GiroCard, GiroCell } from './Giro';
 import { useSettings, usePersisted } from '../lib/settings';
@@ -53,21 +54,24 @@ export default function Crafting() {
   // os preços de todas as receitas alternativas vão numa só consulta
   const ids = [...new Set(variants.flatMap((v) => craftChainIds(v.rec, targetMid)))];
   const { prices, loading, error, updatedAt, refresh } = usePrices(ids);
+  // histórico do item final (Giro e preço de saída realista, IDEIA-065): sobe para antes do cálculo
+  const { history, loading: histLoading, error: histError } = useHistory([targetMid], { cities: SELL_CITIES, enabled: variants.length > 0 && !!prices });
+  const anchor = history ? { history, now } : undefined;
 
   // bônus diário do item: o informado antes do último reset do servidor vale 0 (com aviso); a validação 0/10/20 é a da 060 (computeCraft)
   const daily = effectiveDaily({ value: cfg.craftDaily ?? 0, setAt: cfg.craftDailyAt, now, server });
   const cfgEff = { ...cfg, craftDaily: daily.value };
-  const results = variants.map((v) => computeCraft({ rec: v.rec, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling }));
+  const results = variants.map((v) => computeCraft({ rec: v.rec, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling, anchor }));
   const auto = pickCheapest(results);
   const idx = resolveVariant(cfg.recipeVariant, variants.length, auto);
   const pickerMode = cfg.recipeVariant === undefined || cfg.recipeVariant === 'auto' ? 'auto' : idx;
   const rec = variants[idx]?.rec ?? null;
-  const c = results[idx] ?? computeCraft({ rec: null, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling });
+  const c = results[idx] ?? computeCraft({ rec: null, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling, anchor });
   const savings = waitSavings({ rec, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling });
   // Foco (IDEIA-002): campos validados (060) e cartão; não altera nenhum outro número da tela
   const fv = focusValues(cfg);
   const fbase = item ? focusOf(sel.id, sel.ench) : null;
-  const fs = rec && prices ? craftFocusSummary({ rec, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling, base: fbase, ...fv.values }) : null;
+  const fs = rec && prices ? craftFocusSummary({ rec, targetMid, prices, cfg: cfgEff, premium, bonusCity, feeCeiling, base: fbase, anchor, ...fv.values }) : null;
   // Comparar cidades (IDEIA-058): uma chamada de computeCraft por cidade; nenhum número do resto da tela muda
   const noTaxMap = cfg.noTax && typeof cfg.noTax === 'object' && !Array.isArray(cfg.noTax) ? cfg.noTax : {};
   const feeByCity = cfg.feeByCity && typeof cfg.feeByCity === 'object' && !Array.isArray(cfg.feeByCity) ? cfg.feeByCity : {};
@@ -82,7 +86,6 @@ export default function Crafting() {
   const audit = rec ? auditCraft({ cfg, cfgEff, daily, results, variants, idx, result: c, opts, compare, bonusCity, premium, server, now, feeCeiling, targetMid, item, targetLive }) : null;
 
   // Giro (IDEIA-010): histórico só do item final, só depois de os preços chegarem, uma requisição por item (cache de 1 h).
-  const { history, loading: histLoading, error: histError } = useHistory([targetMid], { cities: SELL_CITIES, enabled: !!rec && !!prices });
   const statsOf = (city) => (history?.[targetMid] ? loadedStats(history, targetMid, city, { now }) : null);
   const share = validateInputs({ share: cfg.share });
   const giroRows = [...new Set(opts.map((o) => o.city))].map((city) => ({ city, stats: statsOf(city) })).filter((r) => r.stats);
@@ -272,7 +275,7 @@ export default function Crafting() {
                   <div>
                     <div className="label">Melhor destino</div>
                     <div>
-                      <b>{cityLabel(best.city)}</b> · {best.label} ({fmt(best.price)}){best.noTax && <>{' '}<small className="good">sem imposto</small></>}
+                      <b>{cityLabel(best.city)}</b> · {best.label} ({fmt(best.price)}{best.anchorState === 'anchored' && c.anchor.on ? `; realista; listado ${fmt(best.listed)}` : ''}){best.noTax && <>{' '}<small className="good">sem imposto</small></>}
                     </div>
                     <div className="hint">
                       Venda líquida {fmt(best.net)}{best.noTax ? ' (sem imposto)' : ''} − custo {fmt(totalCost)}
@@ -320,6 +323,7 @@ export default function Crafting() {
         {rec && (options.length > 0 || c.bmAlt?.length > 0) && (
           <div className="card">
             <h2>Onde vender</h2>
+            <AnchorControls cfg={cfg} set={set} issues={issues.filter((i) => ['anchorOn', 'anchorK', 'anchorDays'].includes(i.field))} on={c.anchor.on} />
             {c.relist.updates > 0 && <div className="hint">O líquido das ordens de venda já desconta {c.relist.updates} atualização(ões) da ordem.</div>}
             <div className="table-wrap">
               <table>
@@ -346,6 +350,10 @@ export default function Crafting() {
                       <td>
                         <Money value={o.price} />
                         <Age ts={o.date} />
+                        {o.mode === 'order' && c.anchor.on && o.anchorState === 'anchored' && <small className="warn">realista · listado {fmt(o.listed)}</small>}
+                        {o.mode === 'order' && !c.anchor.on && o.anchorState === 'anchored' && <small className="muted">listado; o teto realista seria {fmt(o.ceiling)}</small>}
+                        {o.mode === 'order' && c.anchor.on && o.anchorState === 'nohistory' && <small className="muted">sem histórico suficiente: usando o listado</small>}
+                        {o.mode === 'order' && c.anchor.on && (o.anchorState === 'unloaded' || (!anchor && o.anchorState == null && i >= 0)) && <small className="muted">{histLoading ? 'ancoragem pendente (histórico carregando)' : 'histórico não carregado: usando o listado'}</small>}
                       </td>
                       <td><Money value={o.net} /></td>
                       <td><Money value={o.profit} signed /></td>
@@ -375,6 +383,7 @@ export default function Crafting() {
               {illusoryHint()} Sem imposto: venda fora do mercado (guilda, troca direta, encomenda), sem imposto nem taxa de criação; o preço continua sendo a referência do mercado e não garante comprador. A marca vale para todos os itens: fica salva por cidade e modo de venda, não por item. Giro: vendas registradas por dia nos últimos 7 dias completos (veja o cartão “Giro do item”).
             </p>
             <BmReadings readings={c.bm} cost={missing.length === 0 ? unitCost : null} premium={premium} median7d={statsOf(BM_CITY)?.medianPrice} />
+            {c.anchor.anchoredCount > 0 && <div className="hint">{c.anchor.anchoredCount} saída(s) com preço ancorado: o preço listado parecia isolado. A venda instantânea (ordem de compra) não é ancorada.</div>}
             {histError && <Banner kind="warn">Giro indisponível: {histError}</Banner>}
           </div>
         )}
@@ -382,7 +391,7 @@ export default function Crafting() {
         {rec && options.length > 0 && <StressTest input={craftStressInput(c, premium)} />}
 
         {rec && options.length > 0 && giroRows.length > 0 && (
-          <GiroCard rows={giroRows} units={units} sharePct={share.values.share} best={best && { city: best.city, price: best.price }} loading={histLoading}>
+          <GiroCard rows={giroRows} units={units} sharePct={share.values.share} best={best && { city: best.city, price: best.listed ?? best.price }} loading={histLoading}>
             <Field label="Parte do mercado que você espera capturar (%)" hint="Usada para estimar em quantos dias você vende o lote.">
               <NumberInput min={0} step="0.5" value={cfg.share ?? ''} onChange={(v) => set({ share: v })} placeholder="10" />
               <InputIssues issues={share.issues} field="share" />

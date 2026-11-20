@@ -50,9 +50,9 @@ const verdictOf = (source, silverPerPoint, reference) => {
  * a economia é a diferença do custo total, então só ingredientes que retornam contam e a taxa de bancada cancela (dossiê F7).
  * null se não há receita, preços, ou falta preço de algum material.
  */
-export function craftFocusSummary({ rec, targetMid, prices, cfg, premium, bonusCity, feeCeiling, base, efficiency, override, budget, reference }) {
+export function craftFocusSummary({ rec, targetMid, prices, cfg, premium, bonusCity, feeCeiling, base, efficiency, override, budget, reference, anchor }) {
   if (!rec || !prices) return null;
-  const args = { rec, targetMid, prices, premium, bonusCity, feeCeiling };
+  const args = { rec, targetMid, prices, premium, bonusCity, feeCeiling, anchor };
   const on = computeCraft({ ...args, cfg: { ...cfg, focus: true } });
   const off = computeCraft({ ...args, cfg: { ...cfg, focus: false } });
   if (on.missing.length || off.missing.length) return null;
