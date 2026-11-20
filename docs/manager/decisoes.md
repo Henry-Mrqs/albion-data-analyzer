@@ -337,3 +337,6 @@ Usuário pediu menos uso de API: relatórios curtos, só Pesquisador + Planejado
 
 ## D-069 — Respostas ao Planejador (lote 3)
 064 só o filtro da busca (resto fora); limiares de 062/061/053 aprovados como "regra do app" (constantes de produto, sem fonte); 003 fora do lucro das opções (cartão à parte); catálogo: 003 antes da 009 (ambas regeram catalog.json e a fixture); 051 reusa `share` do Giro (10%) e 3 dias de venda; 009 taxa de encantar = campo "não verificado" padrão 0. Ordem de execução: 062 → 053 → 051 → 064 → 003 → 009 → 061, depois de 005 → 059 → 065 → 012 e das 085/086/088/089 (alta). Execução aguarda liberação do usuário (D-067).
+
+## D-070 — Pipeline em lote (pedido do usuário 2026-11-20)
+Usuário liberou os agentes e pediu fases em lote: (1) planos de TODAS as ideias; (2) Executor codifica tudo em sequência (uma branch de integração, um commit por ideia); (3) Tester testa tudo, com o Executor à mão para corrigir e devolver; (4) Deployer sobe tudo no fim. O portão de qualidade continua: nada vai para produção sem Tester APROVADO; cada ideia só conta depois de verificada em produção. Relatórios curtos ao usuário.
