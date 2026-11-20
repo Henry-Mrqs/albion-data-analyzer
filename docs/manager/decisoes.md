@@ -343,3 +343,6 @@ Usuário liberou os agentes e pediu fases em lote: (1) planos de TODAS as ideias
 
 ## D-071 — Respostas ao Planejador final
 088: o cabeçalho usa a leitura MENOR do Mercado Negro (lado seguro) até haver conferência em jogo, dito na tela, mostrando as duas leituras rotuladas "NÃO VERIFICADO em jogo"; 089: aceito (volume/dia maior em itens novos); 013: varredura só em recorte (categoria + tier + encanto), nunca o catálogo inteiro; 086: `flip:cfg` e chaves do Mercado ficam "fora da v1 do auditor" com motivo declarado; 073: `fmt(-0.5)` fica '0'. Ordem em docs/plans/ORDEM.md (085, 089, 086, 074, 088, 072, 073, 082, 083, 059, 065, 012, 062, 053, 051, 064, 003, 009, 061, 007, 011, 036, 013, 080, 079, 077, 084, 087), com a 005 mesclada primeiro.
+
+## D-072 — 089 no lote
+Aprovado atualizar a asserção do teste existente `liquidity.test.js` ("o dia de hoje (parcial) fica fora", esperava divisor 7) SOMENTE se a série do teste cobrir menos que a janela (então o divisor correto muda por desenho) ou se o resultado continuar 7 para série completa; o Executor prova com cálculo próprio e registra em docs/qa/BATCH1-NOTAS.md. Mutações do plano da 088 ficam para o Tester.
