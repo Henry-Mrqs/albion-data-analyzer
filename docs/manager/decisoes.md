@@ -331,3 +331,6 @@ D1 (flake de tempo de App.errors.test.jsx, teste da 071 perto do limite de 4 s) 
 
 ## D-067 — Pausa de execução por pedido do usuário (2026-11-20)
 Usuário pediu menos uso de API: relatórios curtos, só Pesquisador + Planejador trabalhando (modelo haiku) para achar/validar ideias; quando todas estiverem documentadas, o usuário libera Executor/Tester/Deployer. Estado: 23/50; 005 aprovada (deploy 24 pendente); 12 dossiês sem plano → planos em curso.
+
+## D-068 — Respostas ao Pesquisador (013/007/011/036)
+013: ordenação padrão por lucro por craft, lucro por dia como opção (exige giro). 011: janelas configuráveis (padrão 14 e 29 dias, não 30). Dúvida de dado a conferir: o que o Mercado Negro paga (buy_price_max ~2.600 × sell_price_min ~10.800) — nova IDEIA-088 (auditar o uso de buy_price_max no Mercado Negro em flip.js/exits.js/066) e correção do divisor de dias do windowStats (IDEIA-089), ambas prioridade alta por serem possíveis erros de dado em produção. Conferências em jogo pedidas ao usuário: preço pago pelo Mercado Negro por T4 qualidade 1 (e se aceita qualidade igual ou superior); tempo de 1 Broadsword T4 e 1 prancha T4.
