@@ -3,6 +3,7 @@
 // Série: [{ t: ms UTC do dia, n: item_count, p: avg_price }] (ver history.js).
 
 // Constantes de produto (decisão D-034 do Gerente; nenhuma tem fonte de jogo). Ficam juntas para ajuste fácil.
+export const HISTORY_API_DAYS = 29; // observado em 2026-11-19 (dossiê 011 H2); NÃO VERIFICADO se é fixo da API
 export const HISTORY_DAYS = 7; // janela de dias COMPLETOS: termina na véspera (UTC); hoje, parcial, fica fora
 export const NO_TURNOVER_PER_DAY = 5; // abaixo disto: "sem giro"
 export const LOW_TURNOVER_PER_DAY = 15; // abaixo disto: "pouco giro"
@@ -32,23 +33,27 @@ const median = (xs) => {
  *  idle    há série, mas nenhum dia na janela (sem venda registrada)
  *  sparse  1 a MIN_POINTS_IN_WINDOW-1 dias com dado (dados insuficientes: sem veredito de giro)
  *  none / low / ok  pelos limiares de vendas por dia
- * volumePerDay = soma(n da janela) / days; dia sem registro conta 0. points = dias com dado (de windowDays).
+ * volumePerDay = soma(n da janela) / windowDays (dias que a série cobre, ≤ days); dia sem registro conta 0. points = dias com dado (de windowDays).
  */
 export function windowStats(series, { now = Date.now(), days = HISTORY_DAYS } = {}) {
-  const base = { state: 'nodata', volumePerDay: 0, points: 0, windowDays: days, medianPrice: null, lastRecord: null };
+  const base = { state: 'nodata', volumePerDay: 0, points: 0, windowDays: days, requestedDays: days, medianPrice: null, lastRecord: null };
   if (!Array.isArray(series) || !series.length) return base;
   const { fromMs, toMs } = windowOf(now, days);
   const inWin = series.filter((x) => x.t >= fromMs && x.t < toMs);
   const lastRecord = series.reduce((m, x) => Math.max(m, x.t), -Infinity);
   if (!inWin.length) return { ...base, state: 'idle', lastRecord };
-  const volumePerDay = inWin.reduce((a, x) => a + x.n, 0) / days;
+  // Divisor: dias da janela que a série cobre (do 1º registro da série até o fim da janela, no máximo `days`).
+  // Dia sem registro dentro desse intervalo conta 0 (D-034); NÃO é "dias com registro". Regra do app, sem fonte de jogo.
+  const firstRecord = series.reduce((m, x) => Math.min(m, x.t), Infinity);
+  const windowDays = Math.max(1, Math.min(days, Math.floor((toMs - Math.max(fromMs, firstRecord)) / DAY_MS)));
+  const volumePerDay = inWin.reduce((a, x) => a + x.n, 0) / windowDays;
   const medianPrice = median(inWin.map((x) => x.p));
   const points = inWin.length;
   let state = 'ok';
   if (points < MIN_POINTS_IN_WINDOW) state = 'sparse';
   else if (volumePerDay < NO_TURNOVER_PER_DAY) state = 'none';
   else if (volumePerDay < LOW_TURNOVER_PER_DAY) state = 'low';
-  return { state, volumePerDay, points, windowDays: days, medianPrice, lastRecord };
+  return { state, volumePerDay, points, windowDays, requestedDays: days, medianPrice, lastRecord };
 }
 
 /** Dias para vender `qty` unidades capturando `sharePct`% do volume diário. null se não houver conta válida. */
@@ -87,7 +92,7 @@ const ddmm = (ms) => {
  */
 export function loadedStats(data, mid, city, opts) {
   const series = data?.[mid]?.[city];
-  if (series === undefined) return { state: 'unloaded', volumePerDay: 0, points: 0, windowDays: opts?.days ?? HISTORY_DAYS, medianPrice: null, lastRecord: null };
+  if (series === undefined) return { state: 'unloaded', volumePerDay: 0, points: 0, windowDays: opts?.days ?? HISTORY_DAYS, requestedDays: opts?.days ?? HISTORY_DAYS, medianPrice: null, lastRecord: null };
   return windowStats(series, opts);
 }
 

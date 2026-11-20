@@ -26,10 +26,13 @@ export function GiroCard({ rows, units, sharePct, best, loading, children }) {
   const bestStats = rows.find((r) => r.city === best?.city)?.stats;
   const usable = bestStats && ['ok', 'low', 'none'].includes(bestStats.state);
   const gap = usable && best ? priceVsMedian(best.price, bestStats.medianPrice) : null;
+  const ref = bestStats ?? rows[0]?.stats;
+  const short = ref && ref.windowDays < ref.requestedDays ? ref : null;
   return (
     <div className="card stack">
       <h2>Giro do item</h2>
       <div className="hint">Vendas registradas por dia nos últimos 7 dias completos (hoje fica de fora). Dados colaborativos da API: dia sem registro conta como 0 vendas, por isso o contador de dias com dados.</div>
+      {short && <div className="hint">Atenção: a série cobre só {short.windowDays} dias (item novo ou histórico curto da API); o volume por dia usa esses dias.</div>}
       {children}
       {gap != null && gap > PRICE_ABOVE_MEDIAN_WARN && (
         <Banner kind="warn">

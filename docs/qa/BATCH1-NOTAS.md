@@ -17,3 +17,6 @@ Implementação e 8 testes novos prontos e verdes (exceto esse): `docs/qa/IDEIA-
 - Medição: 0/12 falhas do arquivo sob 3 suítes `ui` em paralelo (antes não medido); não repeti 30x nem 10x `npm run check`. Sem retry/skip/aumento de timeout global.
 
 ## IDEIA-089 — PULADA (ver acima); IDEIA-086 — feita (contrato + tela Premium + cartão); IDEIA-074 — feita (só testes).
+
+## IDEIA-089 — FEITA (D-072)
+Patch aplicado. Teste existente `liquidity.test.js > "o dia de hoje (parcial) fica fora"` atualizado de 3 para 7: série de 23 a 25/10 (3 dias), `now`=26/10, janela de 7 dias, soma 21; cobertura = (26/10 00:00 − 23/10 00:00)/1 dia = 3 dias; 21/3 = 7. Condição da D-072 (série cobre menos que a janela) atendida. Task 2: dica no `GiroCard` (usa a linha do melhor destino, ou a 1ª linha se não houver).

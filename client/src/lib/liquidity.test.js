@@ -146,7 +146,8 @@ describe('janela de dias completos', () => {
   it('o dia de hoje (parcial) fica fora', () => {
     const s = windowStats([...flat(21, 3, 23), { t: D(26), n: 9999, p: 1 }], { now });
     expect(s.points).toBe(3);
-    expect(s.volumePerDay).toBeCloseTo(3, 6);
+    // IDEIA-089/D-072: a série (23 a 25/10) cobre 3 dias da janela: 21 / 3 = 7 (antes 21 / 7 = 3)
+    expect(s.volumePerDay).toBeCloseTo(7, 6);
   });
   it('o primeiro dia (há 7 dias) entra; o de há 8 dias não', () => {
     expect(windowStats(pt(D(19)), { now }).points).toBe(1);
@@ -252,5 +253,57 @@ describe('verdictLabel', () => {
     expect(t.low).toBe('pouco giro');
     expect(t.ok).toBe('giro ok');
     expect(new Set(Object.values(t)).size).toBe(6);
+  });
+});
+
+// IDEIA-089: divisor = dias da janela que a série cobre (a API history devolve ~29 dias, não 30).
+describe('windowStats: divisor pelos dias que a série cobre (IDEIA-089)', () => {
+  const DAY = 86400000;
+  const t0 = Date.UTC(2026, 9, 21);
+  const now89 = Date.parse('2026-11-19T12:00:00Z');
+  const s29 = Array.from({ length: 29 }, (_, i) => ({ t: t0 + i * DAY, n: i < 28 ? 310 : 306, p: 8000 }));
+  const ate = (nDias, n) => Array.from({ length: nDias }, (_, i) => ({ t: Date.UTC(2026, 10, 19) - (nDias - i) * DAY, n, p: 100 }));
+
+  it('janela de 30 dias sobre série de 29: divide por 29, não por 30', () => {
+    const r = windowStats(s29, { now: now89, days: 30 });
+    expect(r.volumePerDay).toBeCloseTo(8986 / 29, 6);
+    expect(r.volumePerDay).not.toBeCloseTo(8986 / 30, 3);
+    expect([r.windowDays, r.requestedDays, r.points]).toEqual([29, 30, 29]);
+  });
+  it('janela de 7 dias com série longa continua 7', () => {
+    const r = windowStats(s29, { now: now89, days: 7 });
+    expect(r.volumePerDay).toBeCloseTo(2166 / 7, 4);
+    expect([r.windowDays, r.requestedDays]).toEqual([7, 7]);
+  });
+  it('item novo: 10 pontos, days 30 divide por 10', () => {
+    const r = windowStats(ate(10, 309.6), { now: now89, days: 30 });
+    expect(r.volumePerDay).toBeCloseTo(309.6, 6);
+    expect([r.windowDays, r.points]).toEqual([10, 10]);
+  });
+  it('3 dias de existência, 100/dia, days 7: 100 por dia', () => {
+    const r = windowStats(ate(3, 100), { now: now89, days: 7 });
+    expect(r.volumePerDay).toBe(100);
+    expect([r.windowDays, r.points]).toEqual([3, 3]);
+  });
+  it('buraco dentro do que a série cobre continua contando 0', () => {
+    const old = { t: Date.UTC(2026, 10, 19) - 20 * DAY, n: 50, p: 100 };
+    const rec = [1, 2, 3, 4].map((k) => ({ t: Date.UTC(2026, 10, 19) - k * DAY, n: 100, p: 100 }));
+    const r = windowStats([old, ...rec], { now: now89, days: 7 });
+    expect(r.volumePerDay).toBeCloseTo(400 / 7, 6);
+    expect(r.windowDays).toBe(7);
+  });
+  it('série vazia: nodata e só dados fora da janela: idle, ambos com windowDays = days', () => {
+    expect(windowStats([], { now: now89, days: 30 }).windowDays).toBe(30);
+    const r = windowStats([{ t: Date.UTC(2026, 8, 1), n: 5, p: 1 }], { now: now89, days: 7 });
+    expect([r.state, r.windowDays]).toEqual(['idle', 7]);
+  });
+  it('estado segue por points e volume: 2 pontos = sparse; série de 1 ponto não dá NaN', () => {
+    expect(windowStats(ate(2, 100), { now: now89, days: 7 }).state).toBe('sparse');
+    const r = windowStats(ate(1, 100), { now: now89, days: 7 });
+    expect(Number.isFinite(r.volumePerDay)).toBe(true);
+    expect(r.windowDays).toBe(1);
+  });
+  it('coverageLabel usa windowDays', () => {
+    expect(coverageLabel(windowStats(s29, { now: now89, days: 30 }))).toBe('29 de 29 dias com dados');
   });
 });
