@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { usePersisted } from '../lib/settings';
 import { fmt } from '../lib/econ';
 import { ageLabel } from '../lib/market';
@@ -13,10 +14,11 @@ export default function Premium() {
   const [cfg, setCfg] = usePersisted('premium:cfg', { gold: '', goldCost: '', volume: '', silverPerFocus: '', focusPerDay: '' });
   const set = (patch) => setCfg((c) => ({ ...c, ...patch }));
   const { gold: api, loading, error, refresh } = useGold();
+  const [now] = useState(Date.now);
 
   const { values, issues } = cleanPremiumInputs(cfg);
   const res = premiumBalance(values);
-  const audit = auditPremium({ cfg, values, issues, res, gold: api, now: Date.now() });
+  const audit = auditPremium({ cfg, values, issues, res, gold: api, now });
 
   return (
     <div className="grid-2">
