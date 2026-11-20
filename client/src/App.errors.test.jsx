@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { resetApp, pricesHook } from './test/ui';
+import { warmTabs } from './test/lazyWarm';
 
 const { priceHook, histHook } = vi.hoisted(() => ({ priceHook: vi.fn(), histHook: vi.fn() }));
 vi.mock('./lib/market', async (orig) => ({ ...(await orig()), usePrices: priceHook, fetchPrices: vi.fn(async () => ({})) }));
@@ -20,8 +21,12 @@ vi.mock('./components/Refining', async (orig) => {
 import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
 
+// Prazo único para findBy/waitFor sobre aba lazy (o import() custa mais de 1 s sob carga).
+const SLOW = { timeout: 10000 };
 const TITULO = /Algo deu errado ao mostrar esta tela/;
 let spy;
+
+beforeAll(warmTabs, 30000);
 
 beforeEach(() => {
   resetApp();
@@ -43,10 +48,16 @@ const abrirApp = (hash, wrap = false) => {
 const aba = (nome) => screen.getByRole('button', { name: new RegExp(`^${nome}$`) });
 
 describe('App: limite de erro por aba (IDEIA-071)', () => {
+  it('warmTabs resolve todas as abas lazy antes dos testes (IDEIA-085)', async () => {
+    const mods = await warmTabs();
+    expect(mods).toHaveLength(6);
+    for (const m of mods) expect(typeof m.default).toBe('function');
+  });
+
   it('aba que lança: fallback dentro da área da aba; cabeçalho, abas e rodapé continuam na tela', async () => {
     globalThis.__quebra = true;
     abrirApp('#refining');
-    expect(await screen.findByText(TITULO)).toBeTruthy();
+    expect(await screen.findByText(TITULO, undefined, SLOW)).toBeTruthy();
     for (const n of ['Mercado', 'Refino', 'Craft', 'Flipper', 'RRR']) expect(aba(n)).toBeTruthy();
     expect(screen.getByText('DATA')).toBeTruthy();
     expect(screen.getByText(/Albion Online Data Project/)).toBeTruthy();
@@ -55,33 +66,33 @@ describe('App: limite de erro por aba (IDEIA-071)', () => {
   it('trocar para outra aba recupera (resetKey = aba): #crafting renderiza normalmente sem recarregar', async () => {
     globalThis.__quebra = true;
     abrirApp('#refining');
-    await screen.findByText(TITULO);
+    await screen.findByText(TITULO, undefined, SLOW);
     fireEvent.click(aba('Craft'));
-    expect(await screen.findByText(/Materiais \(/)).toBeTruthy();
+    expect(await screen.findByText(/Materiais \(/, undefined, SLOW)).toBeTruthy();
     expect(screen.queryByText(TITULO)).toBeNull();
   });
 
   it('voltar para a aba quebrada depois de corrigir a causa também recupera', async () => {
     globalThis.__quebra = true;
     abrirApp('#refining');
-    await screen.findByText(TITULO);
+    await screen.findByText(TITULO, undefined, SLOW);
     fireEvent.click(aba('Mercado'));
     globalThis.__quebra = false;
     fireEvent.click(aba('Refino'));
-    expect(await screen.findByRole('heading', { name: 'Refino' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Refino' }, SLOW)).toBeTruthy();
   });
 
   it('o limite de fora (main) não aparece quando só uma aba quebra', async () => {
     globalThis.__quebra = true;
     abrirApp('#refining', true);
-    await screen.findByText(TITULO);
+    await screen.findByText(TITULO, undefined, SLOW);
     expect(screen.queryByText('O app parou')).toBeNull();
     expect(screen.getAllByRole('alert')).toHaveLength(1);
   });
 
   it('rodapé mostra o botão Restaurar configurações (compact) e ele abre a confirmação', async () => {
     abrirApp('#refining');
-    await screen.findByRole('heading', { name: 'Refino' });
+    await screen.findByRole('heading', { name: 'Refino' }, SLOW);
     const rodape = document.querySelector('.footer');
     const b = within(rodape).getByRole('button', { name: /restaurar configurações/i });
     fireEvent.click(b);
@@ -110,7 +121,7 @@ describe('estados salvos corrompidos NÃO derrubam nenhuma aba (regressão do la
     PERFIS[perfil]();
     abrirApp(`#${hash}`);
     // espera o conteúdo da aba (lazy) sair do Suspense
-    await vi.waitFor(() => expect(document.querySelector('.app').textContent.length).toBeGreaterThan(400));
+    await vi.waitFor(() => expect(document.querySelector('.app').textContent.length).toBeGreaterThan(400), SLOW);
     expect(screen.queryByText(TITULO)).toBeNull();
     expect(document.querySelector('.app').textContent).not.toMatch(/NaN|undefined|\[object/);
   });
