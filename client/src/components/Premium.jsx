@@ -4,8 +4,10 @@ import { ageLabel } from '../lib/market';
 import { useGold } from '../lib/gold';
 import { DAILY_FOCUS_PREMIUM } from '../lib/focusConsts';
 import { NOT_COUNTED, PREMIUM, cleanPremiumInputs, premiumBalance } from '../lib/premium';
+import { auditPremium } from '../lib/audit/premium';
 import InputIssues from './InputIssues';
 import { Banner, Field, Money, NumberInput } from './ui';
+import VarAuditCard from './VarAuditCard';
 
 export default function Premium() {
   const [cfg, setCfg] = usePersisted('premium:cfg', { gold: '', goldCost: '', volume: '', silverPerFocus: '', focusPerDay: '' });
@@ -14,6 +16,7 @@ export default function Premium() {
 
   const { values, issues } = cleanPremiumInputs(cfg);
   const res = premiumBalance(values);
+  const audit = auditPremium({ cfg, values, issues, res, gold: api, now: Date.now() });
 
   return (
     <div className="grid-2">
@@ -119,6 +122,7 @@ export default function Premium() {
               <span className="hint">Estimativa, com os números que você informou. Custo = {fmt(values.goldCost)} ouro × preço do ouro.</span>
             </>
           )}
+          <VarAuditCard audit={audit} />
         </div>
 
         <Banner kind="warn" title="O que este cálculo não conta">

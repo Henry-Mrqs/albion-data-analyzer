@@ -5,10 +5,12 @@ import { describe, expect, it } from 'vitest';
 import { PERSISTED } from '../persistSchemas';
 import { CURRENT_DEFAULTS } from '../../test/savedStates';
 import { setFields } from '../../test/setFields';
-import { getScreen, screenIds, uncoveredFields } from './registry';
+import { getScreen, screenIds, uncoveredFields, uncoveredKeys, uncoveredTabs } from './registry';
+import { TAB_AUDIT, UNAUDITED } from './tabs';
 import './craft';
 import './refine';
 import './rrr';
+import './premium';
 
 const COMP = join(import.meta.dirname, '..', '..', 'components');
 const read = (f) => readFileSync(join(COMP, f), 'utf8');
@@ -19,6 +21,7 @@ const SET_FILES = {
   'refine:cfg': ['Refining.jsx', 'FocusCard.jsx'],
   'rrr:cfg': ['RrrCalculator.jsx'],
   'target:cfg': ['TargetPrice.jsx'],
+  'premium:cfg': ['Premium.jsx'],
 };
 
 /** Todo campo que a chave pode guardar: esquema ∪ padrões ∪ campos de set({...}) dos arquivos da tela. */
@@ -54,11 +57,12 @@ describe('contrato do auditor: cada campo salvo tem linha (ou motivo em ignoredF
     expect(uncoveredFields('t', d, { k: ['a', 'velho'] })).toEqual([]);
   });
 
-  it('as 3 telas v1 estão registradas, com as chaves certas; Craft e Refino cobrem também target:cfg (o cartão Preço-alvo mora nelas)', () => {
-    expect(screenIds().sort()).toEqual(['craft', 'refine', 'rrr']);
+  it('as telas registradas são craft, premium, refine, rrr; Craft e Refino cobrem também target:cfg (o cartão Preço-alvo mora nelas)', () => {
+    expect(screenIds().sort()).toEqual(['craft', 'premium', 'refine', 'rrr']);
     expect(getScreen('craft').cfgKeys).toEqual(['craft:cfg', 'target:cfg']);
     expect(getScreen('refine').cfgKeys).toEqual(['refine:cfg', 'target:cfg']);
     expect(getScreen('rrr').cfgKeys).toEqual(['rrr:cfg']);
+    expect(getScreen('premium').cfgKeys).toEqual(['premium:cfg']);
     // os campos de target:cfg que o contrato vigia (se alguém tirar target:cfg do registro, o teste acima reprova)
     expect(savedFieldsOf('target:cfg').sort()).toEqual(['goal', 'margin', 'mode', 'profit', 'relists']);
   });
@@ -83,4 +87,27 @@ describe('contrato do auditor: cada campo salvo tem linha (ou motivo em ignoredF
       ).toEqual([]);
     });
   }
+});
+
+describe('contrato do auditor: chave salva e aba sem tela (IDEIA-086)', () => {
+  const screens = () => screenIds().map(getScreen);
+  it('CONTRATO REAL: toda chave de PERSISTED está numa tela registrada ou em UNAUDITED', () => {
+    const miss = uncoveredKeys(Object.keys(PERSISTED), screens(), UNAUDITED);
+    expect(miss, `chave salva sem tela no auditor: ${miss.join(', ')}. Registre a tela (registerScreen) ou acrescente em UNAUDITED com motivo em lib/audit/tabs.js`).toEqual([]);
+  });
+  it('mutação: uma chave nova em PERSISTED reprova nomeando a chave', () => {
+    expect(uncoveredKeys([...Object.keys(PERSISTED), 'zz:nova'], screens(), UNAUDITED)).toEqual(['zz:nova']);
+  });
+  it('CONTRATO REAL: toda aba de App.jsx (TABS) está em TAB_AUDIT; o teste lê os ids do texto de App.jsx', () => {
+    const app = readFileSync(join(import.meta.dirname, '..', '..', 'App.jsx'), 'utf8');
+    const ids = [...app.matchAll(/\{ id: '([a-z]+)', label:/g)].map((m) => m[1]);
+    expect(ids).toEqual(['market', 'refining', 'crafting', 'flipper', 'rrr', 'premium']); // se a lista mudar, revise o auditor
+    const miss = uncoveredTabs(ids, TAB_AUDIT, screenIds());
+    expect(miss, `aba sem tela no auditor: ${miss.join(', ')}`).toEqual([]);
+  });
+  it('mutação: se TAB_AUDIT perde "premium", o contrato reprova nomeando premium', () => {
+    const sem = { ...TAB_AUDIT };
+    delete sem.premium;
+    expect(uncoveredTabs(Object.keys(TAB_AUDIT), sem, screenIds())).toEqual(['premium']);
+  });
 });

@@ -89,6 +89,13 @@ describe('auditScreen', () => {
   });
 });
 
+describe('affects "balance" (IDEIA-086)', () => {
+  it("'balance' é aceito e 'saldo' continua inválido", () => {
+    expect(() => registerScreen(uid(), def([okVar({ affects: 'balance' })]))).not.toThrow();
+    expect(() => registerScreen(uid(), def([okVar({ affects: 'saldo' })]))).toThrow(/affects/);
+  });
+});
+
 describe('uncoveredFields', () => {
   it('lista campo sem var e sem ignoredFields, nomeando tela, chave e campo', () => {
     const d = { cfgKeys: ['k:cfg'], ignoredFields: { velho: 'legado' }, vars: [okVar({ fields: ['a', 'b'] })] };

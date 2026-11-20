@@ -6,7 +6,8 @@ import { countRows, row } from './core';
 
 const KINDS = ['applied', 'info-only', 'not-considered'];
 // 'rrr' = a Calculadora de RRR não tem custo nem lucro: o teste de sensibilidade mede o RRR e o retorno da receita
-const AFFECTS = ['cost', 'profit', 'rrr', 'none'];
+// 'balance' = saldo de 30 dias da aba Premium (IDEIA-086)
+export const AFFECTS = ['cost', 'profit', 'rrr', 'balance', 'none'];
 const SCREENS = new Map();
 
 /**
@@ -73,4 +74,30 @@ export function uncoveredFields(screenId, def, fieldsByKey) {
   const out = [];
   for (const cfgKey of def.cfgKeys) for (const field of fieldsByKey[cfgKey] ?? []) if (!covered.has(field)) out.push({ screen: screenId, cfgKey, field });
   return out;
+}
+
+const hasReason = (s) => typeof s === 'string' && s.trim() !== '';
+
+/**
+ * Chaves salvas que NENHUMA tela cobre em cfgKeys e que não estão em `unaudited` com motivo (IDEIA-086).
+ * screens = [{ cfgKeys }]; unaudited = { [chave]: motivo }.
+ */
+export function uncoveredKeys(persistedKeys, screens, unaudited) {
+  const covered = new Set((Array.isArray(screens) ? screens : []).flatMap((s) => s?.cfgKeys ?? []));
+  const un = unaudited && typeof unaudited === 'object' ? unaudited : {};
+  return (persistedKeys ?? []).filter((k) => !covered.has(k) && !hasReason(un[k]));
+}
+
+/**
+ * Abas sem cobertura: ausente do mapa; `screen` que não está registrada; ou `screen` null sem `reason` (IDEIA-086).
+ * tabAudit = { [aba]: { screen: string|null, reason? } }.
+ */
+export function uncoveredTabs(tabIds, tabAudit, screenIds_) {
+  const known = new Set(screenIds_ ?? []);
+  return (tabIds ?? []).filter((id) => {
+    const t = tabAudit?.[id];
+    if (!t) return true;
+    if (t.screen != null) return !known.has(t.screen);
+    return !hasReason(t.reason);
+  });
 }
