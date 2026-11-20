@@ -363,10 +363,10 @@ export function validateExtras(list) {
   return { values, issues };
 }
 
-/** Mapa de saídas sem imposto: só chaves 'Cidade|order' ou 'Cidade|instant' com valor `true` sobrevivem (resto some em silêncio). */
+/** Mapa de saídas sem imposto: só chaves 'Cidade|order', 'Cidade|instant' ou 'Black Market|list' (IDEIA-088) com valor `true` sobrevivem (resto some em silêncio). */
 export function cleanNoTax(map) {
   const out = {};
   if (map === null || typeof map !== 'object' || Array.isArray(map)) return out;
-  for (const k of Object.keys(map)) if (map[k] === true && /^.+\|(order|instant)$/.test(k)) out[k] = true;
+  for (const k of Object.keys(map)) if (map[k] === true && /^.+\|(order|instant|list)$/.test(k)) out[k] = true;
   return out;
 }

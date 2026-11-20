@@ -8,7 +8,7 @@ export const DEFAULT_MAX_AGE_H = 24;
 
 const H = 3600000;
 // Mesma regra do fresh() do Flipper (flip.js): sem data = velho; maxAgeH 0 desliga o limite.
-const isFresh = (date, now, maxAgeH) => !!date && (!maxAgeH || now - date <= maxAgeH * H);
+export const isFresh = (date, now, maxAgeH) => !!date && (!maxAgeH || now - date <= maxAgeH * H);
 const params = ({ now = Date.now(), maxAgeH = DEFAULT_MAX_AGE_H } = {}) => ({ now, maxAgeH });
 
 /** Ordem de compra de uma cidade: { buyer, price, date, stale }. buyer = há ordem de compra fresca. */

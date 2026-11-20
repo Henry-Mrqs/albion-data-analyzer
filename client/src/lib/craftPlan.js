@@ -1,6 +1,7 @@
 // Lógica de cálculo da tela de Craft (pura: sem React, fetch ou localStorage).
 import { REFINING, recipeValue, nameOf, refinedTypeOf, tierOf } from './catalog';
 import { SELL_CITIES, quote } from './market';
+import { BM_CITY, BM_READING_VERIFIED, bmHeadline, bmLabel, bmReadings } from './blackMarket';
 import { cleanCraftCfg } from './inputRules';
 import { extrasTotal } from './extras';
 import { rrr as calcRRR, resolveRRR, refineUnit, refineChainIds, buyQuote, materialPlan, netSale, stationFee, roundFee } from './econ';
@@ -45,7 +46,7 @@ function sub0(lines) {
   return out;
 }
 
-export function computeCraft({ rec, targetMid, prices, cfg: rawCfg, premium, bonusCity, feeCeiling }) {
+export function computeCraft({ rec, targetMid, prices, cfg: rawCfg, premium, bonusCity, feeCeiling, bmVerified = BM_READING_VERIFIED }) {
   // IDEIA-060: entradas fora da faixa são corrigidas aqui (a lib se defende sozinha) e devolvidas como `issues`
   const refineTypes = rec ? [...new Set(rec.res.filter((r) => canRefineUniq(r.uniq)).map((r) => refinedTypeOf(r.uniq)))] : [];
   const { cfg, issues } = cleanCraftCfg(rawCfg, { premium, feeCeiling, refineTypes });
@@ -119,8 +120,37 @@ export function computeCraft({ rec, targetMid, prices, cfg: rawCfg, premium, bon
     if (buy.price > 0) options.push({ city, mode: 'instant', label: 'Ordem de compra', price: buy.price, date: buy.date });
     if (sell.price > 0 && city !== 'Black Market') options.push({ city, mode: 'order', label: 'Ordem de venda', price: sell.price, date: sell.date });
   }
+  // IDEIA-088: o Mercado Negro tem duas leituras (compra = buy_price_max, lista = sell_price_min) e NÃO se sabe qual o jogador recebe.
+  // A leitura do cabeçalho (a confirmada; sem confirmação, a MENOR) fica em `options` (e pode ser o melhor destino); a outra vai para
+  // `bmAlt` (mesmos números, nunca é o melhor destino). Só lista (sem ordem de compra) também vai para `bmAlt`: uma leitura não verificada
+  // não é promovida a melhor destino. `options` sem Mercado Negro, ou só com compra, é idêntico ao de antes (campos acrescentados à parte).
+  const bm = bmReadings(prices, targetMid);
+  const bmAlt = [];
+  if (bm.buy || bm.list) {
+    const head = bmHeadline(bm, bmVerified);
+    const primary = bmVerified ? head : bm.buy ? head : null;
+    const buyOpt = options.find((o) => o.city === BM_CITY && o.mode === 'instant');
+    const listOpt = bm.list && { city: BM_CITY, mode: 'instant', reading: 'list', label: bmLabel('list', bmVerified), price: bm.list.price, date: bm.list.date, unverified: bmVerified !== 'list' };
+    if (buyOpt) {
+      buyOpt.reading = 'buy';
+      buyOpt.unverified = bmVerified !== 'buy';
+      if (bm.list) buyOpt.label = bmLabel('buy', bmVerified);
+    }
+    if (listOpt && primary === 'list') options.push(listOpt);
+    else if (listOpt) bmAlt.push(listOpt);
+    if (buyOpt && primary !== 'buy') {
+      options.splice(options.indexOf(buyOpt), 1);
+      bmAlt.push(buyOpt);
+    }
+  }
   options.forEach((o) => {
-    o.noTax = cfg.noTax[`${o.city}|${o.mode}`] === true; // venda fora do mercado: sem imposto e sem taxa de criação (X3)
+    o.noTax = cfg.noTax[noTaxKey(o)] === true; // venda fora do mercado: sem imposto e sem taxa de criação (X3)
+    o.net = netSale(o.price, o.noTax ? 'none' : o.mode, premium) * units;
+    o.profit = o.net - totalCost;
+    o.margin = totalCost > 0 ? (o.profit / totalCost) * 100 : 0;
+  });
+  bmAlt.forEach((o) => {
+    o.noTax = cfg.noTax[noTaxKey(o)] === true;
     o.net = netSale(o.price, o.noTax ? 'none' : o.mode, premium) * units;
     o.profit = o.net - totalCost;
     o.margin = totalCost > 0 ? (o.profit / totalCost) * 100 : 0;
@@ -146,8 +176,11 @@ export function computeCraft({ rec, targetMid, prices, cfg: rawCfg, premium, bon
   const refinable = lines.filter((l) => l.cmp);
   const allBest = refinable.length > 0 && refinable.every((l) => l.mode === 'best');
 
-  return { rates, lines, matCost, fee, extras, extrasList, totalCost, units, unitCost, missing, options, best, ready, plan, used, refinable, allBest, issues };
+  return { rates, lines, matCost, fee, extras, extrasList, totalCost, units, unitCost, missing, options, bmAlt, bm, best, ready, plan, used, refinable, allBest, issues };
 }
+
+/** Chave do interruptor "Sem imposto" de uma saída: cidade|modo; a leitura de lista do Mercado Negro tem a própria (IDEIA-088). */
+export const noTaxKey = (o) => `${o.city}|${o.reading === 'list' ? 'list' : o.mode}`;
 
 // Economia mínima (prata) para contar como ganho: decisão de produto sem fonte; o mesmo limiar do comparativo de refino da tela.
 export const GAIN_THRESHOLD = 0.5;
