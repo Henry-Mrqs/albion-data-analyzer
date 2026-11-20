@@ -13,7 +13,7 @@ import { DEFAULT_MAX_AGE_H, annotateOptions, illusoryHint, pickExit } from '../l
 import { pickCheapest, resolveVariant, returnBadge } from '../lib/recipeAlt';
 import { useHistory } from '../lib/history';
 import { loadedStats } from '../lib/liquidity';
-import { validateInputs } from '../lib/inputRules';
+import { mergeIssues, validateInputs } from '../lib/inputRules';
 import { craftFocusSummary, focusValues } from '../lib/focus';
 import { compareCraftCities } from '../lib/cityCompare';
 import CityCompare from './CityCompare';
@@ -25,7 +25,7 @@ import { useSettings, usePersisted } from '../lib/settings';
 import ItemSelector from './ItemSelector';
 import FeeField from './FeeField';
 import DailyWait from './DailyWait';
-import InputIssues, { CorrectedBadge, mergeIssues } from './InputIssues';
+import InputIssues, { CorrectedBadge } from './InputIssues';
 import PriceMatrix from './PriceMatrix';
 import TargetPrice from './TargetPrice';
 import { exitNoTaxByMode } from '../lib/targetPrice';

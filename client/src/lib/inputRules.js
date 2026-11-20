@@ -370,3 +370,9 @@ export function cleanNoTax(map) {
   for (const k of Object.keys(map)) if (map[k] === true && /^.+\|(order|instant|list)$/.test(k)) out[k] = true;
   return out;
 }
+
+/** Junta listas de avisos sem repetir o mesmo campo+mensagem (IDEIA-072: o selo conta também os avisos do foco). */
+export const mergeIssues = (...lists) => {
+  const seen = new Set();
+  return lists.flat().filter((i) => i && !seen.has(`${i.field}|${i.msg}`) && seen.add(`${i.field}|${i.msg}`));
+};
