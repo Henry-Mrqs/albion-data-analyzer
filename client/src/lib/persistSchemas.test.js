@@ -78,7 +78,8 @@ describe('contrato: todo campo gravado por set({...}) existe no esquema ou nos p
 });
 
 describe('contrato: toda chave usePersisted do código tem entrada em PERSISTED e padrão igual ao do componente', () => {
-  const files = readdirSync(COMP).filter((f) => f.endsWith('.jsx'));
+  // arquivos de teste (*.test.jsx) ficam de fora: só o código de produção conta (IDEIA-074)
+  const files = readdirSync(COMP).filter((f) => f.endsWith('.jsx') && !f.endsWith('.test.jsx'));
   const used = new Map();
   for (const f of files) for (const m of read(f).matchAll(/usePersisted\('([^']+)'/g)) used.set(m[1], f);
 

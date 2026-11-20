@@ -208,3 +208,10 @@ describe('FeeField', () => {
     expect(screen.queryByTestId('ceiling-notice')).toBeNull();
   });
 });
+
+describe('craftCfg() (helper) acompanha os padrões atuais (IDEIA-074, O4)', () => {
+  it('craftCfg() é igual a CURRENT_DEFAULTS["craft:cfg"]: helper e padrões não divergem em silêncio', async () => {
+    const { CURRENT_DEFAULTS } = await import('../test/savedStates');
+    expect(craftCfg()).toEqual(CURRENT_DEFAULTS['craft:cfg']);
+  });
+});
