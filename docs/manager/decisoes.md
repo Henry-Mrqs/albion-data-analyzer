@@ -334,3 +334,6 @@ Usuário pediu menos uso de API: relatórios curtos, só Pesquisador + Planejado
 
 ## D-068 — Respostas ao Pesquisador (013/007/011/036)
 013: ordenação padrão por lucro por craft, lucro por dia como opção (exige giro). 011: janelas configuráveis (padrão 14 e 29 dias, não 30). Dúvida de dado a conferir: o que o Mercado Negro paga (buy_price_max ~2.600 × sell_price_min ~10.800) — nova IDEIA-088 (auditar o uso de buy_price_max no Mercado Negro em flip.js/exits.js/066) e correção do divisor de dias do windowStats (IDEIA-089), ambas prioridade alta por serem possíveis erros de dado em produção. Conferências em jogo pedidas ao usuário: preço pago pelo Mercado Negro por T4 qualidade 1 (e se aceita qualidade igual ou superior); tempo de 1 Broadsword T4 e 1 prancha T4.
+
+## D-069 — Respostas ao Planejador (lote 3)
+064 só o filtro da busca (resto fora); limiares de 062/061/053 aprovados como "regra do app" (constantes de produto, sem fonte); 003 fora do lucro das opções (cartão à parte); catálogo: 003 antes da 009 (ambas regeram catalog.json e a fixture); 051 reusa `share` do Giro (10%) e 3 dias de venda; 009 taxa de encantar = campo "não verificado" padrão 0. Ordem de execução: 062 → 053 → 051 → 064 → 003 → 009 → 061, depois de 005 → 059 → 065 → 012 e das 085/086/088/089 (alta). Execução aguarda liberação do usuário (D-067).

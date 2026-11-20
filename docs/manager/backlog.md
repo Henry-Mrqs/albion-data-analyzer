@@ -23,8 +23,8 @@ Status possíveis: `NOVA → TRIADA → PLANEJADA → EM_EXECUÇÃO → EM_QA �
 | IDEIA-002 | **Foco**: pontos de foco gastos por craft/refino, prata/lucro por ponto de foco, "vale usar foco?" | 5 | 5 | 3 | 4 | 17 | VERIFICADA (deploy 14) |
 | IDEIA-010 | **Liquidez**: volume vendido por dia (API history) em Craft/Flipper/Mercado, aviso de item sem giro | 5 | 4 | 3 | 5 | 17 | **VERIFICADA** (deploy 11) |
 | IDEIA-012 | **Confiança do preço**: detecção de outlier, dado velho e preço isolado; selo de confiança por célula | 4 | 5 | 4 | 4 | 17 | PLANEJADA (após 065) |
-| IDEIA-003 | **Diários de trabalho (journals)**: diário vazio/cheio, prata por craft, entra no lucro | 5 | 4 | 3 | 4 | 16 | TRIADA (escopo reduzido: capacidade, IDs e preço do diário; **fama fora** por confiança BAIXA) |
-| IDEIA-009 | **Encantar**: runa/alma/relíquia — comprar .0 e encantar × craftar já encantado | 5 | 4 | 2 | 5 | 16 | TRIADA (escopo reduzido: quantidades por passo e IDs; **taxa de encantar fora**, sem fonte) |
+| IDEIA-003 | **Diários de trabalho (journals)**: diário vazio/cheio, prata por craft, entra no lucro | 5 | 4 | 3 | 4 | 16 | PLANEJADA (escopo reduzido: capacidade, IDs e preço do diário; **fama fora** por confiança BAIXA) |
+| IDEIA-009 | **Encantar**: runa/alma/relíquia — comprar .0 e encantar × craftar já encantado | 5 | 4 | 2 | 5 | 16 | PLANEJADA (escopo reduzido: quantidades por passo e IDs; **taxa de encantar fora**, sem fonte) |
 | IDEIA-017 | **Peso e transporte**: peso total do plano, lucro por kg, capacidade de montaria | 4 | 4 | 4 | 4 | 16 | NOVA |
 | IDEIA-019 | **Taxa de bancada**: presets por cidade e auditoria da fórmula (qual "item value" o jogo usa) | 4 | 5 | 4 | 3 | 16 | **VERIFICADA** (deploy 3; DT-001 quitada) |
 | IDEIA-023 | **Calculadora de RRR** isolada com tabela de referência de todos os bônus | 3 | 5 | 5 | 3 | 16 | **VERIFICADA** (deploy 2) |
@@ -32,13 +32,13 @@ Status possíveis: `NOVA → TRIADA → PLANEJADA → EM_EXECUÇÃO → EM_QA �
 | IDEIA-030 | **Preço-alvo reverso**: por quanto preciso vender para lucrar X | 4 | 5 | 4 | 3 | 16 | **VERIFICADA** (deploy 2) |
 | IDEIA-031 | **Teste de estresse**: lucro se o preço de venda cair/subir ±N% | 4 | 4 | 4 | 4 | 16 | VERIFICADA (deploy 21) (plano aprovado, D-013) |
 | IDEIA-034 | **"Como foi calculado"**: tooltip com a fórmula e os números de cada valor da tela | 4 | 5 | 4 | 3 | 16 | NOVA |
-| IDEIA-007 | **Lucro por hora**: tempo de produção e fila | 4 | 4 | 3 | 4 | 15 | NOVA |
-| IDEIA-011 | **Tendência e médias** 7/30 dias (API history) | 4 | 4 | 3 | 4 | 15 | NOVA |
-| IDEIA-013 | **Ranking "o que craftar hoje"**: varre todos os itens craftáveis por lucro, margem ou lucro/foco | 5 | 3 | 2 | 5 | 15 | NOVA |
+| IDEIA-007 | **Lucro por hora**: tempo de produção e fila | 4 | 4 | 3 | 4 | 15 | TRIADA (dossiê pronto) |
+| IDEIA-011 | **Tendência e médias** 7/30 dias (API history) | 4 | 4 | 3 | 4 | 15 | TRIADA (dossiê pronto) |
+| IDEIA-013 | **Ranking "o que craftar hoje"**: varre todos os itens craftáveis por lucro, margem ou lucro/foco | 5 | 3 | 2 | 5 | 15 | TRIADA (dossiê pronto) |
 | IDEIA-020 | **Vender o bruto × refinar**: custo de oportunidade do recurso | 4 | 4 | 4 | 3 | 15 | NOVA |
 | IDEIA-021 | **Preço sugerido de ordem** (compra e venda) e lucro por ordem | 4 | 4 | 4 | 3 | 15 | NOVA |
 | IDEIA-032 | **Estoque**: colar inventário e abater do plano de compra | 4 | 4 | 3 | 4 | 15 | NOVA |
-| IDEIA-036 | **Mercado Negro**: filtros por tier/encantamento/qualidade e giro | 4 | 4 | 3 | 4 | 15 | NOVA |
+| IDEIA-036 | **Mercado Negro**: filtros por tier/encantamento/qualidade e giro | 4 | 4 | 3 | 4 | 15 | TRIADA (dossiê pronto) |
 | IDEIA-014 | **Lista de compras** exportável (copiar/CSV) por cidade | 3 | 3 | 5 | 3 | 14 | NOVA |
 | IDEIA-035 | **Frescor da base** por servidor/categoria (quantos itens atualizados nas últimas horas) | 3 | 4 | 4 | 3 | 14 | NOVA |
 | IDEIA-004 | **Fama/XP** por craft e fama por prata | 3 | 3 | 4 | 3 | 13 | NOVA |
@@ -79,8 +79,8 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 | IDEIA-054 | **"Vale pagar Premium?"**: ponto de equilíbrio com o preço do ouro (constantes editáveis e datadas) | 3 | 4 | 4 | 4 | 15 | VERIFICADA (deploy 23) (MÉDIA) |
 | IDEIA-057 | **Corrigir transmutação listada como receita de craft**: 20 recursos brutos (`T5_WOOD` ← `T4_WOOD`...) aparecem como craftáveis no catálogo. Confirmado pelo Gerente em `catalog.json` | 3 | 5 | 5 | 2 | 15 | **VERIFICADA** (deploy 7) |
 | IDEIA-050 | **Calculadora de transmutação** de recursos brutos | 3 | 4 | 3 | 4 | 14 | NOVA (bloqueada: fator do servidor precisa de 1 medição do usuário) |
-| IDEIA-051 | **Dimensionar o lote**: limites de foco, demanda, materiais e prata | 4 | 3 | 2 | 5 | 14 | TRIADA (MÉDIA, depende de 002) |
-| IDEIA-053 | **Confiança da rota por histórico** ("quantos dos últimos N dias deu lucro") | 4 | 3 | 2 | 5 | 14 | TRIADA (MÉDIA, depende de 010) |
+| IDEIA-051 | **Dimensionar o lote**: limites de foco, demanda, materiais e prata | 4 | 3 | 2 | 5 | 14 | PLANEJADA (MÉDIA, depende de 002) |
+| IDEIA-053 | **Confiança da rota por histórico** ("quantos dos últimos N dias deu lucro") | 4 | 3 | 2 | 5 | 14 | PLANEJADA (MÉDIA, depende de 010) |
 | IDEIA-055 | **Hideout como local de craft** (nível de poder, bônus geral/especialista, zona) | 3 | 4 | 3 | 4 | 14 | NOVA (pede 1 confirmação em jogo do RRR de uma bancada) |
 | IDEIA-052 | **Flip de encantamento** no Flipper | 4 | 3 | 2 | 5 | 14 | NOVA (**BLOQUEADA**: taxa de encantar sem fonte; lucro seria enganoso, D-014) |
 | IDEIA-056 | **Diário de operações** e lucro realizado (custo FIFO) | 3 | 2 | 1 | 4 | 10 | NOVA (esforço alto, baixa fidelidade; fica para o fim) |
@@ -94,9 +94,9 @@ Total de sementes funcionais: 34 + 9 acrescentadas no Loop 1 = 43 + 10 do lote 2
 | IDEIA-058 | **Comparar cidades de craft**: qual cidade dá o menor custo para o item (taxa por cidade obrigatória) | 4 | 4 | 3 | 5 | 16 | VERIFICADA (deploy 15) (plano aprovado, D-040) |
 | IDEIA-065 | **Preço de saída realista** ancorado no histórico quando a oferta é isolada | 4 | 3 | 3 | 5 | 15 | PLANEJADA (após 059) (MÉDIA; depende de 010; `k` e `N` são decisão de produto) |
 | IDEIA-059 | **Ciclo de vida da ordem**: cada atualização cobra 2,5% de novo e cancelar não devolve (3 correções = 336,75 por unidade no exemplo) | 4 | 3 | 3 | 4 | 14 | PLANEJADA (após 005) (escopo reduzido: só O1–O3; base do fee na atualização configurável, BAIXA) |
-| IDEIA-061 | **Ordem de compra × compra instantânea** de material: economia, idade do dado e spread (sem prometer tempo de preenchimento) | 3 | 4 | 4 | 3 | 14 | TRIADA (MÉDIA) |
-| IDEIA-062 | **Checagem de oferta do material**: o plano de compra cabe no volume diário? | 4 | 3 | 3 | 4 | 14 | TRIADA (MÉDIA; depende de 010; limiar é decisão de produto) |
-| IDEIA-064 | **Perfil do crafter** (especializações e tiers que sei fazer, uma entrada para tudo) | 3 | 3 | 3 | 4 | 13 | TRIADA (MÉDIA; sem automação por regra de desbloqueio) |
+| IDEIA-061 | **Ordem de compra × compra instantânea** de material: economia, idade do dado e spread (sem prometer tempo de preenchimento) | 3 | 4 | 4 | 3 | 14 | PLANEJADA (MÉDIA) |
+| IDEIA-062 | **Checagem de oferta do material**: o plano de compra cabe no volume diário? | 4 | 3 | 3 | 4 | 14 | PLANEJADA (MÉDIA; depende de 010; limiar é decisão de produto) |
+| IDEIA-064 | **Perfil do crafter** (especializações e tiers que sei fazer, uma entrada para tudo) | 3 | 3 | 3 | 4 | 13 | PLANEJADA (MÉDIA; sem automação por regra de desbloqueio) |
 | IDEIA-063 | **Variância do retorno em lote pequeno** | 2 | 2 | 3 | 3 | 10 | **REJEITADA por ora** (CONFIANÇA BAIXA: a hipótese H1 do sorteio não está comprovada; ver D-016) |
 
 ## Ideia acrescentada no Loop 4 (achado do Deployer no deploy 5)
